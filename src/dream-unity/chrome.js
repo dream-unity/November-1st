@@ -117,10 +117,17 @@ export function installDreamUnityChrome() {
     }
   }
   const events = { signal: lifetime.signal };
+  let returnFocus = statusButton;
   statusButton.addEventListener(
     'click',
     () => {
-      if (!dialog.open) dialog.showModal();
+      if (!dialog.open) {
+        const active = document.activeElement;
+        returnFocus = active?.closest('.du-recovery-actions')
+          ? active
+          : statusButton;
+        dialog.showModal();
+      }
       void check();
     },
     events,
@@ -137,7 +144,7 @@ export function installDreamUnityChrome() {
       ...events,
       capture: true,
     });
-  dialog.addEventListener('close', () => statusButton.focus(), events);
+  dialog.addEventListener('close', () => returnFocus.focus(), events);
   void check();
   return () => {
     lifetime.abort();
@@ -171,9 +178,10 @@ export function showStartupFailure(error) {
   const sources = element('button', 'Data sources');
   sources.type = 'button';
   sources.setAttribute('aria-haspopup', 'dialog');
-  sources.addEventListener('click', () =>
-    document.getElementById('du-open-source-status')?.click(),
-  );
+  sources.addEventListener('click', () => {
+    sources.focus();
+    document.getElementById('du-open-source-status')?.click();
+  });
   actions.append(reload, sources, homeLink());
   container.append(title, element('p', copy.guidance), actions, detail);
   loadingScreen.replaceChildren(container);
