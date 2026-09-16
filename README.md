@@ -1,5 +1,7 @@
 # November-1st · Dream Unity God’s Eye
 
+[Open the deployed application](https://november-1st-sable.vercel.app/) · [Verification record](docs/DREAM_UNITY_VERIFICATION.md)
+
 This repository contains the **complete upstream God’s Eye View source**, pinned to commit `0d41b6be5490db1f10a171f238be75db4d4ec3b4`, with Dream Unity navigation and a production provider host. The application builds locally from this repository; it does not load the former compact Vercel application.
 
 ```sh
