@@ -8,6 +8,61 @@
       name="description"
       content="Explore the planet with Dream Unity’s God’s Eye View: a 3D globe with aircraft, satellites, world radio, cameras, natural events and contextual layers."
     />
+    <!-- du:pages-entry-head:start -->
+    <!-- GitHub Pages serves this source file directly. Vite removes this entire
+         entry before building the complete application and its provider host. -->
+    <script>
+      (() => {
+        const application = new URL('https://november-1st-sable.vercel.app/');
+        if (location.origin === application.origin) return;
+        location.replace(application.href + location.search + location.hash);
+      })();
+    </script>
+    <style>
+      #du-pages-entry {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: grid;
+        place-items: center;
+        box-sizing: border-box;
+        padding: 24px;
+        overflow: auto;
+        background: #080f1a;
+        color: #edf3fb;
+        font:
+          16px/1.6 system-ui,
+          sans-serif;
+      }
+      #du-pages-entry > main {
+        max-width: 560px;
+      }
+      #du-pages-entry h1 {
+        margin: 0 0 12px;
+        font-size: clamp(30px, 6vw, 48px);
+        line-height: 1.15;
+      }
+      #du-pages-entry p {
+        color: #b9c9dc;
+      }
+      #du-pages-open {
+        display: inline-block;
+        padding: 14px 22px;
+        border-radius: 8px;
+        background: #a8dfec;
+        color: #061722;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      #du-pages-open:focus-visible {
+        outline: 3px solid white;
+        outline-offset: 4px;
+      }
+      #du-pages-home {
+        color: #a8dfec;
+      }
+    </style>
+    <!-- du:pages-entry-head:end -->
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <link rel="stylesheet" href="/style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -26,6 +81,38 @@
     />
   </head>
   <body>
+    <!-- du:pages-entry-body:start -->
+    <section id="du-pages-entry" aria-labelledby="du-pages-title">
+      <main>
+        <p>Dream Unity</p>
+        <h1 id="du-pages-title">God’s Eye View</h1>
+        <p>Opening the full globe, live data layers and exploration tools.</p>
+        <p>If it does not open automatically, use the button below.</p>
+        <p>
+          <a id="du-pages-open" href="https://november-1st-sable.vercel.app/"
+            >Open God’s Eye View</a
+          >
+        </p>
+        <p>
+          <a id="du-pages-home" href="https://dreamunity.one/"
+            >Return to Dream Unity</a
+          >
+        </p>
+        <noscript
+          ><p>
+            Automatic opening needs JavaScript. You can still follow the link
+            above; the interactive globe will need JavaScript enabled.
+          </p></noscript
+        >
+      </main>
+    </section>
+    <script>
+      document.getElementById('du-pages-open').href =
+        'https://november-1st-sable.vercel.app/' +
+        location.search +
+        location.hash;
+    </script>
+    <!-- du:pages-entry-body:end -->
     <noscript>
       <div
         style="
@@ -38,6 +125,9 @@
         "
       >
         This 3D globe needs JavaScript. Enable it and reload, or
+        <a href="https://november-1st-sable.vercel.app/" style="color: #a8dbea"
+          >open the full application</a
+        >. You can also
         <a href="https://dreamunity.one/" style="color: #a8dbea"
           >return to Dream Unity</a
         >.

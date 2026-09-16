@@ -6,6 +6,14 @@ November-1st owns the complete upstream source at the commit recorded in UPSTREA
 
 The frontend and `/api/*` must share an origin. A GitHub Pages portal should link to this application using ordinary navigation. It cannot execute this Node backend. Do not point a GitHub Pages copy at a mutable remote app.js or use arbitrary public CORS relays.
 
+## GitHub Pages entry
+
+The public address https://dream-unity.github.io/November-1st/ is an automatic entry to the full application at https://november-1st-sable.vercel.app/. GitHub Pages cannot run the provider server. Keep Pages configured to publish main/root; the committed `.nojekyll` and source-only entry in `index.html` work with that configuration without npm or a Vite build.
+
+The entry preserves the URL query and fragment, uses a fixed destination and `location.replace`, and provides a visible manual link with inline styling. The complete application remains on one origin with its APIs. `build/pages-entry.js`, called by the existing application HTML plugin, removes the entry from development and production application HTML so the full app never redirects itself. Six regression tests exercise the raw source entry, shared-state preservation, manual fallback, self-loop guard and compiled markup.
+
+The former blank page occurred because branch-based Pages publication served the raw Vite template: the UI existed only in unexpanded template comments and `/src/main.js` resolved outside the repository path. Changing only that script URL would not build the modules or provide the backend. Verify the exact GitHub Pages address after publishing; a successful Jekyll/Pages job alone is not sufficient verification.
+
 ## Vercel
 
 Import this repository as a Vite project, choose Node 24.x and use the committed vercel.json. The installation is `PUPPETEER_SKIP_DOWNLOAD=1 npm ci`; the build is `npm run build`; the static output is `dist`. The `api/index.js` function mounts the original provider middleware. Dynamic CCTV catalogue files are explicitly included.

@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { stripPagesEntry } from './pages-entry.js';
 
 export const APPLICATION_TEMPLATES = Object.freeze([
   'scene-chrome',
@@ -15,7 +16,7 @@ const allowed = new Set(APPLICATION_TEMPLATES);
 
 /** Expand only known component templates; markers cannot name filesystem paths. */
 export function expandApplicationHtml(html) {
-  return html.replace(
+  return stripPagesEntry(html).replace(
     /^[ \t]*<!-- gev:template ([^\s]+) -->\r?\n?/gm,
     (_, name) => {
       if (!allowed.has(name))
