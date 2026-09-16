@@ -17,13 +17,13 @@ const MAX_EXPANDED_BYTES = 512 * 1024 * 1024;
 const MAX_ENTRIES = 15000;
 const requiredFiles = [
   'package.json', 'package-lock.json', 'vercel.json', 'index.html',
-  'vite.config.js', 'api/[...path].js', 'host/application.mjs',
+  'vite.config.js', 'api/index.js', 'host/application.mjs',
   'server/providers/local.js', 'src/main.js',
   'scripts/vercel-source-bootstrap.mjs',
 ];
 const payloadFiles = [
   'package.json', 'package-lock.json', 'vercel.json',
-  'api/[...path].js', 'scripts/vercel-source-bootstrap.mjs',
+  'api/index.js', 'scripts/vercel-source-bootstrap.mjs',
 ];
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

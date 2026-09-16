@@ -8,7 +8,7 @@ The frontend and `/api/*` must share an origin. A GitHub Pages portal should lin
 
 ## Vercel
 
-Import this repository as a Vite project, choose Node 24.x and use the committed vercel.json. The installation is `PUPPETEER_SKIP_DOWNLOAD=1 npm ci`; the build is `npm run build`; the static output is `dist`. The `api/[...path].js` function mounts the original provider middleware. Dynamic CCTV catalogue files are explicitly included.
+Import this repository as a Vite project, choose Node 24.x and use the committed vercel.json. The installation is `PUPPETEER_SKIP_DOWNLOAD=1 npm ci`; the build is `npm run build`; the static output is `dist`. The `api/index.js` function mounts the original provider middleware. Dynamic CCTV catalogue files are explicitly included.
 
 A connector-based initial deployment may hydrate a checksum-verified immutable archive of this repository before installing dependencies. The generated `deploy-source.json` is deployment input, not committed source. This does not create an automatic Git integration. Link the Git repository in the Vercel project settings for automatic deployments, or publish a new pinned deployment through the same connector.
 

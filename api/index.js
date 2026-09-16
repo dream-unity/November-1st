@@ -2,7 +2,7 @@ import { createProductionHost } from '../host/application.mjs';
 
 let application;
 
-/** Vercel catch-all preserves original /api/* URLs and upstream middleware. */
+/** Vercel's explicit /api/:path* rewrite forwards the original request URL. */
 export default async function handler(req, res) {
   try {
     application ??= createProductionHost({ mode: 'serverless', serveStatic: false });

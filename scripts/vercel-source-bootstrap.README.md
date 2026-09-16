@@ -26,7 +26,7 @@ Include these files, copied byte-for-byte from that commit, in `files[]`:
 - `package.json`
 - `package-lock.json`
 - `vercel.json`
-- `api/[...path].js`
+- `api/index.js`
 - `scripts/vercel-source-bootstrap.mjs`
 - The deployment-only `deploy-source.json`
 
@@ -66,7 +66,7 @@ leaves the lock should be retried in a clean deployment directory.
 Configure the Vercel function to trace the hydrated `host/`, `server/`, and
 required `src/` modules and include runtime-read reference files. Ordinary
 static imports are traceable after installation; dynamic file paths need
-explicit `functions["api/[...path].js"].includeFiles` patterns. For example,
+explicit `functions["api/index.js"].includeFiles` patterns. For example,
 use the reviewed host's actual data paths rather than shipping credentials or
 assuming that a successful frontend build verifies the backend. Inspect a
 deployed API response and build logs to verify function inclusion.

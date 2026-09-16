@@ -26,7 +26,7 @@ Multiple instances require deliberate shared caching and quota coordination.
 
 ## Existing GitHub → Vercel route
 
-`api/[...path].js` is a Node function for `/api/*`. The full built frontend is
+`api/index.js` is a Node function for `/api/*`. The full built frontend is
 served from `dist`. Each warm function instance retains upstream request caches;
 disk caching uses `/tmp/november-first` and can disappear at any cold start.
 Upstream provider service duration, payload limits, and per-instance caches remain

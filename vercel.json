@@ -34,5 +34,11 @@
       ]
     }
   ],
-  "name": "november-1st"
+  "name": "november-1st",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api"
+    }
+  ]
 }
