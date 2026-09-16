@@ -1,0 +1,12 @@
+.git
+node_modules
+docs/media
+screenshots
+qa-shots
+output
+.env
+.env.*
+!.env.example
+.gev-cache
+state
+*.log

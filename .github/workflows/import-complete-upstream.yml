@@ -1,0 +1,55 @@
+name: Import pinned complete upstream
+on:
+  push:
+    branches: [main]
+    paths: [UPSTREAM_IMPORT.json]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: initial-upstream-import
+  cancel-in-progress: false
+jobs:
+  import:
+    if: github.repository == 'dream-unity/November-1st'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.14.0
+      - name: Import exact source without overwriting reviewed integration
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          if test -f .upstream-import-complete; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          upstream_commit=0d41b6be5490db1f10a171f238be75db4d4ec3b4
+          git init /tmp/gev-upstream
+          git -C /tmp/gev-upstream fetch --depth=1 https://github.com/bilawalsidhu/gods-eye-view.git "$upstream_commit"
+          git -C /tmp/gev-upstream checkout --detach FETCH_HEAD
+          test "$(git -C /tmp/gev-upstream rev-parse HEAD)" = "$upstream_commit"
+          rsync -a --ignore-existing --exclude=.git --exclude=.github /tmp/gev-upstream/ ./
+          echo "$upstream_commit" > .upstream-import-complete
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
+      - name: Verify complete source build and production host
+        if: steps.source.outputs.changed == 'true'
+        run: |
+          npm ci
+          npm run test:host
+          npm run check:boundaries
+          npm run build
+      - name: Commit full source to November-1st
+        if: steps.source.outputs.changed == 'true'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Import complete pinned God’s Eye View source with Dream Unity production host'
+          git push origin HEAD:main
