@@ -29,6 +29,7 @@ export function installDreamUnityChrome() {
   const nav = element('nav', '', 'du-navigation');
   nav.setAttribute('aria-label', 'Dream Unity navigation');
   const statusButton = element('button', 'Data sources');
+  statusButton.id = 'du-open-source-status';
   statusButton.type = 'button';
   statusButton.dataset.connection = 'checking';
   statusButton.setAttribute('aria-haspopup', 'dialog');
@@ -167,7 +168,13 @@ export function showStartupFailure(error) {
   const reload = element('button', 'Reload globe');
   reload.type = 'button';
   reload.addEventListener('click', () => window.location.reload());
-  actions.append(reload, homeLink());
+  const sources = element('button', 'Data sources');
+  sources.type = 'button';
+  sources.setAttribute('aria-haspopup', 'dialog');
+  sources.addEventListener('click', () =>
+    document.getElementById('du-open-source-status')?.click(),
+  );
+  actions.append(reload, sources, homeLink());
   container.append(title, element('p', copy.guidance), actions, detail);
   loadingScreen.replaceChildren(container);
   title.focus();

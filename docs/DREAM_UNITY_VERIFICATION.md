@@ -26,6 +26,48 @@ and provider function. The live verification results are recorded below after
 deployment. No credentialed voice, paid map or other paid-provider request was
 made to validate this repair.
 
+### Live checks of the repair
+
+The complete repair was published as
+`76cac7c479ad2757966ec5cca1c1ef10ae814456` and deployed successfully as
+`dpl_2apLty3cmBQE9ZB9TFHycFbKWWio`. Both frontend build metadata and API health
+reported that exact revision. The GitHub Pages workflow and all three CI jobs
+(Node 24.14, Node 26, Windows onboarding) completed successfully.
+
+Public checks at approximately 23:51–23:54 UTC on 2026-09-16:
+
+| Check | Observed result |
+| --- | --- |
+| GitHub Pages entry | Browser reached the full application's stable Vercel URL |
+| Host health | HTTP 200; 20 providers mounted; revision matches frontend |
+| Voice preflight | HTTP 200; `VOICE_NOT_CONFIGURED`, available=false; accurate server-setup message |
+| Token request with configuration confirmed absent | Structured HTTP 503 with the same configuration code; no OpenAI call |
+| Capabilities | 17 source groups; six optional groups accurately marked as requiring configuration/access/persistent service |
+| Civilian aircraft around Austin | HTTP 200; 455 aircraft records |
+| Military aircraft | HTTP 200; 232 aircraft records |
+| Satellites | HTTP 200; 20 station orbital records including ISS |
+| Radio | HTTP 200; 750 stations; stale=false, degraded=false |
+| Cameras | HTTP 200; 3,661 catalogue entries, 2.63 MB response |
+| Launches | HTTP 200; 25 records |
+| Melbourne weather | HTTP 200; status=ready using the required latitude/longitude parameters |
+| FIRMS/TomTom configuration | HTTP 200; hasKey=false |
+| AIS | Explicit HTTP 503 persistent-service requirement |
+| Invalid terrain coordinates | HTTP 400; rejected before acquisition |
+| Unknown nested API/voice suffix | JSON 404 |
+| Hosted local key editor/debug writer | JSON 404 as intended |
+
+The first weather probe used shortened query names rather than the documented
+contract and correctly received HTTP 400; the corrected latitude/longitude
+request above succeeded. The source status DOM contained the correct six setup
+requirements and voice guidance. The controlled browser still cannot initialize
+WebGL. That exposed a further usability issue: the startup recovery overlay
+covered the normal source-status button. The follow-up adds a Data sources action
+inside the recovery panel; the normal functioning globe is unchanged.
+
+These catalogue/HTTP checks do not certify individual broadcaster playback,
+paid voice sessions or 3D rendering. The complete runtime remains dependent on
+the external requirements in the audit record.
+
 ## Earlier baseline — 2026-09-16
 
 ## Local source verification
