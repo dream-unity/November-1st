@@ -1,4 +1,5 @@
 import * as Cesium from 'cesium';
+import { createCctvVideoPlayback } from './videoPlayback.js';
 import {
   CCTV_PROJECTION_OVERLAY_SOURCE_ID,
   CCTV_PROJECTION_OVERLAY_SOURCE_OPTIONS,
@@ -183,6 +184,9 @@ export function createProjection({
       ctx,
       image: null,
       video: null,
+      playback: null,
+      mediaStatus: null,
+      destroyed: false,
       planeEntity: null,
       cameraId: String(record.camera.id),
       labelPosition: new Cesium.Cartesian3(),
@@ -219,11 +223,36 @@ export function createProjection({
       video.playsInline = true;
       video.crossOrigin = 'anonymous';
       video.preload = 'auto';
-      video.src = parts.frames.mediaUrlFor(record.camera);
-      video.addEventListener('canplay', () => {
-        video.play().catch(() => {});
-      });
       runtime.video = video;
+      runtime.playback = createCctvVideoPlayback({
+        video,
+        url: parts.frames.mediaUrlFor(record.camera),
+        feedType,
+        onStatus(status) {
+          if (runtime.destroyed) return;
+          runtime.mediaStatus = status;
+          runtime.lastPlaceholderPaintAt = 0;
+          if (status.status !== 'ready') {
+            parts.frames.paintProjectionPlaceholder(ctx, record.camera, status);
+            runtime.canvasStamp++;
+          }
+          if (runtime.planeMaterial)
+            runtime.planeMaterial.image =
+              status.status === 'ready' ? video : canvas;
+          if (runtime.overlayEntry) {
+            runtime.overlayEntry.details = status.message
+              ? [status.message]
+              : [];
+            if (layerState._projectionOverlayOwnerId === runtime.cameraId)
+              layerState._cctvOverlayHost.setEntries(
+                CCTV_PROJECTION_OVERLAY_SOURCE_ID,
+                [runtime.overlayEntry],
+                CCTV_PROJECTION_OVERLAY_SOURCE_OPTIONS,
+              );
+          }
+          services.render.governorRequestRender?.('cctv-video-status');
+        },
+      });
     } else {
       const img = new Image();
       img.decoding = 'async';
@@ -254,11 +283,13 @@ export function createProjection({
     const positions =
       record.frustumPositions || parts.geometry.frustumCartesians(geometry);
     runtime.planeMaterial = new Cesium.ImageMaterialProperty({
-      image: mode === 'video' && runtime.video ? runtime.video : canvas,
+      image: runtime.mediaStatus?.status === 'ready' ? runtime.video : canvas,
       transparent: true,
       color: Cesium.Color.WHITE.withAlpha(0.95),
     });
     createProjectionPlane(record, runtime, geometry, positions);
+    if (runtime.mediaStatus?.message)
+      runtime.overlayEntry.details = [runtime.mediaStatus.message];
 
     return runtime;
   }
@@ -288,10 +319,19 @@ export function createProjection({
 
   function destroyProjectionRuntime(runtime) {
     if (!runtime) return;
-    if (runtime.video) {
+    runtime.destroyed = true;
+    if (runtime.playback) {
+      runtime.playback.destroy();
+      runtime.playback = null;
+    } else if (runtime.video) {
       runtime.video.pause();
       runtime.video.removeAttribute('src');
       runtime.video.load();
+    }
+    if (runtime.image) {
+      runtime.image.onload = null;
+      runtime.image.onerror = null;
+      runtime.image.removeAttribute('src');
     }
     if (runtime.planeEntity && layerState._viewer) {
       layerState._viewer.entities.remove(runtime.planeEntity);
@@ -324,9 +364,7 @@ export function createProjection({
       const active = parts.selection.getActiveRecord();
       if (layerState._enabled && layerState._showProjection && active) {
         ensureProjectionRuntime(active);
-        if (active.projection?.video) {
-          active.projection.video.play().catch(() => {});
-        }
+        active.projection?.playback?.resume();
         if (active.projection) {
           parts.frames.drawProjectionFrame(active);
           parts.frames.refreshProjectionTextures(active);
@@ -363,9 +401,11 @@ export function createProjection({
         layerState._enabled &&
         layerState._showProjection
       ) {
-        record.projection.video.play().catch(() => {});
+        record.projection.playback?.setActive(true);
       } else {
-        record.projection.video.pause();
+        if (record.projection.playback)
+          record.projection.playback.setActive(false);
+        else record.projection.video.pause();
       }
     }
   }

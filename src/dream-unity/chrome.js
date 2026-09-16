@@ -1,6 +1,8 @@
 import {
   readDeploymentStatus,
   providerStatusLabel,
+  providerStatusDetails,
+  deploymentStatusFailureCopy,
   startupFailureCopy,
 } from './status.js';
 import './chrome.css';
@@ -86,20 +88,25 @@ export function installDreamUnityChrome() {
             'du-provider-status',
           ),
         );
-        if (typeof provider.detail === 'string' && provider.detail)
-          value.append(element('p', provider.detail));
+        for (const detail of providerStatusDetails(provider))
+          value.append(element('p', detail));
         row.append(name, value);
         rows.append(row);
       }
-      state.textContent =
-        'Data service connected. Source configuration is listed below.';
+      const setupCount = providers.filter((provider) =>
+        ['not-configured', 'protected', 'requires-persistent-service'].includes(
+          provider.status,
+        ),
+      ).length;
+      state.textContent = setupCount
+        ? `Data service connected. ${setupCount} optional sources need setup or access; details are listed below.`
+        : 'Data service connected. Source configuration is listed below.';
       statusButton.dataset.connection = 'connected';
-      statusButton.title = 'Data service connected. View source configuration.';
-    } catch {
+      statusButton.title = state.textContent;
+    } catch (error) {
       if (lifetime.signal.aborted) return;
       rows.replaceChildren();
-      state.textContent =
-        'Source status could not be checked. Individual map layers report their own availability. Check your connection and try again.';
+      state.textContent = deploymentStatusFailureCopy(error);
       statusButton.dataset.connection = 'unavailable';
       statusButton.title =
         'Source status unavailable. Open details or check again.';

@@ -7,7 +7,7 @@
   "functions": {
     "api/**/*.js": {
       "maxDuration": 300,
-      "includeFiles": "{host,server,src,scripts,config}/**"
+      "includeFiles": "{{host,server,src,scripts,config}/**,dist/build-info.json}"
     }
   },
   "headers": [

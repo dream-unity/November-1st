@@ -48,6 +48,26 @@ const STEP_SELECTED_PIXEL_SIZE = 13;
 /** Route request timeout (ms) — the proxy itself gives OSRM 12 s. */
 const ROUTE_TIMEOUT_MS = 15_000;
 
+/** Decode provider and platform failures before accepting any route geometry. */
+export async function readDirectionsResponse(response) {
+  let payload;
+  try {
+    payload = await response.json();
+  } catch {
+    // Hosting failures can return text or HTML; their HTTP status still matters.
+  }
+  if (response.status === 429) {
+    throw new Error('Routing is rate limited — try again in a moment');
+  }
+  if (!response.ok) {
+    throw new Error(`Routing service unavailable (HTTP ${response.status})`);
+  }
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw new Error('Routing service returned an invalid response');
+  }
+  return payload;
+}
+
 /** Pointer-ownership id while a globe click is placing an endpoint. */
 export const DIRECTIONS_POINTER_OWNER = 'directions';
 
@@ -829,14 +849,7 @@ export function createDirectionsLayer({ services }) {
         signal: controller.signal,
         headers: { Accept: 'application/json' },
       });
-      const payload = await response.json();
-      if (response.status === 429) {
-        throw new Error(
-          typeof payload?.error === 'string' && payload.error
-            ? `${payload.error} — try again in a moment`
-            : 'Routing is rate limited — try again in a moment',
-        );
-      }
+      const payload = await readDirectionsResponse(response);
       if (seq !== _routeSeq || !_enabled) return;
       const route = normalizeRoutePayload(payload, mode);
       if (!route) {
@@ -848,7 +861,7 @@ export function createDirectionsLayer({ services }) {
             ? 'No route found between A and B'
             : payload?.error
               ? `Routing failed: ${payload.error}`
-              : 'No route found between A and B';
+              : 'Routing service returned invalid route data';
         return;
       }
       _route = route;

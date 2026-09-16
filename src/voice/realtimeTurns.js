@@ -1,4 +1,5 @@
 import { realtimeSessionEvent } from './realtimeEvents.js';
+import { describeVoiceError } from './realtimeErrors.js';
 import { readLayerLifecycleSummary } from './layerSummary.js';
 import {
   CALL_DEDUPE_MS,
@@ -231,12 +232,16 @@ export class RealtimeTurns {
       this.pendingResponseInstructions = null;
       this.pendingUserTextResponse = false;
       this.cancelRadioHandoff({ abortTools: true });
+      // An error state must not leave a live microphone or a billable transport
+      // behind the disconnected-looking UI.
+      const diagnostics = this.connectionDiagnostics();
+      this.stop({ preserveStatus: true });
       this.reportError('Realtime API', payload.error, {
         eventId: payload.event_id,
         type: payload.error?.type,
         code: payload.error?.code,
         param: payload.error?.param,
-        ...this.connectionDiagnostics(),
+        ...diagnostics,
       });
       return;
     }
@@ -631,6 +636,15 @@ export class RealtimeTurns {
       if (responseStatus === 'failed') {
         const details = payload.response?.status_details || null;
         const failErr = details?.error || null;
+        if (!describeVoiceError(failErr || {}).retryable) {
+          const diagnostics = this.connectionDiagnostics();
+          this.stop({ preserveStatus: true });
+          this.reportError('Realtime response failed', failErr, {
+            responseId: payload.response?.id || payload.response_id || null,
+            ...diagnostics,
+          });
+          return;
+        }
         this.reportError('Realtime response failed', failErr, {
           responseId: payload.response?.id || payload.response_id || null,
           statusReason: details?.reason || null,

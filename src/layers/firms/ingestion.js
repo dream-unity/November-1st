@@ -31,7 +31,11 @@ export function createIngestion({
       if (payload.keyRequired) {
         layerState._keyRequired = true;
         layerState._error = null;
-        layerState._stale = false;
+        // Keep the last observation available for inspection, but never let
+        // retained detections look live after access to the feed is lost.
+        layerState._stale = Boolean(
+          layerState._lastUpdate || layerState._fires.length,
+        );
         return;
       }
       layerState._keyRequired = false;
@@ -72,7 +76,14 @@ export function createIngestion({
       )
         return;
       console.warn(`[Data:${id}] FIRMS live load failed:`, error);
-      layerState._error = 'live feed unavailable';
+      layerState._keyRequired = false;
+      layerState._stale = Boolean(
+        layerState._lastUpdate || layerState._fires.length,
+      );
+      layerState._error =
+        error?.code === 'FIRMS_PERSISTENT_HOST_REQUIRED'
+          ? 'Complete fire snapshot requires the persistent Node service'
+          : 'live feed unavailable';
     } finally {
       if (layerState.request === request) {
         layerState.request = null;

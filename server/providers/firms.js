@@ -1,5 +1,11 @@
 import path from 'node:path';
 import { promises as fsp } from 'node:fs';
+import { gzip as gzipCallback } from 'node:zlib';
+import { promisify } from 'node:util';
+import {
+  readResponseTextCapped,
+  readResponseJsonCapped,
+} from './common/http.js';
 
 import { filterTrailing24h, parseFirmsCsv } from '../../src/data/firmsCsv.js';
 
@@ -25,6 +31,68 @@ import { filterTrailing24h, parseFirmsCsv } from '../../src/data/firmsCsv.js';
  *
  * @returns {import('vite').Plugin}
  */
+const gzip = promisify(gzipCallback);
+const FIRMS_SERVERLESS_RESPONSE_BYTES = 4 * 1024 * 1024;
+const FIRMS_MAX_CSV_BYTES = 32 * 1024 * 1024;
+const FIRMS_MAX_STATUS_BYTES = 64 * 1024;
+
+/** Honor an explicit gzip refusal even when a wildcard is accepted. */
+function acceptsGzip(header) {
+  const entries = String(header || '')
+    .toLowerCase()
+    .split(',')
+    .map((entry) => {
+      const [encoding, ...parameters] = entry.trim().split(';');
+      const quality = parameters
+        .map((value) => value.trim())
+        .find((value) => value.startsWith('q='));
+      const q = quality === undefined ? 1 : Number(quality.slice(2));
+      return { encoding, accepted: Number.isFinite(q) && q > 0 && q <= 1 };
+    });
+  return (
+    (
+      entries.find((entry) => entry.encoding === 'gzip') ||
+      entries.find((entry) => entry.encoding === '*')
+    )?.accepted === true
+  );
+}
+
+/** Prepare a full snapshot before headers are sent, never truncate records. */
+export async function prepareFirmsJson(
+  status,
+  payload,
+  { serverless = Boolean(process.env.VERCEL), acceptEncoding = '' } = {},
+) {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-store',
+  };
+  let body = Buffer.from(JSON.stringify(payload));
+  if (serverless) {
+    headers.Vary = 'Accept-Encoding';
+    if (body.byteLength > 64 * 1024 && acceptsGzip(acceptEncoding)) {
+      body = await gzip(body);
+      headers['Content-Encoding'] = 'gzip';
+    }
+    if (body.byteLength > FIRMS_SERVERLESS_RESPONSE_BYTES) {
+      delete headers['Content-Encoding'];
+      status = 503;
+      body = Buffer.from(
+        JSON.stringify({
+          error: 'response_too_large',
+          code: 'FIRMS_PERSISTENT_HOST_REQUIRED',
+          message:
+            'This complete fire snapshot exceeds the serverless response limit. Use the persistent Node deployment for this feed.',
+          count: Array.isArray(payload.fires) ? payload.fires.length : null,
+          maxResponseBytes: FIRMS_SERVERLESS_RESPONSE_BYTES,
+        }),
+      );
+    }
+  }
+  headers['Content-Length'] = String(body.byteLength);
+  return { status, headers, body };
+}
+
 export function firmsProxy() {
   const TTL_MS = 30 * 60_000;
   const STATUS_TTL_MS = 5 * 60_000;
@@ -77,9 +145,15 @@ export function firmsProxy() {
    */
   async function fetchSource(key, source) {
     const url = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${encodeURIComponent(key)}/${source}/world/2`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(60_000) });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const records = parseFirmsCsv(await res.text());
+    const signal = AbortSignal.timeout(60_000);
+    const res = await fetch(url, { signal, redirect: 'error' });
+    if (!res.ok) {
+      void res.body?.cancel().catch(() => {});
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const records = parseFirmsCsv(
+      await readResponseTextCapped(res, FIRMS_MAX_CSV_BYTES, signal),
+    );
     if (records === null) throw new Error('non-CSV upstream response');
     return records;
   }
@@ -140,9 +214,17 @@ export function firmsProxy() {
       statusInflight = (async () => {
         try {
           const url = `https://firms.modaps.eosdis.nasa.gov/mapserver/mapkey_status/?MAP_KEY=${encodeURIComponent(key)}`;
-          const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const body = await res.json();
+          const signal = AbortSignal.timeout(10_000);
+          const res = await fetch(url, { signal, redirect: 'error' });
+          if (!res.ok) {
+            void res.body?.cancel().catch(() => {});
+            throw new Error(`HTTP ${res.status}`);
+          }
+          const body = await readResponseJsonCapped(
+            res,
+            FIRMS_MAX_STATUS_BYTES,
+            signal,
+          );
           const used = Number(body?.current_transactions);
           const limit = Number(body?.transaction_limit);
           return Number.isFinite(used) && Number.isFinite(limit)
@@ -169,13 +251,14 @@ export function firmsProxy() {
 
   const installMiddleware = (server) => {
     server.middlewares.use('/api/firms', async (req, res) => {
-      const sendJson = (status, obj) => {
-        if (res.headersSent) return;
-        res.writeHead(status, {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store',
+      const sendJson = async (status, obj) => {
+        if (res.headersSent || res.writableEnded) return;
+        const response = await prepareFirmsJson(status, obj, {
+          acceptEncoding: req.headers?.['accept-encoding'],
         });
-        res.end(JSON.stringify(obj));
+        if (res.headersSent || res.writableEnded) return;
+        res.writeHead(response.status, response.headers);
+        res.end(response.body);
       };
       try {
         const subPath = String(req.url || '').split('?')[0];
@@ -184,7 +267,7 @@ export function firmsProxy() {
 
         if (subPath === '/status') {
           if (!key) {
-            sendJson(200, {
+            await sendJson(200, {
               hasKey: false,
               lastFetch: null,
               count: null,
@@ -195,7 +278,7 @@ export function firmsProxy() {
             return;
           }
           const transactions = await getTransactions(key);
-          sendJson(200, {
+          await sendJson(200, {
             hasKey: true,
             lastFetch: mem ? mem.at : null,
             count: mem ? mem.fires.length : null,
@@ -207,13 +290,13 @@ export function firmsProxy() {
         }
 
         if (!key) {
-          sendJson(503, { error: 'no_key' });
+          await sendJson(503, { error: 'no_key' });
           return;
         }
 
         const entry = mem;
         if (entry && Date.now() - entry.at < TTL_MS) {
-          sendJson(200, buildPayload(entry, false));
+          await sendJson(200, buildPayload(entry, false));
           return;
         }
         // Stale or missing → refresh, single-flight (concurrent requests
@@ -239,17 +322,17 @@ export function firmsProxy() {
         const pending = inflight;
         const fresh = await pending;
         if (fresh) {
-          sendJson(200, buildPayload(fresh, false));
+          await sendJson(200, buildPayload(fresh, false));
         } else if (entry) {
-          sendJson(200, buildPayload(entry, true)); // upstream down — stale beats empty
+          await sendJson(200, buildPayload(entry, true)); // upstream down — stale beats empty
         } else {
-          sendJson(502, {
+          await sendJson(502, {
             error: 'firms fetch failed and no cache available',
           });
         }
       } catch (err) {
         console.warn('[firms-proxy] error:', err?.message || err);
-        sendJson(500, { error: 'firms proxy error' });
+        await sendJson(500, { error: 'firms proxy error' });
       }
     });
   };

@@ -35,7 +35,11 @@ Long radio/media proxy streams can be interrupted when a function reaches its
 maximum duration; native public station URLs may continue independently. A
 persistent deployment is the complete path for continuous streams. Full-world
 FIRMS results and large catalogues must also fit the platform's response limit;
-increasing function duration does not increase that payload limit.
+increasing function duration does not increase that payload limit. FIRMS uses
+lossless gzip when accepted by the client and measures the encoded response
+against a conservative 4 MiB budget. If the complete result still does not fit,
+the layer explains that a persistent host is required. It never silently drops
+fire records to fit the function budget.
 
 Continuous AIS ingestion is **not** started in a function. Without a persistent
 service, `/api/ais-live` returns HTTP 503 and an explicit
@@ -104,9 +108,11 @@ Protecting Vercel's static pages themselves requires platform access protection.
 ## Verification and truthfulness
 
 `/api/health` proves only that the host mounted its middleware, lists the mounted
-providers, and includes the deployment commit when provided by the platform.
+providers, and includes the deployment commit from platform configuration or bundled build metadata.
 `/api/capabilities` reports credential and architecture configuration without
-disclosing values. Neither endpoint claims that an upstream feed was fetched,
+disclosing values. Metered-provider status reflects this request's access: a
+server-side bearer token configured on the deployment does not grant a public
+visitor access. Neither endpoint claims that an upstream feed was fetched,
 that provider permissions are valid, or that rendered positions were observed.
 Provider responses remain responsible for actual freshness and availability.
 
@@ -118,3 +124,24 @@ The host tests verify actual middleware prefix routing, all-provider mounting,
 static-file boundaries, blocked key-writing routes, metered-route authorization,
 rate limits, async rejection handling, CORS, lifecycle teardown, and the restricted
 AIS bridge. They do not claim to exercise real external provider uptime.
+
+
+## Voice availability and failure contracts
+
+`GET /api/realtime/status` is a read-only, no-cost preflight. It reports
+`available`, `configured`, `status`, `code`, `message`, and `retryable` without
+minting a session, requesting a microphone, contacting OpenAI, or consuming the
+paid-route request quota. A configured key is not proof of provider validity.
+
+- `VOICE_NOT_CONFIGURED`: the owner must enable OpenAI on the server.
+- `VOICE_AUTH_REQUIRED`: the current visitor has no protected-provider access.
+- `VOICE_READY`: the deployment configuration permits a session attempt.
+
+Session creation separately distinguishes provider access rejection, exhausted
+quota, rate limits, invalid model/session configuration, timeouts, unreachable
+providers, and invalid responses. Upstream errors are sanitized. Token payloads
+and AI HUD responses are bounded during streaming, and malformed/oversized HUD
+requests receive explicit HTTP 400/413 responses before any provider call.
+Unavailable credentials do not consume the paid quota; template placeholders
+are treated as absent. These checks do not replace provider billing limits or
+prove that a credential is valid.

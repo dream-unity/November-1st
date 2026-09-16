@@ -43,3 +43,20 @@ test('response-body completion honors cancellation without replacing records', a
     name: 'AbortError',
   });
 });
+
+test('complete-snapshot hosting guidance survives the source contract', async () => {
+  const source = createFirmsSource({
+    fetchImpl: async () =>
+      Response.json(
+        {
+          error: 'response_too_large',
+          code: 'FIRMS_PERSISTENT_HOST_REQUIRED',
+        },
+        { status: 503 },
+      ),
+  });
+  await assert.rejects(source.getSnapshot(), {
+    code: 'FIRMS_PERSISTENT_HOST_REQUIRED',
+    message: 'Complete fire snapshot requires the persistent Node service',
+  });
+});

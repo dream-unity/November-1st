@@ -7,7 +7,30 @@ const STATUS_LABELS = Object.freeze({
 });
 
 export function providerStatusLabel(value) {
-  return STATUS_LABELS[value] || 'Status unknown';
+  return Object.hasOwn(STATUS_LABELS, value)
+    ? STATUS_LABELS[value]
+    : 'Status unknown';
+}
+
+/** Keep setup/access instructions visible alongside configuration metadata. */
+export function providerStatusDetails(provider) {
+  return [...new Set([provider?.message, provider?.guidance, provider?.detail])]
+    .filter((value) => typeof value === 'string' && value.trim())
+    .map((value) => value.trim());
+}
+
+export function deploymentStatusFailureCopy(error) {
+  if (error?.status === 401 || error?.status === 403)
+    return 'Source configuration requires access to this deployment. Ask the site owner for access, then check again.';
+  if (error?.status === 404)
+    return 'This deployment does not expose source configuration. Individual map layers report their own availability.';
+  if (error?.name === 'TimeoutError')
+    return 'The source status check timed out. The service may be busy; check again shortly.';
+  if (error?.code === 'INVALID_STATUS')
+    return 'The data service returned an unrecognised status. Reload the page and check again; if this continues, the deployment needs attention.';
+  if (Number.isInteger(error?.status))
+    return `The source status service returned HTTP ${error.status}. Check again shortly; individual map layers report their own availability.`;
+  return 'Source status could not be checked. Check your connection and try again; individual map layers report their own availability.';
 }
 
 /** Health confirms our service answered; it does not validate external feeds. */
@@ -26,8 +49,19 @@ export async function readDeploymentStatus({
       redirect: 'error',
       headers: { Accept: 'application/json' },
     });
-    if (!response.ok) throw new Error(`Data service HTTP ${response.status}`);
-    return response.json();
+    if (!response.ok)
+      throw Object.assign(new Error(`Data service HTTP ${response.status}`), {
+        status: response.status,
+      });
+    try {
+      return await response.json();
+    } catch (error) {
+      if (scopedSignal.aborted) throw scopedSignal.reason;
+      throw Object.assign(new Error('The data service returned invalid JSON'), {
+        code: 'INVALID_STATUS',
+        cause: error,
+      });
+    }
   };
   const [health, capabilities] = await Promise.all([
     request('/api/health'),
@@ -36,17 +70,27 @@ export async function readDeploymentStatus({
   if (
     health?.status !== 'ok' ||
     health?.service !== 'dream-unity-gods-eye' ||
-    !Array.isArray(capabilities?.providers)
+    !Array.isArray(capabilities?.providers) ||
+    !capabilities.providers.length ||
+    capabilities.providers.some(
+      (provider) =>
+        !provider ||
+        typeof provider.id !== 'string' ||
+        !provider.id.trim() ||
+        typeof provider.label !== 'string' ||
+        !provider.label.trim() ||
+        typeof provider.status !== 'string',
+    )
   )
-    throw new Error('The data service did not return a recognised status');
+    throw Object.assign(
+      new Error('The data service did not return a recognised status'),
+      {
+        code: 'INVALID_STATUS',
+      },
+    );
   return {
     health,
-    providers: capabilities.providers.filter(
-      (provider) =>
-        provider &&
-        typeof provider.id === 'string' &&
-        typeof provider.label === 'string',
-    ),
+    providers: capabilities.providers,
   };
 }
 
@@ -64,7 +108,7 @@ export function startupFailureCopy(error) {
       : 'The globe could not finish loading',
     guidance: graphics
       ? 'This globe needs WebGL graphics. Try reloading, closing other graphics-heavy tabs, or opening this page in another current browser. On a desktop, check that browser hardware acceleration is enabled.'
-      : 'Check your connection and reload to try again. If the problem continues, the error details below can help identify it.',
-    detail: message,
+      : 'Reload to try again. If the problem continues, share the error details below so the startup failure can be identified.',
+    detail: causes ? `${message}\n${causes}` : message,
   };
 }

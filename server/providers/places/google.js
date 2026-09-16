@@ -2,6 +2,7 @@ import {
   googleServerApiKey,
   keylessGooglePlacesResponse,
 } from './google-key.js';
+import { readResponseJsonCapped } from '../common/http.js';
 import { makeOptInRateLimiter, clientKey } from '../common/rate-limit.js';
 import {
   projectNearbyPlaces,
@@ -104,6 +105,7 @@ export function googlePlacesContextProxy({
           {
             method: 'POST',
             redirect: 'error',
+            signal: AbortSignal.timeout(12000),
             headers: {
               'Content-Type': 'application/json',
               'X-Goog-Api-Key': apiKey,
@@ -130,12 +132,23 @@ export function googlePlacesContextProxy({
             }),
           },
         );
-        const data = await response.json().catch(() => ({}));
+        const data = await readResponseJsonCapped(response, 2 * 1024 * 1024);
+        if (
+          !data ||
+          typeof data !== 'object' ||
+          Array.isArray(data) ||
+          (data.places !== undefined && !Array.isArray(data.places))
+        ) {
+          throw new Error('Invalid Google Places response');
+        }
         const places = projectNearbyPlaces(data, latitude, longitude);
 
         res.statusCode = response.ok ? 200 : response.status;
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
-        res.setHeader('Cache-Control', 'private, max-age=300');
+        res.setHeader(
+          'Cache-Control',
+          response.ok ? 'private, max-age=300' : 'no-store',
+        );
         res.end(
           JSON.stringify({
             places,
@@ -149,7 +162,7 @@ export function googlePlacesContextProxy({
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.end(
           JSON.stringify({
-            error: error?.message || 'Google Places request failed',
+            error: 'Google Places is temporarily unavailable',
             places: [],
           }),
         );
@@ -224,6 +237,7 @@ export function googlePlacesContextProxy({
           {
             method: 'POST',
             redirect: 'error',
+            signal: AbortSignal.timeout(12000),
             headers: {
               'Content-Type': 'application/json',
               'X-Goog-Api-Key': apiKey,
@@ -249,12 +263,23 @@ export function googlePlacesContextProxy({
             }),
           },
         );
-        const data = await response.json().catch(() => ({}));
+        const data = await readResponseJsonCapped(response, 2 * 1024 * 1024);
+        if (
+          !data ||
+          typeof data !== 'object' ||
+          Array.isArray(data) ||
+          (data.places !== undefined && !Array.isArray(data.places))
+        ) {
+          throw new Error('Invalid Google Places response');
+        }
         const places = projectTextSearchPlaces(data, latitude, longitude);
 
         res.statusCode = response.ok ? 200 : response.status;
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
-        res.setHeader('Cache-Control', 'private, max-age=300');
+        res.setHeader(
+          'Cache-Control',
+          response.ok ? 'private, max-age=300' : 'no-store',
+        );
         res.end(
           JSON.stringify({
             places,
@@ -268,7 +293,7 @@ export function googlePlacesContextProxy({
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.end(
           JSON.stringify({
-            error: error?.message || 'Google Places request failed',
+            error: 'Google Places is temporarily unavailable',
             places: [],
           }),
         );

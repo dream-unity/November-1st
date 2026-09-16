@@ -43,6 +43,7 @@ export {
 } from './realtimeInputPolicy.js';
 
 import { createRealtimeBackend } from './realtimeBackend.js';
+import { describeVoiceError } from './realtimeErrors.js';
 
 const STATUS = {
   idle: 'OFF',
@@ -61,7 +62,7 @@ export class GevRealtimeController extends RealtimeFacade {
     dataManager = null,
     backend = createRealtimeBackend(),
     signal,
-    debugSink = postDebugLog,
+    debugSink = import.meta.env?.DEV ? postDebugLog : null,
     actionExecutor,
     onSessionEvent,
   }) {
@@ -70,6 +71,8 @@ export class GevRealtimeController extends RealtimeFacade {
     this.onSessionEvent = onSessionEvent;
     this.backend = backend;
     this.lifetimeSignal = signal;
+    this.availability = null;
+    this.availabilityGeneration = 0;
 
     this.lifetimeAbort = () => this.stop({ removeUi: true });
     signal?.addEventListener('abort', this.lifetimeAbort, { once: true });
@@ -130,6 +133,7 @@ export class GevRealtimeController extends RealtimeFacade {
         setStatus: (...args) => this.setStatus(...args),
         start: (...args) => this.start(...args),
         pauseRadioForVoice: (...args) => this.pauseRadioForVoice(...args),
+        canStartVoice: () => this.availability?.available !== false,
       },
     });
 
@@ -193,6 +197,8 @@ export class GevRealtimeController extends RealtimeFacade {
         fatalError: (...args) => this.fatalError(...args),
         reportError: (...args) => this.reportError(...args),
         handleRealtimeEvent: (...args) => this.handleRealtimeEvent(...args),
+        refreshAvailability: (...args) => this.refreshAvailability(...args),
+        setAvailability: (...args) => this.setAvailability(...args),
       },
     });
     this._radio.observe();
@@ -201,6 +207,36 @@ export class GevRealtimeController extends RealtimeFacade {
 
   isActive() {
     return this.status !== 'idle' && this.status !== 'error';
+  }
+
+  async refreshAvailability({ signal = this.lifetimeSignal } = {}) {
+    if (!this.backend.requestAvailability) return null;
+    const generation = ++this.availabilityGeneration;
+    try {
+      const availability = await this.backend.requestAvailability({ signal });
+      if (signal?.aborted || generation !== this.availabilityGeneration)
+        return null;
+      this.setAvailability(availability);
+      return availability;
+    } catch (error) {
+      if (signal?.aborted || generation !== this.availabilityGeneration)
+        return null;
+      // A failed capability check is not permission to mint a token. Keep a
+      // safe recheck action available without showing a startup error popup.
+      const availability = {
+        available: false,
+        code: 'VOICE_STATUS_UNAVAILABLE',
+        message: error.message || 'Could not check AI voice availability.',
+        retryable: true,
+      };
+      this.setAvailability(availability);
+      return availability;
+    }
+  }
+
+  setAvailability(availability) {
+    this.availability = availability;
+    if (!this.isActive()) this.setStatus('idle', 'Voice off');
   }
 
   // Fatal error path: tear the session down (stop tracks, close pc/dc, kill the
@@ -222,6 +258,7 @@ export class GevRealtimeController extends RealtimeFacade {
     // releases its own resources instead of promoting them onto a stopped
     // controller (H7).
     this._connection.invalidate();
+    if (removeUi) this.availabilityGeneration++;
     if (removeUi)
       this.lifetimeSignal?.removeEventListener('abort', this.lifetimeAbort);
     this.cancelPushToTalkHold();
@@ -281,13 +318,32 @@ export class GevRealtimeController extends RealtimeFacade {
     }
   }
 
-  setStatus(status, detail) {
+  setStatus(status, detail, failure = null) {
     this.status = status;
     this.emitSessionEvent({ type: 'state', state: status, detail });
     this.ui.root.dataset.status = status;
     if (status === 'error') this.ui.root.classList.remove('error-dismissed');
     this.updateVoiceButtonLabel();
     this.ui.status.textContent = STATUS[status] || STATUS.idle;
+    const unavailable =
+      status === 'idle' && this.availability?.available === false;
+    if (this.ui.button) {
+      this.ui.button.title = unavailable
+        ? `${this.availability.message} Activate to check again.`
+        : 'Toggle voice control';
+      this.ui.button.setAttribute?.(
+        'aria-label',
+        unavailable
+          ? `${this.availability.message} Check voice availability again`
+          : 'Voice control — activate to toggle voice; hold Space to speak',
+      );
+    }
+    this.ui.root.dataset.availability =
+      this.availability == null
+        ? 'unknown'
+        : this.availability.available
+          ? 'configured'
+          : 'unavailable';
     const resolvedDetail =
       status === 'listening' && this.pushToTalkMode
         ? this.pushToTalkKeyHeld
@@ -301,16 +357,36 @@ export class GevRealtimeController extends RealtimeFacade {
           (status === 'idle' ? 'VOICE STANDBY' : 'VOICE ACTIVE');
     this.ui.detail.textContent = primaryDetail;
     this.ui.detail.title = primaryDetail;
+    if (unavailable) {
+      const description = describeVoiceError(this.availability);
+      this.ui.status.textContent =
+        this.availability.code === 'VOICE_STATUS_UNAVAILABLE'
+          ? 'CHECK CONNECTION'
+          : description.label;
+      this.ui.detail.textContent = 'AI VOICE UNAVAILABLE';
+      this.ui.detail.title = this.availability.message;
+      if (this.ui.helpDetail)
+        this.ui.helpDetail.textContent = `${this.availability.message} ${description.hint} Activate the mic button to check again.`;
+    }
     if (this.ui.errorDetail) {
       this.ui.errorDetail.textContent =
         status === 'error'
           ? resolvedDetail || 'Voice session could not be started.'
           : '';
     }
+    if (this.ui.errorTitle)
+      this.ui.errorTitle.textContent =
+        failure?.label || 'VOICE CONNECTION ERROR';
+    if (this.ui.errorHint)
+      this.ui.errorHint.textContent =
+        status === 'error'
+          ? (failure || describeVoiceError({ message: resolvedDetail })).hint
+          : '';
     if (status === 'idle' || status === 'connecting' || status === 'error') {
       this.setVoiceSpeaker('idle');
     }
     if (
+      detail !== 'Checking voice availability' &&
       shouldPauseRadioForVoice({
         status,
         pushToTalkKeyHeld: this.pushToTalkKeyHeld,

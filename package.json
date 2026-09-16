@@ -47,7 +47,7 @@
     "qa:transit": "node scripts/qa-transit.mjs",
     "build:upstream": "vite build",
     "start": "node --env-file-if-exists=.env host/start.mjs",
-    "test:host": "node --test host/*.test.mjs",
+    "test:host": "node --test --test-concurrency=1 --test-reporter=tap host/*.test.mjs",
     "test:integration": "npm run test:host",
     "verify": "npm run check:boundaries && npm run test:host && npm test && npm run build",
     "preinstall": "node scripts/vercel-source-bootstrap.mjs"

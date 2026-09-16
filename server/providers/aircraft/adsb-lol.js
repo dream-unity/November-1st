@@ -1,3 +1,8 @@
+import {
+  coalesceProxyRequest,
+  readResponseTextCapped,
+} from '../common/http.js';
+
 /**
  * Vite plugin: adsb.lol military aircraft proxy with 12 s response cache.
  *
@@ -17,6 +22,7 @@
 export function adsbLolProxy() {
   /** @type {string|null} Cached upstream JSON body. */
   let _cache = null;
+  const inFlight = new Map();
   /** @type {number} Epoch-ms when the cache was populated. */
   let _cacheAt = 0;
   /** @type {number} Epoch-ms until which upstream is not contacted. */
@@ -66,6 +72,37 @@ export function adsbLolProxy() {
     res.end(body);
   }
 
+  function fetchSnapshot() {
+    return coalesceProxyRequest(inFlight, 'military', async () => {
+      const signal = AbortSignal.timeout(12000);
+      const upstream = await fetch('https://api.adsb.lol/v2/mil', {
+        headers: { 'User-Agent': 'gods-eye-view-adsblol-proxy/1.0' },
+        signal,
+        redirect: 'error',
+      });
+      let body;
+      if (upstream.ok) {
+        body = await readResponseTextCapped(upstream, 4 * 1024 * 1024, signal);
+        const data = JSON.parse(body);
+        if (!Array.isArray(data?.ac))
+          throw new Error('Invalid military aircraft snapshot');
+      } else {
+        // Error pages are neither flight data nor safe JSON. Discard the body
+        // immediately, including when it never finishes streaming.
+        void upstream.body?.cancel().catch(() => {});
+        body = JSON.stringify({
+          error: `Aircraft source HTTP ${upstream.status}`,
+        });
+      }
+      return {
+        ok: upstream.ok,
+        status: upstream.status,
+        headers: upstream.headers,
+        body,
+      };
+    }).promise;
+  }
+
   const installMiddleware = (server) => {
     server.middlewares.use('/api/adsblol/mil', async (req, res) => {
       try {
@@ -94,11 +131,9 @@ export function adsbLolProxy() {
           );
           return;
         }
-        const upstream = await fetch('https://api.adsb.lol/v2/mil', {
-          headers: { 'User-Agent': 'gods-eye-view-adsblol-proxy/1.0' },
-        });
+        const upstream = await fetchSnapshot();
         if (upstream.ok) {
-          const body = await upstream.text();
+          const body = upstream.body;
           _cache = body;
           _cacheAt = Date.now();
           _cooldownUntil = 0;
@@ -115,7 +150,6 @@ export function adsbLolProxy() {
           );
           if (_cache) {
             // Do not wait for a failing response body before serving usable data.
-            upstream.body?.cancel().catch(() => {});
             serve(res, 200, _cache, 'STALE', {
               'X-ADS-B-Upstream-Status': String(upstream.status),
               'X-ADS-B-Retry-After-Seconds': String(
@@ -125,7 +159,7 @@ export function adsbLolProxy() {
             return;
           }
         }
-        const body = await upstream.text();
+        const body = upstream.body;
         serve(
           res,
           upstream.status,
@@ -140,7 +174,9 @@ export function adsbLolProxy() {
             : {},
         );
       } catch (e) {
-        console.error('[adsb.lol Proxy]', e.message);
+        console.error('[adsb.lol Proxy] upstream unavailable');
+        _cooldownUntil = Date.now() + SERVER_ERROR_COOLDOWN_MS;
+        _cooldownStatus = 502;
         if (_cache) {
           serve(res, 200, _cache, 'STALE');
           return;

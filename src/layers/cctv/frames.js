@@ -119,7 +119,11 @@ export function createFrames({ state: layerState, services, parts, source }) {
 
   function refreshProjectionTextures(record) {
     const runtime = record?.projection;
-    if (!runtime || runtime.mode === 'video') return;
+    if (
+      !runtime ||
+      (runtime.mode === 'video' && runtime.mediaStatus?.status === 'ready')
+    )
+      return;
     const now = Date.now();
     if (
       now - parts.model.safeNumber(runtime.lastTextureSwapAt, 0) <
@@ -279,12 +283,16 @@ export function createFrames({ state: layerState, services, parts, source }) {
     const runtime = record?.projection;
     if (!runtime || !runtime.ctx) return;
 
-    const health = layerState._healthById.get(record.camera.id) || null;
+    const health =
+      runtime.mediaStatus ||
+      layerState._healthById.get(record.camera.id) ||
+      null;
 
     if (runtime.mode === 'video' && runtime.video) {
       const video = runtime.video;
       if (
         video.readyState >= 2 &&
+        (!runtime.mediaStatus || runtime.mediaStatus.status === 'ready') &&
         video.videoWidth > 0 &&
         video.videoHeight > 0
       ) {

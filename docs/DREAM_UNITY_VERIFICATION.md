@@ -1,4 +1,32 @@
-# Verification record — 2026-09-16
+# Verification record
+
+## Reliability repair verification — 2026-09-16 UTC
+
+This section supersedes the earlier baseline for the reliability repair.
+See [the audit and correction matrix](RELIABILITY_AUDIT.md).
+
+- `npm test`: **330 test files completed; 4,200 tests, 4,199 passed,
+  zero failed/cancelled, one Windows-only native-DACL test skipped**. This includes
+  both isolated Node 24 allocation probes. Ordinary tests use concurrency four.
+- `npm run test:host`: **51 passed**, with complete TAP totals. This includes
+  actual HTTP routing/authentication, credential-free voice preflight, streamed
+  payload limits, body disposal, all-provider mounting and lossless large fire
+  snapshot transport checks.
+- Production build, import/package ownership checks, formatting, setup doctor,
+  immutable-bootstrap checkout check and whitespace checks passed.
+- Both hosted and original upstream builds were checked to preserve the
+  distinction between hosted deployment settings and the local key editor.
+- Dependency audit reported zero known vulnerabilities in both production-only
+  and complete installed dependency inventories at the time of this check.
+
+The source is published and then explicitly deployed: this connector-created
+Vercel project does not automatically deploy every Git commit. Use
+`/build-info.json` and `/api/health` to compare the revision of the running frontend
+and provider function. The live verification results are recorded below after
+deployment. No credentialed voice, paid map or other paid-provider request was
+made to validate this repair.
+
+## Earlier baseline — 2026-09-16
 
 ## Local source verification
 

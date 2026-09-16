@@ -61,15 +61,20 @@ export function createQueries({
       const staleText = layerState._lastUpdate
         ? `STALE · cached ${components.model.formatAge(now - layerState._lastUpdate) || '<1h'}`
         : 'STALE';
+      const staleLabel = layerState._error
+        ? `${layerState._error} · ${staleText}`
+        : staleText;
       let loadingLabel = '';
       if (layerState._loading) {
         loadingLabel = layerState._fires.length
           ? 'refreshing...'
           : 'loading...';
       } else if (layerState._keyRequired) {
-        loadingLabel = 'KEY REQUIRED';
+        loadingLabel = layerState._stale
+          ? `KEY REQUIRED · ${staleText}`
+          : 'KEY REQUIRED';
       } else if (layerState._stale) {
-        loadingLabel = staleText;
+        loadingLabel = staleLabel;
       } else if (layerState._error) {
         loadingLabel = layerState._error;
       } else if (layerState._lastUpdate) {
@@ -89,7 +94,7 @@ export function createQueries({
         error: layerState._keyRequired
           ? 'KEY REQUIRED'
           : layerState._stale
-            ? staleText
+            ? staleLabel
             : layerState._error,
         loadingLabel,
       };

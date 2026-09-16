@@ -30,6 +30,7 @@ export function createRealtimeSession({
       }
       controller.syncCostUi();
       controller.bindPushToTalkShortcut();
+      void controller.refreshAvailability?.();
     },
   };
 }

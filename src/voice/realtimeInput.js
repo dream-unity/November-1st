@@ -55,6 +55,7 @@ export class RealtimeInput {
     if (this.shortcutKeyDownHandler) return;
     this.shortcutKeyDownHandler = (event) => {
       if (!shouldHandlePushToTalkKeyDown(event)) return;
+      if (!this.isActive() && this.canStartVoice?.() === false) return;
       if (event.repeat) {
         if (this.spaceKeyHeld && !this.pushToTalkHoldPreservesNative)
           event.preventDefault();
@@ -102,9 +103,9 @@ export class RealtimeInput {
         ) {
           this.pushToTalkHoldControl.blur();
         }
-        this.pauseRadioForVoice();
         this.pushToTalkKeyHeld = true;
         if (this.isActive()) {
+          this.pauseRadioForVoice();
           this.ui.root.dataset.pushToTalk = 'held';
           this.setMicrophoneEnabled(true);
           if (this.status === 'listening')

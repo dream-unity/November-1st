@@ -95,9 +95,9 @@ export function adsbdbProxy() {
               dirty = true;
             }
             // other statuses: leave uncached so we retry later
-            return fresh(store[key]) ? store[key].data : null;
+            return store[key]?.data ?? null;
           } catch {
-            return fresh(store[key]) ? store[key].data : null; // network error → stale if any
+            return store[key]?.data ?? null; // network error → stale if any
           } finally {
             inflight.delete(ik);
           }

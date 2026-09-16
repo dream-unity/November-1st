@@ -63,9 +63,15 @@ test('unpadded acq_time parses in the adapter path ("45" = 00:45Z)', () => {
 
 test('parseAcquisitionMs: memo cache is honored, invalid input → 0', () => {
   const cache = new Map();
-  assert.equal(parseAcquisitionMs('2026-07-16', '1006', cache), Date.UTC(2026, 6, 16, 10, 6));
+  assert.equal(
+    parseAcquisitionMs('2026-07-16', '1006', cache),
+    Date.UTC(2026, 6, 16, 10, 6),
+  );
   assert.equal(cache.size, 1);
-  assert.equal(parseAcquisitionMs('2026-07-16', '1006', cache), Date.UTC(2026, 6, 16, 10, 6));
+  assert.equal(
+    parseAcquisitionMs('2026-07-16', '1006', cache),
+    Date.UTC(2026, 6, 16, 10, 6),
+  );
   assert.equal(parseAcquisitionMs(undefined, '1006', cache), 0);
 });
 
@@ -89,13 +95,67 @@ test('records with non-finite lat/lon are skipped; index stays sequential', () =
     proxyRecord({ lat: 40.1 }),
   ]);
   assert.equal(fires.length, 2);
-  assert.deepEqual(fires.map((f) => f.index), [0, 1]);
+  assert.deepEqual(
+    fires.map((f) => f.index),
+    [0, 1],
+  );
 });
 
 test('non-finite frp/brightness → 0; empty input → []', () => {
-  const [fire] = adaptFirmsRecords([proxyRecord({ frp: 'n/a', brightness: undefined })]);
+  const [fire] = adaptFirmsRecords([
+    proxyRecord({ frp: 'n/a', brightness: undefined }),
+  ]);
   assert.equal(fire.frp, 0);
   assert.equal(fire.brightness, 0);
   assert.deepEqual(adaptFirmsRecords([]), []);
   assert.deepEqual(adaptFirmsRecords(null), []);
+});
+
+test('missing and out-of-range coordinates do not turn into real detections at zero', () => {
+  const invalid = [null, undefined, '', ' ', true, false, [], {}];
+  const fires = adaptFirmsRecords([
+    ...invalid.flatMap((value) => [
+      proxyRecord({ lat: value }),
+      proxyRecord({ lon: value }),
+    ]),
+    proxyRecord({ lat: 90.001 }),
+    proxyRecord({ lat: -90.001 }),
+    proxyRecord({ lon: 180.001 }),
+    proxyRecord({ lon: -180.001 }),
+    proxyRecord({ lat: 0, lon: 0 }),
+    proxyRecord({ lat: '-90', lon: '180' }),
+  ]);
+  assert.deepEqual(
+    fires.map(({ index, lat, lon }) => ({ index, lat, lon })),
+    [
+      { index: 0, lat: 0, lon: 0 },
+      { index: 1, lat: -90, lon: 180 },
+    ],
+  );
+});
+
+test('invalid acquisition dates and times cannot normalize into a plausible observation', () => {
+  for (const [date, time] of [
+    ['2026-02-29', '1230'],
+    ['2026-04-31', '1230'],
+    ['2026-00-10', '1230'],
+    ['2026-13-10', '1230'],
+    ['2026-07-00', '1230'],
+    ['2026x07x16', '1230'],
+    ['2026-07-16junk', '1230'],
+    ['2026-07-16', '2400'],
+    ['2026-07-16', '1260'],
+    ['2026-07-16', '12345'],
+    ['2026-07-16', '-1'],
+    ['2026-07-16', undefined],
+    ['2026-07-16', ''],
+    ['2026-07-16', '  '],
+    ['2026-07-16', true],
+  ])
+    assert.equal(parseAcquisitionMs(date, time), 0, `${date} ${time}`);
+  assert.equal(parseAcquisitionMs('2024-02-29', '0'), Date.UTC(2024, 1, 29));
+  assert.equal(
+    parseAcquisitionMs('2026-07-16', 45),
+    Date.UTC(2026, 6, 16, 0, 45),
+  );
 });

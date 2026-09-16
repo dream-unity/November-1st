@@ -32,7 +32,14 @@ function enforceOptInRateLimit(limiter, req, res) {
   res.statusCode = 429;
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Retry-After', '5');
-  res.end(JSON.stringify({ error: 'Rate limit exceeded' }));
+  res.end(
+    JSON.stringify({
+      error:
+        'The AI service is receiving too many requests. Wait briefly before trying again.',
+      code: 'VOICE_RATE_LIMITED',
+      retryable: true,
+    }),
+  );
   return false;
 }
 

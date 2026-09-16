@@ -1,21 +1,30 @@
 import connect from 'connect';
 import { EventEmitter } from 'node:events';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { readHostConfig, capabilityReport } from './config.mjs';
 import { hostSecurity, json } from './security.mjs';
 import { staticApplication } from './static.mjs';
 import { aisBridge } from './ais-bridge.mjs';
+import { voiceAvailability } from '../server/providers/openai/status.js';
 
 /** Connect itself does not catch rejected promises from async handlers. */
 function asyncAware(app) {
   const originalUse = app.use.bind(app);
-  app.use = (...args) => originalUse(...args.map((argument) => {
-    if (typeof argument !== 'function' || argument.length === 4) return argument;
-    return (req, res, next) => {
-      try { Promise.resolve(argument(req, res, next)).catch(next); }
-      catch (error) { next(error); }
-    };
-  }));
+  app.use = (...args) =>
+    originalUse(
+      ...args.map((argument) => {
+        if (typeof argument !== 'function' || argument.length === 4)
+          return argument;
+        return (req, res, next) => {
+          try {
+            Promise.resolve(argument(req, res, next)).catch(next);
+          } catch (error) {
+            next(error);
+          }
+        };
+      }),
+    );
   return app;
 }
 
@@ -25,9 +34,10 @@ async function productionProviders(config) {
   await mkdir(config.stateDir, { recursive: true });
   process.chdir(config.stateDir);
   const { localProviderPlugins } = await import('../server/providers/local.js');
-  return localProviderPlugins().filter((plugin) =>
-    plugin.name !== 'gev-key-setup' &&
-    !(config.mode === 'serverless' && plugin.name === 'ais-live-proxy'),
+  return localProviderPlugins().filter(
+    (plugin) =>
+      plugin.name !== 'gev-key-setup' &&
+      !(config.mode === 'serverless' && plugin.name === 'ais-live-proxy'),
   );
 }
 
@@ -44,38 +54,92 @@ export async function createProductionHost({
   providerPlugins,
   fetchImpl,
 } = {}) {
+  let revision = config.commit;
+  if (!revision) {
+    try {
+      const metadata = JSON.parse(
+        await readFile(path.join(config.distDir, 'build-info.json'), 'utf8'),
+      );
+      if (/^[a-f0-9]{40}$/i.test(metadata.commit || ''))
+        revision = metadata.commit;
+    } catch {
+      /* A development host may not have build metadata yet. */
+    }
+  }
   const app = asyncAware(connect());
   const lifecycle = new EventEmitter();
-  const plugins = providerPlugins ?? await productionProviders(config);
+  const plugins = providerPlugins ?? (await productionProviders(config));
   const providerNames = plugins.map((plugin) => plugin.name);
   let disposed = false;
   app.use(hostSecurity(config, env));
   const exactGet = (handler) => (req, res, next) => {
     if (!['/', ''].includes((req.url || '/').split('?')[0])) return next();
-    if (!['GET', 'HEAD'].includes(req.method)) return json(res, 405, { error: 'Method not allowed' });
+    if (!['GET', 'HEAD'].includes(req.method))
+      return json(res, 405, { error: 'Method not allowed' });
     handler(req, res);
   };
-  app.use('/api/health', exactGet((req, res) => json(res, 200, {
-    status: 'ok', service: 'dream-unity-gods-eye', runtime: config.mode,
-    commit: config.commit, providersMounted: providerNames,
-    note: 'Host ready; provider mounting does not establish upstream availability.',
-  })));
-  app.use('/api/capabilities', exactGet((req, res) => json(res, 200, capabilityReport(config, env))));
-  if (config.mode === 'serverless') app.use('/api/ais-live', aisBridge(config, fetchImpl));
+  app.use(
+    '/api/health',
+    exactGet((req, res) =>
+      json(res, 200, {
+        status: 'ok',
+        service: 'dream-unity-gods-eye',
+        runtime: config.mode,
+        commit: revision,
+        providersMounted: providerNames,
+        note: 'Host ready; provider mounting does not establish upstream availability.',
+      }),
+    ),
+  );
+  app.use(
+    '/api/capabilities',
+    exactGet((req, res) =>
+      json(res, 200, capabilityReport(config, env, req.gevHostAccess)),
+    ),
+  );
+  app.use(
+    '/api/realtime/status',
+    exactGet((req, res) =>
+      json(
+        res,
+        200,
+        voiceAvailability({
+          apiKey: env.OPENAI_API_KEY,
+          authorized: req.gevHostAccess?.authorized || config.allowPaidPublic,
+        }),
+      ),
+    ),
+  );
+  if (config.mode === 'serverless')
+    app.use('/api/ais-live', aisBridge(config, fetchImpl));
   const server = { middlewares: app, httpServer: lifecycle };
   for (const plugin of plugins) {
-    if (plugin.name === 'gev-key-setup') throw new Error('Local credential editor cannot be mounted in production');
-    if (config.mode === 'serverless' && plugin.name === 'ais-live-proxy') throw new Error('Persistent AIS ingestion cannot run inside a serverless function');
-    if (typeof plugin.configurePreviewServer !== 'function') throw new Error(`Provider lacks a production middleware hook: ${plugin.name}`);
+    if (plugin.name === 'gev-key-setup')
+      throw new Error(
+        'Local credential editor cannot be mounted in production',
+      );
+    if (config.mode === 'serverless' && plugin.name === 'ais-live-proxy')
+      throw new Error(
+        'Persistent AIS ingestion cannot run inside a serverless function',
+      );
+    if (typeof plugin.configurePreviewServer !== 'function')
+      throw new Error(
+        `Provider lacks a production middleware hook: ${plugin.name}`,
+      );
     const postHook = await plugin.configurePreviewServer(server);
     if (typeof postHook === 'function') await postHook();
   }
   // A missing provider route must never receive the HTML application shell.
-  app.use('/api', (req, res) => json(res, 404, { error: 'API route not found' }));
+  app.use('/api', (req, res) =>
+    json(res, 404, { error: 'API route not found' }),
+  );
   if (serveStatic) app.use(staticApplication(config.distDir));
   app.use((req, res) => json(res, 404, { error: 'Not found' }));
   app.use((error, req, res, next) => {
-    if (res.headersSent) { res.destroy(); return; }
+    if (res.headersSent) {
+      res.destroy();
+      return;
+    }
     // Do not echo upstream URLs, secrets, filesystem paths or stack traces.
     console.error('[production-host] Request failed:', error?.name || 'Error');
     json(res, 500, { error: 'Request could not be completed' });

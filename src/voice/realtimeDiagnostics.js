@@ -1,3 +1,5 @@
+import { describeVoiceError } from './realtimeErrors.js';
+
 export const ERROR_LOG_LIMIT = 30;
 
 export const ERROR_STORAGE_KEY = 'gev-realtime-errors';
@@ -86,6 +88,8 @@ export function createErrorRecord(source, error, extra = {}) {
     sctpCauseCode: rtcError?.sctpCauseCode ?? null,
     receivedAlert: rtcError?.receivedAlert ?? null,
     sentAlert: rtcError?.sentAlert ?? null,
+    code: rtcError?.code || null,
+    status: rtcError?.status ?? null,
     ...removeEmptyValues(extra),
   };
 }
@@ -173,13 +177,17 @@ export class RealtimeDiagnostics {
   }
 
   reportError(source, error = null, extra = {}) {
-    const record = createErrorRecord(source, error, extra);
+    const record = sanitizeDebugValue(createErrorRecord(source, error, extra));
     this.errors.unshift(record);
     this.errors.length = Math.min(this.errors.length, ERROR_LOG_LIMIT);
     storeErrors(this.errors);
     console.error('[GEV Realtime]', record);
     this.debugLog('error', record);
-    this.setStatus('error', formatErrorForDisplay(record));
+    this.setStatus(
+      'error',
+      formatErrorForDisplay(record),
+      describeVoiceError(record),
+    );
     return record;
   }
 

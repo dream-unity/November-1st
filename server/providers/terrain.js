@@ -125,11 +125,18 @@ export function terrainHeightsProxy() {
   async function fetchUpstreamAll(points) {
     const results = [];
     let firstError = null;
+    const deadline = Date.now() + 240000;
     for (let i = 0; i < points.length; i += UPSTREAM_CHUNK) {
       const chunk = points.slice(i, i + UPSTREAM_CHUNK);
       let chunkResults = [];
       try {
-        chunkResults = await fetchTerrainChunkWithRetry(chunk);
+        const remaining = deadline - Date.now();
+        if (remaining <= 0)
+          throw new Error('Terrain request deadline exceeded');
+        chunkResults = await fetchTerrainChunkWithRetry(chunk, {
+          attemptTimeoutMs: Math.min(30000, remaining),
+          retryBudgetMs: Math.min(10000, Math.max(0, remaining - 30000)),
+        });
       } catch (error) {
         firstError = firstError || error;
       }
@@ -167,7 +174,15 @@ export function terrainHeightsProxy() {
         const parsedUrl = new URL(req.url || '', 'http://internal');
         const rawPoints = parsedUrl.searchParams.get('points');
         const points = parseTerrainPoints(rawPoints);
-        if (!points) {
+        const blankCoordinate = rawPoints
+          ?.split(';')
+          .filter(Boolean)
+          .some((pair) => pair.split(',').some((value) => value.trim() === ''));
+        if (
+          !points ||
+          blankCoordinate ||
+          points.some(([lon, lat]) => Math.abs(lon) > 180 || Math.abs(lat) > 90)
+        ) {
           send(400, {
             error:
               'invalid points parameter — expected "lon,lat;lon,lat;…" with finite numbers',
@@ -175,7 +190,7 @@ export function terrainHeightsProxy() {
           return;
         }
         if (points.length > MAX_POINTS) {
-          send(500, {
+          send(400, {
             error: `too many points (${points.length}); max ${MAX_POINTS} per request`,
           });
           return;

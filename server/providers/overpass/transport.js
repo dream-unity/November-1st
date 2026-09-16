@@ -98,7 +98,11 @@ async function fetchOverpassPayload(
         signal: controller.signal,
       });
 
-      const responseBody = await readBody(upstream, maxResponseBytes);
+      const responseBody = await readBody(
+        upstream,
+        maxResponseBytes,
+        controller.signal,
+      );
       const contentType =
         upstream.headers.get('content-type') || 'application/json';
       const status = upstream.status;
@@ -136,6 +140,15 @@ async function fetchOverpassPayload(
         lastError = new Error(
           `Overpass upstream returned ${status} (${endpoint})`,
         );
+        continue;
+      }
+
+      try {
+        const decoded = JSON.parse(responseBody);
+        if (!Array.isArray(decoded?.elements))
+          throw new Error('Invalid elements');
+      } catch {
+        lastError = new Error('Invalid Overpass response');
         continue;
       }
 

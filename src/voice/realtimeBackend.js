@@ -1,10 +1,13 @@
 import { DEFAULT_VOICE_TIER, resolveVoiceModel } from './voiceCost.js';
+import { realtimeError } from './realtimeErrors.js';
 
 /** Realtime-compatible token and SDP requests, independent of microphone/UI ownership. */
 export function createRealtimeBackend({
   tokenEndpoint = '/api/realtime/token',
+  statusEndpoint = '/api/realtime/status',
   callsEndpoint = 'https://api.openai.com/v1/realtime/calls',
   tokenTransport = (...args) => fetch(...args),
+  statusTransport = (...args) => tokenTransport(...args),
   connectionTransport = (...args) => fetch(...args),
   timeoutMs = 30_000,
   signal: lifetime,
@@ -15,6 +18,25 @@ export function createRealtimeBackend({
     );
   return Object.freeze({
     protocol: 'openai-realtime',
+    async requestAvailability({ signal } = {}) {
+      signal = scoped(signal);
+      signal.throwIfAborted();
+      const response = await statusTransport(statusEndpoint, {
+        signal,
+        cache: 'no-store',
+        redirect: 'error',
+      });
+      const data = await response.json().catch(() => null);
+      signal.throwIfAborted();
+      if (!response.ok || typeof data?.available !== 'boolean') {
+        throw realtimeError('Could not check AI voice availability.', {
+          code: data?.code || 'VOICE_STATUS_UNAVAILABLE',
+          status: response.status,
+          retryable: true,
+        });
+      }
+      return data;
+    },
     async requestToken({ tier = DEFAULT_VOICE_TIER, signal } = {}) {
       signal = scoped(signal);
       signal.throwIfAborted();
@@ -31,8 +53,13 @@ export function createRealtimeBackend({
       if (!response.ok) {
         const reason =
           typeof data?.error === 'string' ? data.error : data?.error?.message;
-        throw new Error(
+        throw realtimeError(
           reason || `Realtime token failed: HTTP ${response.status}`,
+          {
+            code: data?.code || data?.error?.code,
+            status: response.status,
+            retryable: data?.retryable,
+          },
         );
       }
       const token =
@@ -83,7 +110,10 @@ export function createRealtimeBackend({
       signal.throwIfAborted();
       if (!response.ok) {
         await response.body?.cancel?.().catch(() => {});
-        throw new Error(`Realtime SDP failed: HTTP ${response.status}`);
+        throw realtimeError(`Realtime SDP failed: HTTP ${response.status}`, {
+          code: 'VOICE_SDP_FAILED',
+          status: response.status,
+        });
       }
       const answer = await response.text();
       signal.throwIfAborted();

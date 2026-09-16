@@ -96,7 +96,7 @@ test('does not hide real provider and HTTP failures', () => {
   assert.equal(isHudSummaryUnconfigured(200, { error: 'provider failed' }), false);
 });
 
-test('the installed keyless HUD route stays successful after the voice quota is exhausted', async () => {
+test('unconfigured voice requests preserve the quota and the keyless HUD fallback', async () => {
   const previousKey = process.env.OPENAI_API_KEY;
   const previousLimit = process.env.GEV_RATELIMIT_OPENAI_PER_MIN;
   process.env.OPENAI_API_KEY = '';
@@ -111,8 +111,11 @@ test('the installed keyless HUD route stays successful after the voice quota is 
     const firstToken = await invokeRoute(token);
     const secondToken = await invokeRoute(token);
     assert.equal(firstToken.statusCode, 503);
-    assert.deepEqual(firstToken.body, { error: 'OPENAI_API_KEY is not set' });
-    assert.equal(secondToken.statusCode, 429);
+    assert.equal(firstToken.body.code, 'VOICE_NOT_CONFIGURED');
+    assert.equal(firstToken.body.available, false);
+    assert.equal(firstToken.body.retryable, false);
+    assert.equal(secondToken.statusCode, 503);
+    assert.equal(secondToken.body.code, 'VOICE_NOT_CONFIGURED');
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const response = await invokeRoute(hud, { method: 'POST' });

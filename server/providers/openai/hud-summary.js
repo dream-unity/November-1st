@@ -1,7 +1,12 @@
 import { keylessHudSummaryResponse } from '../../../src/hudSummaryResponse.js';
 import { enforceOptInRateLimit, openAiRateLimiter } from './rate-limit.js';
-import { readRequestBody } from '../common/request.js';
 import { OPENAI_HUD_SUMMARY_MODEL_DEFAULT } from './constants.js';
+import {
+  configuredCredential,
+  voiceProviderFailure,
+  sendVoiceJson,
+} from './status.js';
+import { readResponseTextCapped } from '../common/http.js';
 
 function extractOpenAiResponseText(data) {
   if (typeof data?.output_text === 'string' && data.output_text.trim()) {
@@ -25,34 +30,95 @@ function toFiveWordHudSummary(value) {
     .join(' ');
 }
 
+/** Drain oversized requests without destroying the socket before a 413 can be delivered. */
+function readHudBody(req, limit = 64 * 1024) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    let settled = false;
+    const chunks = [];
+    const cleanup = () => {
+      req.removeListener('data', onData);
+      req.removeListener('end', onEnd);
+      req.removeListener('error', onError);
+      req.removeListener('aborted', onAbort);
+    };
+    const fail = (code) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      const error = new Error(code);
+      error.code = code;
+      // The caller may disconnect while an oversized body is being drained.
+      // Keep an error listener until close so that expected socket errors do
+      // not become an uncaught exception after this promise has rejected.
+      const drainError = () => {};
+      req.on('error', drainError);
+      req.once('close', () => req.removeListener('error', drainError));
+      req.resume?.();
+      reject(error);
+    };
+    const onData = (value) => {
+      const chunk = Buffer.isBuffer(value) ? value : Buffer.from(value);
+      size += chunk.length;
+      if (size > limit) return fail('BODY_TOO_LARGE');
+      chunks.push(chunk);
+    };
+    const onEnd = () => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(Buffer.concat(chunks).toString('utf8'));
+    };
+    const onError = () => fail('BODY_READ_ERROR');
+    const onAbort = () => fail('BODY_READ_ERROR');
+    if (Number(req.headers?.['content-length']) > limit)
+      return fail('BODY_TOO_LARGE');
+    req.on('data', onData);
+    req.on('end', onEnd);
+    req.on('error', onError);
+    req.on('aborted', onAbort);
+  });
+}
+
 async function handleHudSummary(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') {
-    res.statusCode = 405;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ error: 'Method not allowed' }));
-    return;
+    res.setHeader('Allow', 'POST');
+    return sendVoiceJson(res, 405, { error: 'Method not allowed' });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  const keyless = keylessHudSummaryResponse(apiKey);
-  if (keyless) {
-    res.statusCode = keyless.statusCode;
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-store');
-    res.end(JSON.stringify(keyless.payload));
-    return;
-  }
+  const apiKey = String(process.env.OPENAI_API_KEY ?? '').trim();
+  const keyless = keylessHudSummaryResponse(
+    configuredCredential(apiKey) ? apiKey : '',
+  );
+  if (keyless) return sendVoiceJson(res, keyless.statusCode, keyless.payload);
 
-  // Opt-in per-IP throttle (GEV_RATELIMIT_OPENAI_PER_MIN). Keyless HUD
-  // fallback has no provider cost and resolves above without consuming a
-  // paid-endpoint quota slot.
+  // Missing configuration returns the existing successful local HUD fallback.
   if (!enforceOptInRateLimit(openAiRateLimiter(), req, res)) return;
 
+  let context;
   try {
-    const body = await readRequestBody(req, 64 * 1024);
-    const context = JSON.parse(body || '{}');
+    const body = await readHudBody(req);
+    context = JSON.parse(body || '{}');
+    if (!context || typeof context !== 'object' || Array.isArray(context))
+      throw new SyntaxError();
+  } catch (error) {
+    const tooLarge = error?.code === 'BODY_TOO_LARGE';
+    return sendVoiceJson(res, tooLarge ? 413 : 400, {
+      error: tooLarge
+        ? 'HUD context exceeds the request size limit.'
+        : 'HUD context must be a valid JSON object.',
+      code: tooLarge ? 'BODY_TOO_LARGE' : 'INVALID_REQUEST',
+      retryable: false,
+    });
+  }
+
+  try {
+    const signal = AbortSignal.timeout(30_000);
     const response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
+      redirect: 'error',
+      signal,
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
@@ -73,27 +139,47 @@ async function handleHudSummary(req, res) {
         max_output_tokens: 100,
       }),
     });
-    const data = await response.json().catch(() => ({}));
+    const responseText = await readResponseTextCapped(
+      response,
+      128 * 1024,
+      signal,
+    );
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      data = null;
+    }
+    if (!response.ok)
+      return sendVoiceJson(res, response.status === 429 ? 429 : 502, {
+        summary: null,
+        ...voiceProviderFailure(response.status, data),
+      });
     const summary = toFiveWordHudSummary(extractOpenAiResponseText(data));
-    res.statusCode = response.ok && summary ? 200 : response.status || 502;
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-store');
-    res.end(
-      JSON.stringify({
-        summary: summary || null,
-        error: response.ok
-          ? null
-          : data.error?.message || 'OpenAI HUD summary request failed',
-      }),
-    );
+    if (!summary)
+      return sendVoiceJson(res, 502, {
+        summary: null,
+        error: 'The AI summary provider returned no usable summary.',
+        code: 'HUD_INVALID_RESPONSE',
+        retryable: true,
+      });
+    return sendVoiceJson(res, 200, { summary, error: null });
   } catch (error) {
-    res.statusCode = 502;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(
-      JSON.stringify({
-        error: error?.message || 'OpenAI HUD summary request failed',
-      }),
-    );
+    if (error?.code === 'RESPONSE_TOO_LARGE')
+      return sendVoiceJson(res, 502, {
+        code: 'HUD_INVALID_RESPONSE',
+        retryable: true,
+        error: 'The AI summary provider returned an oversized response.',
+      });
+    const timedOut =
+      error?.name === 'TimeoutError' || error?.name === 'AbortError';
+    return sendVoiceJson(res, timedOut ? 504 : 502, {
+      error: timedOut
+        ? 'The AI summary provider took too long to respond.'
+        : 'The AI summary provider could not be reached.',
+      code: timedOut ? 'HUD_PROVIDER_TIMEOUT' : 'HUD_PROVIDER_UNREACHABLE',
+      retryable: true,
+    });
   }
 }
 

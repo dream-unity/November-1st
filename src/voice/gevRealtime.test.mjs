@@ -260,7 +260,11 @@ test('long Space blurs a focused control before voice and consumes release', (t)
     order.push('blur');
     f.document.activeElement = null;
   };
-  f.controller.pauseRadioForVoice = () => order.push('voice');
+  const start = f.controller.start;
+  f.controller.start = (options) => {
+    order.push('voice');
+    return start(options);
+  };
   assert.equal(f.key('keydown', button).defaultPrevented, false);
   assert.equal(f.key('keydown', button, { repeat: true }).defaultPrevented, false);
   f.advance(PUSH_TO_TALK_HOLD_DELAY_MS);
@@ -274,6 +278,18 @@ test('long Space blurs a focused control before voice and consumes release', (t)
   assert.equal(release.defaultPrevented, true);
   assert.equal(activations, 0);
   assert.equal(f.microphone.enabled, false);
+});
+
+test('known unavailable voice leaves Space to the focused control without a voice attempt', (t) => {
+  const f = createPushToTalkFixture(t);
+  f.controller.availability = { available: false, code: 'VOICE_NOT_CONFIGURED' };
+  const button = pushToTalkTarget({ tagName: 'BUTTON' });
+  assert.equal(f.key('keydown', button).defaultPrevented, false);
+  f.advance(PUSH_TO_TALK_HOLD_DELAY_MS);
+  assert.deepEqual(f.starts, []);
+  assert.deepEqual(f.radio, []);
+  assert.equal(button.blurred, 0);
+  assert.equal(f.key('keyup', button).defaultPrevented, false);
 });
 
 test('push-to-talk still ignores modified, already-handled and typing keydowns', (t) => {

@@ -1,4 +1,7 @@
+import { describeVoiceError, realtimeError } from './realtimeErrors.js';
+
 const DISCONNECT_GRACE_MS = 6000;
+const CONNECTION_TIMEOUT_MS = 30_000;
 
 function releaseStartResources({ localStream = null, localPc = null } = {}) {
   if (localStream) {
@@ -38,6 +41,7 @@ export class RealtimeConnection {
     this.audioEl = null;
     this.startEpoch = 0;
     this.disconnectGraceTimer = null;
+    this.connectTimer = null;
     this._tearingDown = false;
   }
   get lifetimeSignal() {
@@ -51,18 +55,12 @@ export class RealtimeConnection {
   }
   async start({ pushToTalk = false } = {}) {
     if (this.isActive() || this.lifetimeSignal?.aborted) return;
-    this.pauseRadioForVoice();
     const pushToTalkKeyHeld = pushToTalk && this.input.pushToTalkKeyHeld;
     const spaceKeyHeld = this.input.spaceKeyHeld;
     this.stop({ preserveStatus: true });
     this.input.pushToTalkMode = pushToTalk;
     this.input.pushToTalkKeyHeld = pushToTalkKeyHeld;
     this.input.spaceKeyHeld = spaceKeyHeld;
-    if (!window.RTCPeerConnection || !navigator.mediaDevices?.getUserMedia) {
-      this.setStatus('error', 'WebRTC microphone support unavailable');
-      return;
-    }
-
     // Claim this connect attempt. stop() (and any later start()) bump startEpoch,
     // so `epoch !== this.startEpoch` after any await means we were superseded and
     // must abandon this attempt, releasing whatever it already acquired (H7).
@@ -78,7 +76,7 @@ export class RealtimeConnection {
     // — this is what "applies next session" means.
     this.cost.prepareSession();
     this.syncCostUi();
-    this.setStatus('connecting', 'Requesting microphone');
+    this.setStatus('connecting', 'Checking voice availability');
     this.debugLog('session.starting', {
       epoch,
       tier: this.cost.voiceTier,
@@ -87,6 +85,31 @@ export class RealtimeConnection {
     let localStream = null;
     let localPc = null;
     try {
+      const availability = await this.refreshAvailability?.({ signal });
+      if (this.abandonStart(epoch, { localStream, localPc })) return;
+      if (this.backend.requestAvailability && !availability) {
+        this.stop({ preserveStatus: true });
+        this.setStatus('idle', 'Voice availability check changed; try again.');
+        return;
+      }
+      if (availability?.available === false) {
+        this.stop({ preserveStatus: true });
+        this.setStatus('idle', availability.message);
+        return;
+      }
+      if (
+        !globalThis.window?.RTCPeerConnection ||
+        !globalThis.navigator?.mediaDevices?.getUserMedia
+      ) {
+        throw realtimeError(
+          'WebRTC microphone support is unavailable in this browser.',
+          {
+            code: 'VOICE_UNSUPPORTED',
+            retryable: false,
+          },
+        );
+      }
+      this.setStatus('connecting', 'Connecting to voice service');
       const minted = await this.backend.requestToken({
         tier: this.cost.voiceTier,
         signal,
@@ -112,6 +135,7 @@ export class RealtimeConnection {
         servedTier: minted.tier || null,
         ratesRecognized: costState.ratesRecognized,
       });
+      this.setStatus('connecting', 'Requesting microphone');
       localStream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -156,12 +180,11 @@ export class RealtimeConnection {
       };
       this.pc.onicecandidateerror = (event) => {
         if (!ownsConnection()) return;
-        this.reportError('ICE candidate', event, {
+        // One STUN/TURN candidate can fail while another connects normally.
+        // Only the terminal ICE/peer failure handlers should end the session.
+        this.debugLog('webrtc.candidate.warning', {
           errorCode: event.errorCode,
           errorText: event.errorText,
-          address: event.address,
-          port: event.port,
-          url: event.url,
           ...this.connectionDiagnostics(),
         });
       };
@@ -174,6 +197,7 @@ export class RealtimeConnection {
       const ownsChannel = () => ownsConnection() && this.dc === dataChannel;
       dataChannel.addEventListener('open', () => {
         if (!ownsChannel()) return;
+        this.clearConnectTimeout();
         const detail = this.input.pushToTalkMode
           ? this.input.pushToTalkKeyHeld
             ? 'Release Space to send'
@@ -232,6 +256,19 @@ export class RealtimeConnection {
         sdp: answerSdp,
       });
       if (this.abandonStart(epoch, { localStream, localPc })) return;
+      if (dataChannel.readyState !== 'open') {
+        this.connectTimer = setTimeout(() => {
+          this.connectTimer = null;
+          if (!ownsChannel() || dataChannel.readyState === 'open') return;
+          this.fatalError(
+            'Realtime connection',
+            realtimeError('The voice data connection did not open in time.', {
+              code: 'VOICE_CONNECTION_TIMEOUT',
+              retryable: true,
+            }),
+          );
+        }, CONNECTION_TIMEOUT_MS);
+      }
       this.debugLog('webrtc.answer.applied', {
         connection: this.connectionDiagnostics(),
       });
@@ -245,6 +282,16 @@ export class RealtimeConnection {
       }
       const diagnostics = this.connectionDiagnostics();
       this.stop({ preserveStatus: true });
+      if (describeVoiceError(error).unavailable) {
+        this.setAvailability?.({
+          available: false,
+          code: error.code,
+          message: error.message,
+          status: error.status,
+        });
+        this.setStatus('idle', error.message);
+        return;
+      }
       this.reportError('Realtime connection', error, diagnostics);
     }
   }
@@ -315,6 +362,11 @@ export class RealtimeConnection {
     }
   }
 
+  clearConnectTimeout() {
+    if (this.connectTimer) clearTimeout(this.connectTimer);
+    this.connectTimer = null;
+  }
+
   sendRealtimeEvent(message, logEventName = 'client.event') {
     if (!this.dc || this.dc.readyState !== 'open') return false;
     this.debugLog(logEventName, {
@@ -341,6 +393,7 @@ export class RealtimeConnection {
 
   invalidate() {
     this.startEpoch++;
+    this.clearConnectTimeout();
     this.connectionAbort?.abort();
     this.connectionAbort = null;
   }

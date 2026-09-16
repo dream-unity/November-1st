@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { promises as fsp } from 'node:fs';
+import { readResponseTextCapped } from '../common/http.js';
 import { celestrakTleUrl } from '../../../src/data/spaceProviderRequests.js';
 
 /**
@@ -60,7 +61,7 @@ export function celestrakProxy() {
       },
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const body = await res.text();
+    const body = await readResponseTextCapped(res, 4 * 1024 * 1024);
     // An upstream error page parses to zero TLEs — treat as failure, keep cache.
     if (!/^1 /m.test(body)) throw new Error('no TLE lines in response');
     return { at: Date.now(), body };
@@ -71,7 +72,7 @@ export function celestrakProxy() {
       const group = String(req.url || '')
         .replace(/^\//, '')
         .split('?')[0];
-      if (!/^[a-z0-9-]+$/i.test(group)) {
+      if (!/^[a-z0-9-]{1,80}$/i.test(group)) {
         res.writeHead(400, { 'Content-Type': 'text/plain' });
         res.end('invalid group');
         return;

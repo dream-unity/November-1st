@@ -196,9 +196,18 @@ export function gbfsProxy() {
         }
 
         const upstream = await fetchGbfsUpstream(upstreamUrl.toString());
+        if (upstream.status >= 200 && upstream.status < 300) {
+          const payload = JSON.parse(upstream.body);
+          if (!Array.isArray(payload?.data?.stations)) {
+            throw new Error('Invalid GBFS stations response');
+          }
+        }
         res.writeHead(upstream.status, {
           'Content-Type': upstream.contentType,
-          'Cache-Control': gbfsCacheControl(upstreamUrl.pathname),
+          'Cache-Control':
+            upstream.status >= 200 && upstream.status < 300
+              ? gbfsCacheControl(upstreamUrl.pathname)
+              : 'no-store',
           'X-GBFS-Upstream': upstreamUrl.hostname,
           'X-GBFS-Cache': 'MISS',
         });

@@ -15,7 +15,7 @@ import { readCappedResponseText } from '../common/http.js';
 export function trackBackfillProxies() {
   const TRACK_CACHE_MS = 60000;
   const TRACK_CACHE_MAX = 200;
-  const RESPONSE_CAP_BYTES = 5 * 1024 * 1024;
+  const RESPONSE_CAP_BYTES = 4 * 1024 * 1024;
   /** @type {Map<string, {at:number,status:number,body:string}>} */
   const cache = new Map();
 
@@ -44,17 +44,29 @@ export function trackBackfillProxies() {
       upstream,
       RESPONSE_CAP_BYTES,
     );
+    let status = upstream.status;
     let body;
     if (tooLarge) {
+      status = 502;
       body = JSON.stringify({ error: 'Upstream track response too large' });
     } else if (!upstream.ok) {
       // Sanitize upstream error surface; status code is signal enough
       body = JSON.stringify({ error: `Track source HTTP ${upstream.status}` });
     } else {
+      const data = JSON.parse(text);
+      if (
+        !data ||
+        typeof data !== 'object' ||
+        Array.isArray(data) ||
+        (!Array.isArray(data.path) && !Array.isArray(data.trace))
+      ) {
+        throw new Error('Invalid track history');
+      }
       body = text;
     }
-    cachePut(key, { at: Date.now(), status: upstream.status, body });
-    res.statusCode = upstream.status;
+    if (status === 200 || status === 404)
+      cachePut(key, { at: Date.now(), status, body });
+    res.statusCode = status;
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
     res.end(body);
@@ -95,7 +107,7 @@ export function trackBackfillProxies() {
         const hex = String(incoming.searchParams.get('hex') || '')
           .trim()
           .toLowerCase();
-        if (!/^[0-9a-f~]{6,7}$/.test(hex)) {
+        if (!/^~?[0-9a-f]{6}$/.test(hex)) {
           res.statusCode = 400;
           res.setHeader('Content-Type', 'application/json');
           res.end(

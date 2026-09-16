@@ -13,6 +13,12 @@ import {
 } from './constants.js';
 import { realtimeInstructions } from './instructions.js';
 import { GEV_REALTIME_TOOLS } from './tools.js';
+import {
+  voiceAvailability,
+  voiceProviderFailure,
+  sendVoiceJson,
+} from './status.js';
+import { readResponseTextCapped } from '../common/http.js';
 
 function createRealtimeTokenHandler({
   annotationGuidance,
@@ -30,16 +36,17 @@ function createRealtimeTokenHandler({
       return;
     }
 
-    // Opt-in per-IP throttle (GEV_RATELIMIT_OPENAI_PER_MIN). No-op when unset.
-    if (!enforceOptInRateLimit(openAiRateLimiter(), req, res)) return;
-
-    const apiKey = resolveApiKey();
-    if (!apiKey) {
-      res.statusCode = 503;
-      res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({ error: 'OPENAI_API_KEY is not set' }));
-      return;
+    const apiKey = String(resolveApiKey() ?? '').trim();
+    const availability = voiceAvailability({ apiKey });
+    if (!availability.available) {
+      return sendVoiceJson(res, 503, {
+        ...availability,
+        error: availability.message,
+      });
     }
+
+    // Missing configuration must not consume a quota reserved for real calls.
+    if (!enforceOptInRateLimit(openAiRateLimiter(), req, res)) return;
 
     // Voice model tier, requested by the client as ?tier=standard|mini.
     // resolveVoiceModel is total: an unknown, empty, or hostile value
@@ -119,10 +126,11 @@ function createRealtimeTokenHandler({
     };
 
     try {
+      const signal = AbortSignal.timeout(30_000);
       const response = await fetchImpl(endpoint, {
         method: 'POST',
         redirect: 'error',
-        signal: AbortSignal.timeout(30_000),
+        signal,
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
@@ -130,12 +138,30 @@ function createRealtimeTokenHandler({
         },
         body: JSON.stringify(sessionConfig),
       });
-      const body = await response.text();
+      const body = await readResponseTextCapped(response, 256 * 1024, signal);
+      let data;
+      try {
+        data = JSON.parse(body);
+      } catch {
+        data = null;
+      }
+      if (!response.ok) {
+        const failure = voiceProviderFailure(response.status, data);
+        const status = response.status === 429 ? 429 : 502;
+        if (status === 429) res.setHeader('Retry-After', '30');
+        return sendVoiceJson(res, status, failure);
+      }
+      const token = data?.value ?? data?.client_secret?.value;
+      if (typeof token !== 'string' || !/^[!-~]{1,4096}$/.test(token)) {
+        return sendVoiceJson(res, 502, {
+          code: 'VOICE_INVALID_RESPONSE',
+          retryable: true,
+          error:
+            'The voice provider returned an invalid session response. Try again shortly.',
+        });
+      }
       res.statusCode = response.status;
-      res.setHeader(
-        'Content-Type',
-        response.headers.get('content-type') || 'application/json',
-      );
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
       // Which tier/model this secret was actually minted for. The upstream
       // body is passed through untouched (the client parses it verbatim), so
       // these headers are the authoritative echo — including the case where a
@@ -147,13 +173,24 @@ function createRealtimeTokenHandler({
       }
       res.end(body);
     } catch (error) {
-      res.statusCode = 502;
-      res.setHeader('Content-Type', 'application/json');
-      res.end(
-        JSON.stringify({
-          error: error?.message || 'Failed to create Realtime token',
-        }),
-      );
+      if (error?.code === 'RESPONSE_TOO_LARGE')
+        return sendVoiceJson(res, 502, {
+          code: 'VOICE_INVALID_RESPONSE',
+          retryable: true,
+          error:
+            'The voice provider returned an oversized session response. Try again shortly.',
+        });
+      const timedOut =
+        error?.name === 'TimeoutError' || error?.name === 'AbortError';
+      return sendVoiceJson(res, timedOut ? 504 : 502, {
+        code: timedOut
+          ? 'VOICE_PROVIDER_TIMEOUT'
+          : 'VOICE_PROVIDER_UNREACHABLE',
+        retryable: true,
+        error: timedOut
+          ? 'The voice provider took too long to respond. Try again shortly.'
+          : 'The server could not reach the voice provider. Try again shortly.',
+      });
     }
   };
 }

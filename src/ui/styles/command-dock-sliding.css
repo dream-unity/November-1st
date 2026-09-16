@@ -644,10 +644,13 @@
   font-family: var(--font-sans);
   font-size: 0.7rem;
   line-height: 1.35;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 #gev-voice-control:not([data-status='error']):hover .gev-voice-help-tray,
+#gev-voice-control[data-availability='unavailable']:focus-within
+  .gev-voice-help-tray,
 #gev-voice-control:not([data-status='error'])
   #gev-voice-button:focus-visible
   ~ .gev-voice-help-tray {

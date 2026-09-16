@@ -142,7 +142,9 @@ export function createVoiceSession({ createAdapter, runner, signal }) {
       try {
         adapter.stop(options);
       } finally {
-        if (!options.preserveStatus)
+        // An adapter that emitted its own final state has already rendered it.
+        // A duplicate idle event would overwrite its capability/setup message.
+        if (!options.preserveStatus && state !== 'idle')
           emit({ type: 'state', state: 'idle', detail: 'Voice off' });
       }
     },

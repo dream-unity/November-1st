@@ -5,8 +5,10 @@ import { createBrowserViteConfig } from './build/vite.js';
 // provider server or exposing its local credential-setting endpoint.
 export default defineConfig(({ mode }) => {
   const env = { ...loadEnv(mode, process.cwd(), ''), ...process.env };
-  return createBrowserViteConfig({
+  const config = createBrowserViteConfig({
     googleApiKey: env.GOOGLE_MAPS_API_KEY,
     cesiumToken: env.CESIUM_ION_TOKEN,
   });
+  config.define['import.meta.env.GEV_HOSTED'] = 'true';
+  return config;
 });

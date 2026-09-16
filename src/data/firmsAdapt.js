@@ -8,7 +8,7 @@
 
 /**
  * Map proxy fire records into internal fire records. Records with
- * non-finite coordinates are skipped; `index` is the post-skip position
+ * missing or invalid coordinates are skipped; `index` is the post-skip position
  * (it keys pick ids and context-store ids, so it must stay sequential).
  * `contextEntity`/`position` start null and are lazily filled by the layer.
  * @param {?Array<Object>} records - /api/firms `fires` array.
@@ -19,9 +19,25 @@ export function adaptFirmsRecords(records) {
   if (!Array.isArray(records)) return fires;
   const acqCache = new Map();
   for (const record of records) {
+    if (
+      !record ||
+      !['number', 'string'].includes(typeof record.lat) ||
+      !['number', 'string'].includes(typeof record.lon) ||
+      String(record.lat).trim() === '' ||
+      String(record.lon).trim() === ''
+    )
+      continue;
     const lat = Number(record?.lat);
     const lon = Number(record?.lon);
-    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+    if (
+      !Number.isFinite(lat) ||
+      lat < -90 ||
+      lat > 90 ||
+      !Number.isFinite(lon) ||
+      lon < -180 ||
+      lon > 180
+    )
+      continue;
     fires.push({
       index: fires.length,
       lat,
@@ -68,7 +84,7 @@ export function normalizeConfidence(value) {
  * @returns {number} Epoch milliseconds, or 0 when unparseable.
  */
 export function parseAcquisitionMs(date, time, cache = new Map()) {
-  if (typeof date !== 'string' || date.length < 10) return 0;
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return 0;
   const key = `${date}:${time ?? ''}`;
   const cached = cache.get(key);
   if (cached !== undefined) return cached;
@@ -76,16 +92,23 @@ export function parseAcquisitionMs(date, time, cache = new Map()) {
   const year = Number(date.slice(0, 4));
   const month = Number(date.slice(5, 7));
   const day = Number(date.slice(8, 10));
-  const hhmm = String(time ?? '0000').padStart(4, '0');
+  // Missing time is unknown, not an observed midnight. FIRMS permits unpadded
+  // HHMM numbers, but Date.UTC must not normalize invalid dates or 24:60.
+  const rawTime = String(time ?? '');
+  const hhmm = rawTime.padStart(4, '0');
   const hours = Number(hhmm.slice(0, 2));
   const minutes = Number(hhmm.slice(2, 4));
   const valid =
-    Number.isFinite(year) &&
-    Number.isFinite(month) &&
-    Number.isFinite(day) &&
-    Number.isFinite(hours) &&
-    Number.isFinite(minutes);
-  const ms = valid ? Date.UTC(year, month - 1, day, hours, minutes) : 0;
+    /^\d{1,4}$/.test(rawTime) &&
+    year >= 100 &&
+    month >= 1 &&
+    month <= 12 &&
+    day >= 1 &&
+    day <= 31 &&
+    hours <= 23 &&
+    minutes <= 59;
+  let ms = valid ? Date.UTC(year, month - 1, day, hours, minutes) : 0;
+  if (ms && new Date(ms).getUTCDate() !== day) ms = 0;
   cache.set(key, ms);
   return ms;
 }

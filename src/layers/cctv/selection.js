@@ -79,6 +79,8 @@ export function createSelection({
         record,
       )
     ) {
+      // Retry media without rebuilding the already selected camera geometry.
+      record.projection?.playback?.retry();
       return CCTV_ACTIVATION_RESULT.UNCHANGED;
     }
     layerState._activeCameraId = cameraId;

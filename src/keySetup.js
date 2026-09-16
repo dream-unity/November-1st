@@ -38,6 +38,39 @@ export function collectKeyUpdates(fields) {
   return updates;
 }
 
+/** Validate the dev-server contract before building editable credential rows. */
+function validSetupStatus(status) {
+  return Boolean(
+    status &&
+    Array.isArray(status.keys) &&
+    Number.isInteger(status.total) &&
+    status.total === status.keys.length &&
+    Number.isInteger(status.setCount) &&
+    status.setCount === status.keys.filter((key) => key?.set === true).length &&
+    status.keys.every((key) => {
+      if (
+        !key ||
+        typeof key.id !== 'string' ||
+        !key.id ||
+        typeof key.title !== 'string' ||
+        typeof key.unlocks !== 'string' ||
+        typeof key.set !== 'boolean' ||
+        !Array.isArray(key.envVars) ||
+        !key.envVars.length ||
+        !key.envVars.every(
+          (name) => typeof name === 'string' && /^[A-Z][A-Z0-9_]*$/.test(name),
+        )
+      )
+        return false;
+      try {
+        return new URL(key.getUrl).protocol === 'https:';
+      } catch {
+        return false;
+      }
+    }),
+  );
+}
+
 /**
  * After the FIRST Google key lands, the restart's reload should boot the
  * photoreal default — not faithfully restore the auto-selected keyless OSM
@@ -155,10 +188,19 @@ export async function initKeySetup({
   documentRef = globalThis.document,
   fetchImpl,
   signal,
+  enabled = !import.meta.env?.GEV_HOSTED,
+  requestTimeoutMs = 10_000,
 } = {}) {
   const chip = documentRef?.getElementById?.('key-setup-chip');
   const root = documentRef?.getElementById?.('key-setup');
   if (!chip || !root || root.dataset.initialized === 'true') return null;
+  // Hosted builds deliberately do not include the local credential editor.
+  // Do not make an expected-to-fail request every time the public app starts.
+  if (!enabled) {
+    chip.remove();
+    root.remove();
+    return null;
+  }
   root.dataset.initialized = 'true';
   const lifetime = new AbortController();
   let disposed = false;
@@ -178,15 +220,25 @@ export async function initKeySetup({
   }
   signal?.addEventListener('abort', destroy, { once: true });
   const doFetch = fetchImpl || globalThis.fetch?.bind(globalThis);
+  const request = async (url, options = {}) => {
+    const timeout = AbortSignal.timeout(requestTimeoutMs);
+    const response = await doFetch(url, {
+      ...options,
+      cache: 'no-store',
+      credentials: 'same-origin',
+      redirect: 'error',
+      signal: AbortSignal.any([lifetime.signal, timeout]),
+    });
+    const payload = await response.json();
+    return { response, payload };
+  };
 
   let status = null;
   try {
-    const response = await doFetch('/api/setup/status', {
-      cache: 'no-store',
-      signal: lifetime.signal,
-    });
+    const { response, payload } = await request('/api/setup/status');
     if (!response.ok) throw new Error(String(response.status));
-    status = await response.json();
+    if (!validSetupStatus(payload)) throw new Error('Invalid setup status');
+    status = payload;
     if (disposed) return null;
   } catch {
     // Prod build or non-loopback visitor: the surface cannot function, so it
@@ -272,16 +324,20 @@ export async function initKeySetup({
     applyButton?.setAttribute('aria-disabled', 'true');
     say('Saving…');
     try {
-      const response = await doFetch('/api/setup/keys', {
+      const { response, payload } = await request('/api/setup/keys', {
         method: 'POST',
-        signal: lifetime.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
-      const payload = await response.json().catch(() => ({}));
       if (disposed) return;
       if (!response.ok || !payload.ok) {
         say(payload.error || `Save failed (${response.status}).`);
+        return;
+      }
+      if (!validSetupStatus(payload.status)) {
+        say(
+          'The server could not confirm the saved configuration. Reload to check before saving again.',
+        );
         return;
       }
       for (const input of root.querySelectorAll('input[data-env-var]'))
@@ -311,10 +367,15 @@ export async function initKeySetup({
         `${doneVerb} ${storeLabel()}. Restarting — this page reloads itself.`,
       );
     } catch (error) {
-      say(`Save failed: ${error?.message || error}`);
+      if (disposed) return;
+      say(
+        error?.name === 'TimeoutError'
+          ? 'The save response timed out. Reload to check whether the configuration was saved before trying again.'
+          : `Save could not be confirmed: ${error?.message || error}. Reload to check before trying again.`,
+      );
     } finally {
       busy = false;
-      applyButton?.setAttribute('aria-disabled', 'false');
+      if (!disposed) applyButton?.setAttribute('aria-disabled', 'false');
     }
   };
 
