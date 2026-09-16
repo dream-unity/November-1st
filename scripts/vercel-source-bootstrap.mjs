@@ -28,6 +28,37 @@ const payloadFiles = [
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Vercel can rewrite JSON formatting before running installation. Preserve
+// every configuration value and array position while ignoring object order.
+function canonicalJson(value) {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(',')}}`;
+}
+
+function verifyVercelConfiguration(suppliedBytes, pinnedBytes) {
+  let supplied;
+  let pinned;
+  try {
+    supplied = JSON.parse(suppliedBytes.toString('utf8'));
+    pinned = JSON.parse(pinnedBytes.toString('utf8'));
+  } catch {
+    // JSON parse errors can contain input values; never print those values.
+    throw new Error('Initial deployment payload differs from pinned source: vercel.json (invalid JSON).');
+  }
+  if (!supplied || !pinned || typeof supplied !== 'object' || typeof pinned !== 'object' ||
+      Array.isArray(supplied) || Array.isArray(pinned)) {
+    throw new Error('Initial deployment payload differs from pinned source: vercel.json (expected JSON objects).');
+  }
+  const added = Object.keys(supplied).filter((key) => !Object.hasOwn(pinned, key)).sort();
+  const removed = Object.keys(pinned).filter((key) => !Object.hasOwn(supplied, key)).sort();
+  const changed = Object.keys(pinned).filter((key) => Object.hasOwn(supplied, key) &&
+    canonicalJson(supplied[key]) !== canonicalJson(pinned[key])).sort();
+  if (added.length || removed.length || changed.length) {
+    throw new Error(`Initial deployment payload differs from pinned source: vercel.json (added: ${JSON.stringify(added)}; removed: ${JSON.stringify(removed)}; changed: ${JSON.stringify(changed)}).`);
+  }
+}
+
 async function optionalRead(file) {
   try { return await readFile(file); }
   catch (error) { if (error.code === 'ENOENT') return null; throw error; }
@@ -200,6 +231,10 @@ async function hydrate(config) {
   // Ensure Vercel discovered precisely the configuration/entrypoint we build.
   for (const file of payloadFiles) {
     const supplied = await optionalRead(path.join(root, file));
+    if (file === 'vercel.json' && supplied) {
+      verifyVercelConfiguration(supplied, files.get(file).bytes);
+      continue;
+    }
     if (!supplied || digest(supplied) !== files.get(file)?.sha256) {
       throw new Error(`Initial deployment payload differs from pinned source: ${file}`);
     }
