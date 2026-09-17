@@ -57,7 +57,7 @@ Missing station coordinates remain `null`. Audio playback stays available; **Sho
 
 ## Deployment verification
 
-Production runtime revision: `7b1cec50627a15716a3566a8b55f51162b332c7a`, Vercel deployment `dpl_8vF6zcKZRqbPpHQULBbpV5pUuBM8`. Public `/api/health` returned that exact revision with status `ok`. The GitHub Pages link preserved both `feed=cctv` and `country=UA`, selected Ukraine, and displayed five live entries with zero snapshots or clips.
+Initial playback-verified runtime revision: `7b1cec50627a15716a3566a8b55f51162b332c7a`, Vercel deployment `dpl_8vF6zcKZRqbPpHQULBbpV5pUuBM8`. Public `/api/health` returned that exact revision with status `ok`. The GitHub Pages link preserved both `feed=cctv` and `country=UA`, selected Ukraine, and displayed five live entries with zero snapshots or clips.
 
 The public country radio endpoint returned **155 entries: 20 curated and 135 community-directory entries**, with `degraded:false`. **130 entries had no coordinates**, demonstrating that usable broadcaster audio is no longer discarded for lacking a map pin. These are observed directory counts, not simultaneous audible-playback guarantees.
 
@@ -68,5 +68,15 @@ All five cameras decoded moving video through the public application, as detaile
 The GitHub Pages radio deep link retained `country=UA` and displayed the scoped directory. KISS FM Ukrainian and Radio NV reached the browser's actual `playing` event, displaying “Playing broadcaster audio.” KISS FM pause displayed “Paused”; Radio NV stop was also checked. The location button was correctly disabled for the unlocated curated entries. This verifies player operation for those samples, not independent auditory identity of all 155 entries.
 
 The test environment cannot initialize WebGL, so the independent feed directory was verified through the existing recovery interface; a full hardware-accelerated globe walkthrough remains unverified here. Production error/warning logs had no entries at the time checked. GitHub CI run `35194839322` passed Node 24.14, Node 26 and Windows onboarding; Pages run `35194837869` also passed.
+
+## Final radio deduplication release
+
+The final production runtime is `7aba2f0d1cc89636ae7206d23544d234b6375640`, deployment `dpl_3QYvGurMJ7fdLY8Po6hEMnBTU9Ct`. Public health returned that exact revision. The final radio endpoint returned **152 entries: 20 curated and 132 community-directory entries**, `degraded:false`, with **128 unlocated stations**. The browser refreshed to 152 entries, and searching “Digital” returned only KISS FM Digital. The duplicate Радіопіхота entry was also absent from the endpoint.
+
+The follow-up strips trailing standalone HD/HQ/LQ quality labels and matches the Cyrillic and Latin components of reviewed bilingual station names. It does not split ordinary hyphens or treat same-language programme titles as aliases. Distinct main, Ukrainian, Deep and Digital programmes remain separate. The added regression passed with the other country-radio tests. Camera/frontend/hosting code is unchanged from the version in which all five cameras and the first two radio samples were played.
+
+Final CI run `35195708654` passed on the exact deployed revision: Node 24.14, Node 26 and Windows onboarding. Pages run `35195707348` passed. The final suite contains **4,506 passing checks**, with one existing platform-specific skip: 4,434 ordinary unit tests, 14 allocation checks and 58 hosted integration tests. Formatting checked 935 runtime files, and the production build and boundary checks passed.
+
+After the final deployment, KISS FM Digital also reached the real browser `playing` event and stopped correctly. The production error/warning log query again returned no entries at the time checked. The subsequent verification-record commit changes this document only; deployed runtime identity remains the exact revision above.
 
 This record distinguishes registry validation, live playlist observations, official-page playback and application playback. It does not claim that every external feed is permanently available or that every possible future error has been eliminated.
