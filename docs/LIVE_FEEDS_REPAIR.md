@@ -19,6 +19,7 @@ paths while retaining the full upstream globe, layers and interaction system.
 | Camera access | Configuring Google could put even free camera snapshots behind paid admission | Strict snapshots bypass paid-provider admission because their server path cannot call Street View; non-strict fallback requests remain protected |
 | Traffic | Street Traffic animated vehicles and optional flow speeds did not supply incident reports | A separate official incident/roadworks service and searchable report panel; simulation is never presented as a report |
 | Traffic integrity | Successful HTTP alone cannot establish freshness or coverage; old TomTom tiles were re-stamped as fresh | Provider update time, retrieval time, active/planned filtering, stale/partial states, coalescing and bounded retry/backoff; stale flow tiles no longer become fresh LIVE speeds |
+| Hosted routing | Vercel forwarded the unused `:path*` rewrite capture as a query parameter, causing strict traffic validation to return HTTP 400 only after deployment | The native function removes exactly the redundant capture before dispatch; unrelated, duplicate and malformed values remain subject to provider validation |
 | Globe handoff | Slow catalogue loads could override a newer target or a closed panel | Cancellation and existing camera-ownership generation checks; exact selection where available, explicit coordinate fallback otherwise; cockpit ownership is respected |
 | Lifecycle/accessibility | Hidden nested controls and obsolete asynchronous work made recovery difficult | Search, region filters, explicit result counts/pagination, keyboard tabs, focus restoration, visible retry and cleanup on close |
 
@@ -61,6 +62,15 @@ why JPEG transport alone does not prove a current camera view; provider capture
 time and intermittent outages remain visible verification limits. Official
 traffic responses were checked against actual schemas and publication timestamps
 before integration.
+
+Public browser checks of revision `ee41f39` reached the full application from the
+GitHub Pages entry while preserving `?feed=radio`. Deutschlandfunk reached the
+actual media `playing` state and paused through the visible control. The
+Warendorf market-square camera decoded to a 640 × 360 image in the dialog.
+Those checks also caught the hosted traffic-query failure above; local provider
+tests alone had not exercised Vercel's rewrite behavior. The routing regression
+now tests that boundary while preserving strict query validation. Vercel
+documents forwarding unused captures in its [rewrite documentation](https://vercel.com/docs/routing/rewrites).
 
 The controlled browser cannot initialize WebGL, so it cannot certify a hardware
 cockpit walkthrough. It can exercise the new feed interface, actual audio/video

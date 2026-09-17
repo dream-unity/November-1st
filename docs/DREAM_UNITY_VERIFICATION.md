@@ -9,9 +9,11 @@ WebGL context.
 - `npm test`: **339 test files completed; 4,275 tests, 4,274 passed, zero failed
   or cancelled, one Windows-only native-DACL test skipped**. Both isolated
   allocation probes completed. The ordinary suite contains 4,261 tests.
-- `npm run test:host`: **52 passed**, including full provider mounting, native
+- `npm run test:host`: **55 passed**, including full provider mounting, native
   Vercel dispatch, the new traffic routes and strict-camera admission with an
-  optional Google credential configured.
+  optional Google credential configured. Three additional regressions cover
+  removal of Vercel's redundant rewrite capture, preservation of application
+  values and strict rejection of arbitrary traffic parameters.
 - Production build, package/import ownership checks, adopted formatting, setup
   doctor and whitespace checks passed. HLS support is loaded in a separate chunk.
 - The production dependency audit found zero known vulnerabilities at validation.
@@ -35,6 +37,27 @@ reports. Configuration-only availability remains separate from actual feed
 status. Release identity is available through `/build-info.json` and
 `/api/health`; this project still requires an explicit Vercel deployment after a
 source commit. Public browser verification must use the published revision.
+
+### Public browser checks and deployment correction
+
+Revision `ee41f39` was checked through the GitHub Pages entry and the production
+alias; both frontend build information and backend health matched that commit.
+All three CI jobs (Node 24.14, Node 26 and Windows) passed. In the actual browser:
+
+- The `?feed=radio` link survived the portal redirect and opened the directory.
+  The 750-station catalogue loaded, Deutschlandfunk reached **Playing broadcaster
+  audio**, and the pause control reached **Paused**.
+- The camera directory loaded 3,661 entries. Searching Warendorf and selecting
+  its market-square camera displayed an actually decoded 640 × 360 image.
+- The feed dialog fit a 1,363 × 936 viewport without horizontal overflow and
+  remained usable after this test browser's WebGL initialization failure.
+- Traffic exposed a deployment-only HTTP 400: Vercel injected its unused rewrite
+  capture into the query. The native entry now removes only the exact redundant
+  value, with three regression tests and a fresh passing production build.
+  Austin and Finland must be checked again on the corrected published revision.
+
+The controlled browser cannot initialize WebGL. These checks therefore establish
+the independent feed paths, not a hardware-rendered globe/cockpit walkthrough.
 
 ## Reliability repair verification — 2026-09-16 UTC
 
