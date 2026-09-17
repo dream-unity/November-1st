@@ -154,8 +154,18 @@ test('supported country directories are requested explicitly and unsupported cou
   };
   for (const country of ['UA', 'AU'])
     await readFeedDirectory('radio', { country, fetchImpl });
-  assert.deepEqual(calls, ['/api/radio/stations?country=UA', '/api/radio/stations?country=AU']);
-  for (const country of ['GB', '../stations', 'UA&secret=x', 'AU&secret=x', 'toString', '__proto__'])
+  assert.deepEqual(calls, [
+    '/api/radio/stations?country=UA',
+    '/api/radio/stations?country=AU',
+  ]);
+  for (const country of [
+    'GB',
+    '../stations',
+    'UA&secret=x',
+    'AU&secret=x',
+    'toString',
+    '__proto__',
+  ])
     await assert.rejects(
       readFeedDirectory('radio', { country, fetchImpl }),
       /Unsupported country/,
@@ -165,6 +175,83 @@ test('supported country directories are requested explicitly and unsupported cou
     /Unsupported country/,
   );
   assert.equal(calls.length, 2);
+});
+
+test('Melbourne radio is an explicit Australian city request and preserves searchable locality without inventing map pins', async () => {
+  const calls = [];
+  const data = await readFeedDirectory('radio', {
+    country: 'AU',
+    city: 'melbourne',
+    fetchImpl: async (url) => {
+      calls.push(url);
+      return Response.json({
+        stations: [
+          {
+            ...station,
+            country: 'Australia',
+            countryCode: 'AU',
+            lat: null,
+            lon: null,
+            city: 'Melbourne',
+            locality: 'Fitzroy',
+            region: 'Greater Melbourne',
+            metroArea: 'melbourne',
+            geographySourcePage: 'https://broadcaster.example/about',
+          },
+        ],
+      });
+    },
+  });
+  assert.deepEqual(calls, ['/api/radio/stations?country=AU&city=melbourne']);
+  assert.equal(data.items[0].lat, null);
+  assert.equal(filterFeedDirectory(data.items, 'Fitzroy').length, 1);
+  assert.equal(filterFeedDirectory(data.items, 'Greater Melbourne').length, 1);
+  for (const options of [
+    { country: 'UA', city: 'melbourne' },
+    { country: 'AU', city: 'melbourne&secret=x' },
+    { country: '', city: 'melbourne' },
+  ])
+    await assert.rejects(
+      readFeedDirectory('radio', {
+        ...options,
+        fetchImpl: async () => {
+          throw new Error('must not fetch');
+        },
+      }),
+      /Unsupported city/,
+    );
+});
+
+test('radio location-match labels admit only recognized Australian provenance values', () => {
+  for (const metroMatch of ['curated', 'community-metadata']) {
+    const data = normalizeFeedDirectory('radio', {
+      stations: [
+        {
+          ...station,
+          countryCode: 'AU',
+          metroMatch,
+        },
+      ],
+    });
+    assert.equal(data.items[0].metroMatch, metroMatch);
+  }
+  for (const overrides of [
+    { metroMatch: 'publisher-verified' },
+    { metroMatch: '<script>community-metadata</script>' },
+    { metroMatch: ['community-metadata'] },
+    { metroMatch: 'community-metadata', countryCode: 'UA' },
+  ]) {
+    const data = normalizeFeedDirectory('radio', {
+      stations: [
+        {
+          ...station,
+          countryCode: 'AU',
+          ...overrides,
+        },
+      ],
+    });
+    assert.equal(data.items[0].metroMatch, '');
+  }
 });
 
 test('search matches all words across location, station genre and language with exact region filtering', () => {

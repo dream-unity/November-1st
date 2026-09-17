@@ -71,7 +71,10 @@
     "integrationStatus": "publisher-only: playableInEmbed false",
     "verifiedAt": "2026-09-17T08:46:00Z",
     "verification": "Primary public YouTube player metadata: status OK; isLiveNow true; playableInEmbed false. Publisher title confirms 2026 North/South facing stream; both cannot be embedded.",
-    "access": "publisher-only"
+    "access": "publisher-only",
+    "metroArea": "melbourne",
+    "locality": "Melbourne CBD",
+    "region": "Greater Melbourne"
   },
   {
     "id": "au-melbourne-367-collins-south",
@@ -88,7 +91,10 @@
     "integrationStatus": "publisher-only: playableInEmbed false",
     "verifiedAt": "2026-09-17T08:46:00Z",
     "verification": "Primary public YouTube player metadata: status OK; isLiveNow true; playableInEmbed false. Publisher title confirms 2026 North/South facing stream; both cannot be embedded.",
-    "access": "publisher-only"
+    "access": "publisher-only",
+    "metroArea": "melbourne",
+    "locality": "Melbourne CBD",
+    "region": "Greater Melbourne"
   },
   {
     "country": "AU",

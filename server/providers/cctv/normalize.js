@@ -475,6 +475,28 @@ export function prioritizeSources(cameras, maxCount, anchors) {
   return scored.slice(0, cap).map((entry) => entry.camera);
 }
 
+/** Preserve explicit publisher geography without inferring metro membership. */
+export function normalizeCctvGeography(item) {
+  const boundedText = (value) =>
+    typeof value === 'string'
+      ? value
+          .replace(/[\u0000-\u001f\u007f]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .slice(0, 100)
+          .trim()
+      : '';
+  return {
+    metroArea:
+      String(item.country || item.countryCode || '').toUpperCase() === 'AU' &&
+      item.metroArea === 'melbourne'
+        ? 'melbourne'
+        : '',
+    locality: boundedText(item.locality),
+    region: boundedText(item.region),
+  };
+}
+
 /**
  * Normalize a raw CCTV source item into a canonical shape with safe defaults.
  *
@@ -495,6 +517,7 @@ export function normalizeSourceItem(item) {
     id: String(item.id || '').trim(),
     name: String(item.name || item.id || '').trim(),
     city: String(item.city || ''),
+    ...normalizeCctvGeography(item),
     state: String(item.state || '')
       .trim()
       .slice(0, 80),

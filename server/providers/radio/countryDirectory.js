@@ -99,6 +99,17 @@ export function normalizeCountryRadioSources(
       playbackKind: 'live',
       streamFormat: isHls ? 'hls' : 'progressive',
       liveOnly: isHls,
+      city: cleanRadioText(row.city, 80),
+      region: cleanRadioText(row.region, 80),
+      locality: cleanRadioText(row.locality, 80),
+      metroArea:
+        countryCode === 'AU' && row.metroArea === 'melbourne'
+          ? 'melbourne'
+          : '',
+      geographicScope: ['metro', 'suburban'].includes(row.geographicScope)
+        ? row.geographicScope
+        : '',
+      geographySourcePage: publicRadioHttpsUrl(row.geographySourcePage),
       locationPrecision: station.lat === null ? 'unknown' : 'publisher-city',
       aliases: Array.isArray(row.aliases)
         ? row.aliases
@@ -228,6 +239,12 @@ function publicCountryStation(station) {
     playbackKind: station.playbackKind || 'unknown',
     streamFormat: station.streamFormat || 'progressive',
     liveOnly: station.liveOnly === true,
+    city: station.city || '',
+    region: station.region || '',
+    locality: station.locality || '',
+    metroArea: station.metroArea || '',
+    geographicScope: station.geographicScope || '',
+    geographySourcePage: station.geographySourcePage || null,
     locationPrecision:
       station.locationPrecision ||
       (station.lat === null ? 'unknown' : 'directory'),

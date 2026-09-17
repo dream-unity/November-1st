@@ -179,6 +179,13 @@ export function installLiveFeeds({
     const initialCountry = /^[a-z]{2}$/i.test(suppliedCountry)
       ? suppliedCountry.toUpperCase()
       : '';
+    const initialCity =
+      initialCountry === 'AU' &&
+      new URLSearchParams(globalThis.location?.search || '')
+        .get('city')
+        ?.toLowerCase() === 'melbourne'
+        ? 'melbourne'
+        : '';
     activeKind = kind;
     title.textContent = TITLES[kind];
     for (const [id, tab] of tabButtons) {
@@ -267,6 +274,17 @@ export function installLiveFeeds({
       filters.append(countryLabel);
     }
     filters.append(regionLabel);
+    const areaLabel = element('label', 'Metropolitan area');
+    const area = element('select');
+    area.setAttribute('aria-label', 'Filter by metropolitan area');
+    area.append(
+      new Option('All areas', ''),
+      new Option('Greater Melbourne', 'melbourne'),
+    );
+    area.value = initialCity;
+    areaLabel.hidden = initialCountry !== 'AU';
+    areaLabel.append(area);
+    filters.append(areaLabel);
     const mediaFilter = kind === 'cctv' ? element('select') : null;
     const mediaOptions = [
       ['live', 'Live video'],
@@ -292,6 +310,7 @@ export function installLiveFeeds({
           'click',
           () => {
             region.value = name;
+            area.value = '';
             search.value = '';
             region.dispatchEvent(new Event('change'));
           },
@@ -300,6 +319,31 @@ export function installLiveFeeds({
         filters.append(shortcut);
       }
     }
+    const melbourneShortcut = button(
+      kind === 'radio' ? 'Melbourne stations' : 'Melbourne cameras',
+    );
+    melbourneShortcut.addEventListener(
+      'click',
+      () => {
+        if (kind === 'radio') region.value = 'Australia';
+        else {
+          if (
+            ![...countryFilter.options].some((option) => option.value === 'AU')
+          )
+            countryFilter.append(new Option('Australia', 'AU'));
+          countryFilter.value = 'AU';
+          region.value = '';
+          mediaFilter.value = 'live';
+        }
+        area.value = 'melbourne';
+        areaLabel.hidden = false;
+        search.value = '';
+        if (kind === 'cctv') updateRegions();
+        area.dispatchEvent(new Event('change'));
+      },
+      { signal },
+    );
+    filters.append(melbourneShortcut);
     const directoryStatus = element(
       'p',
       'Loading directory…',
@@ -340,8 +384,8 @@ export function installLiveFeeds({
     let mediaLifetime = null;
     let disposeMedia = () => {};
     let loadGeneration = 0;
-    let radioCatalogCountry = '';
-    let requestedRadioCountry = null;
+    let radioCatalogKey = '';
+    let requestedRadioKey = null;
     let initialCountryApplied = false;
     const radioCountryNames = new Set(Object.values(RADIO_COUNTRY_DIRECTORIES));
     function stopMedia() {
@@ -361,8 +405,20 @@ export function installLiveFeeds({
       const location = element(
         'p',
         kind === 'radio'
-          ? [item.state, item.country].filter(Boolean).join(', ')
-          : [item.city, item.state, cameraCountry(item).name, item.provider]
+          ? [
+              ...new Set(
+                [item.locality, item.city, item.state, item.country].filter(
+                  Boolean,
+                ),
+              ),
+            ].join(', ')
+          : [
+              item.locality,
+              item.city,
+              item.state,
+              cameraCountry(item).name,
+              item.provider,
+            ]
               .filter(Boolean)
               .join(' · '),
       );
@@ -463,6 +519,14 @@ export function installLiveFeeds({
             'du-feeds-note',
           ),
         );
+        if (item.metroMatch === 'community-metadata')
+          detail.append(
+            element(
+              'p',
+              'Included because its community listing mentions Melbourne; a Melbourne location has not been verified with the broadcaster.',
+              'du-feeds-note',
+            ),
+          );
         if (item.sourcePage && item.sourcePage !== item.homepage) {
           const sourceLink = element('a', 'View broadcaster stream source');
           sourceLink.href = item.sourcePage;
@@ -691,6 +755,10 @@ export function installLiveFeeds({
       renderList();
     }
     function renderList() {
+      // Retained country data belongs to its accepted scope. A pending or failed
+      // city request must not relabel the wider AU catalogue as Melbourne.
+      const scopedItems =
+        kind === 'radio' && radioCatalogKey !== radioScopeKey() ? [] : items;
       publisherLinks.replaceChildren();
       const externalMatches =
         kind === 'cctv' && ['live', 'all'].includes(mediaFilter.value)
@@ -700,6 +768,7 @@ export function installLiveFeeds({
               region.value,
               'all',
               countryFilter.value,
+              area.value,
             )
           : [];
       publisherLinks.hidden = !externalMatches.length;
@@ -746,16 +815,18 @@ export function installLiveFeeds({
             region.value,
             option.value,
             countryFilter.value,
+            area.value,
           ).length;
           option.textContent = `${label} (${matching})`;
         }
       }
       const filtered = filterFeedDirectory(
-        items,
+        scopedItems,
         search.value,
         region.value,
         mediaFilter?.value || 'all',
         countryFilter?.value || '',
+        kind === 'cctv' ? area.value : '',
       );
       const matches =
         kind === 'cctv' ? interleaveCameraCountries(filtered) : filtered;
@@ -763,8 +834,8 @@ export function installLiveFeeds({
       const shown = matches.slice(0, visibleCount);
       const itemLabel = kind === 'radio' ? 'stations' : 'cameras';
       count.textContent = matches.length
-        ? `Showing ${shown.length} of ${matches.length} matching ${itemLabel} (${items.length} in this directory).`
-        : items.length
+        ? `Showing ${shown.length} of ${matches.length} matching ${itemLabel} (${scopedItems.length} in this directory).`
+        : scopedItems.length
           ? kind === 'cctv'
             ? 'No in-app cameras match this media type, search, country and region. Change the filters to view other available sources.'
             : 'No matches. Try a different search or region.'
@@ -779,11 +850,19 @@ export function installLiveFeeds({
         const subtitle = element(
           'span',
           kind === 'radio'
-            ? [item.country, item.tags.slice(0, 3).join(', ')]
+            ? [
+                item.locality || item.city || item.state,
+                item.country,
+                item.metroMatch === 'community-metadata'
+                  ? 'Melbourne match from community listing'
+                  : '',
+                item.tags.slice(0, 3).join(', '),
+              ]
                 .filter(Boolean)
                 .join(' · ')
             : [
                 item.city,
+                item.locality,
                 item.state,
                 cameraCountry(item).name,
                 item.provider,
@@ -817,18 +896,42 @@ export function installLiveFeeds({
       renderList();
     };
     search.addEventListener('input', resetFilter, { signal });
+    function updateArea() {
+      const isAustralia =
+        kind === 'radio'
+          ? radioCountryCode(region.value) === 'AU'
+          : countryFilter.value === 'AU';
+      areaLabel.hidden = !isAustralia;
+      if (!isAustralia) area.value = '';
+    }
+    function refreshRadioScope() {
+      const key = radioScopeKey();
+      if (
+        key !== radioCatalogKey ||
+        (requestedRadioKey !== null && requestedRadioKey !== key)
+      )
+        void loadDirectory();
+    }
+    function radioScopeKey() {
+      return `${radioCountryCode(region.value)}:${area.value}`;
+    }
+    area.addEventListener(
+      'change',
+      () => {
+        updateArea();
+        if (kind === 'cctv') updateRegions();
+        resetFilter();
+        if (kind === 'radio') refreshRadioScope();
+      },
+      { signal },
+    );
     region.addEventListener(
       'change',
       () => {
+        updateArea();
         resetFilter();
         if (kind === 'radio') {
-          const targetCountry = radioCountryCode(region.value);
-          if (
-            targetCountry !== radioCatalogCountry ||
-            (requestedRadioCountry !== null &&
-              requestedRadioCountry !== targetCountry)
-          )
-            void loadDirectory();
+          refreshRadioScope();
         }
       },
       { signal },
@@ -836,6 +939,7 @@ export function installLiveFeeds({
     countryFilter?.addEventListener(
       'change',
       () => {
+        updateArea();
         updateRegions();
         resetFilter();
       },
@@ -865,6 +969,7 @@ export function installLiveFeeds({
             '',
             'all',
             countryFilter.value,
+            area.value,
           )
         : items;
       const names = new Set(
@@ -891,16 +996,28 @@ export function installLiveFeeds({
       const requestSignal = AbortSignal.any([signal, request.signal]);
       const requestedCountry =
         kind === 'radio' ? radioCountryCode(region.value) : '';
-      requestedRadioCountry = requestedCountry;
+      const requestedCity =
+        kind === 'radio' && requestedCountry === 'AU' ? area.value : '';
+      const requestedKey = `${requestedCountry}:${requestedCity}`;
+      requestedRadioKey = requestedKey;
       refresh.disabled = true;
       directoryStatus.textContent = 'Loading directory…';
+      if (kind === 'radio' && requestedKey !== radioCatalogKey) {
+        stopMedia();
+        selected = null;
+        detail.replaceChildren(
+          element('p', 'Choose a station after this directory loads.'),
+        );
+        renderList();
+      }
       try {
         const data = await readFeedDirectory(kind, {
           signal: requestSignal,
           country: requestedCountry,
+          city: requestedCity,
         });
         if (requestSignal.aborted || generation !== loadGeneration) return;
-        radioCatalogCountry = requestedCountry;
+        radioCatalogKey = requestedKey;
         items = data.items;
         publisherSources = data.publisherSources;
         if (selected) {
@@ -961,16 +1078,17 @@ export function installLiveFeeds({
             region.value = matching.country;
         }
         initialCountryApplied = true;
+        updateArea();
         directoryStatus.textContent = !items.length
           ? 'This directory currently contains no entries. Try refreshing later.'
           : `${data.stale || data.degraded ? 'Cached / degraded directory. ' : ''}${data.updatedAt ? `Directory updated ${new Date(data.updatedAt).toLocaleString()}. ` : ''}${data.rejected ? `${data.rejected} unusable entries were excluded. ` : ''}Choose an entry to check its media.`;
         renderList();
       } catch (error) {
         if (!requestSignal.aborted)
-          directoryStatus.textContent = `${errorCopy(error)}${items.length ? ' Previous directory retained.' : ''}`;
+          directoryStatus.textContent = `${errorCopy(error)}${items.length && (kind !== 'radio' || radioCatalogKey === requestedKey) ? ' Previous directory retained.' : ''}`;
       } finally {
         if (!signal.aborted && generation === loadGeneration) {
-          requestedRadioCountry = null;
+          requestedRadioKey = null;
           refresh.disabled = false;
         }
       }

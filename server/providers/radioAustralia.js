@@ -36,3 +36,44 @@ export function createAustraliaRadioDirectory(options = {}) {
     ...country,
   });
 }
+
+/** A city view reuses the complete AU cache without assigning a map location. */
+export function melbourneRadioCatalog(catalog) {
+  const melbourneToken = /(?:^|[^\p{L}\p{N}])melbourne(?=$|[^\p{L}\p{N}])/iu;
+  const stations = catalog.stations.flatMap((station) => {
+    if (station.countryCode !== 'AU') return [];
+    if (station.sourceKind === 'curated-australia') {
+      return station.metroArea === 'melbourne'
+        ? [{ ...station, metroMatch: 'curated' }]
+        : [];
+    }
+    // Community directory locations are claims, not publisher verification.
+    // Victoria, nearby coordinates and national networks alone are insufficient.
+    const mentionsMelbourne = [
+      station.name,
+      station.state,
+      ...(station.tags || []),
+    ].some((value) => typeof value === 'string' && melbourneToken.test(value));
+    return mentionsMelbourne
+      ? [{ ...station, metroMatch: 'community-metadata' }]
+      : [];
+  });
+  const curatedStationCount = stations.filter(
+    (station) => station.metroMatch === 'curated',
+  ).length;
+  return {
+    ...catalog,
+    stations,
+    coverage: {
+      ...catalog.coverage,
+      countryCode: 'AU',
+      city: 'melbourne',
+      metroArea: 'melbourne',
+      countryStationCount: catalog.stations.length,
+      stationCount: stations.length,
+      curatedStationCount,
+      directoryStationCount: stations.length - curatedStationCount,
+      inferredStationCount: stations.length - curatedStationCount,
+    },
+  };
+}

@@ -14,15 +14,9 @@
       "state": "New South Wales",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "easy listening"
-      ],
-      "aliases": [
-        "2NURFM"
-      ],
+      "languages": ["english"],
+      "tags": ["easy listening"],
+      "aliases": ["2NURFM"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:59:05.528Z",
@@ -55,15 +49,9 @@
       "state": "Western Australia",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "classic hits 60s 70a 80s"
-      ],
-      "aliases": [
-        "Perth 6IX"
-      ],
+      "languages": ["english"],
+      "tags": ["classic hits 60s 70a 80s"],
+      "aliases": ["Perth 6IX"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:59:05.532Z",
@@ -113,9 +101,7 @@
         "roots",
         "soul"
       ],
-      "aliases": [
-        "PBS 106.7FM"
-      ],
+      "aliases": ["PBS 106.7FM"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:59:08.118Z",
@@ -133,7 +119,13 @@
         "ownerPageTitle": "PBS FM | PBS amplifies under-represented music and supports the local music community",
         "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
         "audiblePlaybackVerified": false
-      }
+      },
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "metro",
+      "geographySourcePage": "https://www.pbsfm.org.au/",
+      "locality": "Collingwood"
     },
     {
       "id": "au-9f734527d85b7b9f91a0",
@@ -148,17 +140,9 @@
       "state": "Victoria",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "community radio",
-        "independent"
-      ],
-      "aliases": [
-        "Triple R 102.7FM",
-        "Triple R"
-      ],
+      "languages": ["english"],
+      "tags": ["community radio", "independent"],
+      "aliases": ["Triple R 102.7FM", "Triple R"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:59:10.831Z",
@@ -176,7 +160,12 @@
         "ownerPageTitle": "Triple R 102.7FM, Melbourne Independent Radio ",
         "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
         "audiblePlaybackVerified": false
-      }
+      },
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "metro",
+      "geographySourcePage": "https://www.rrr.org.au/"
     },
     {
       "id": "au-24b9c5282b4af13d72c1",
@@ -193,9 +182,7 @@
       "lon": null,
       "languages": [],
       "tags": [],
-      "aliases": [
-        "Community Radio 2XX"
-      ],
+      "aliases": ["Community Radio 2XX"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:59:58.327Z",
@@ -228,19 +215,9 @@
       "state": "Queensland",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "electro",
-        "electronica",
-        "idm",
-        "techno"
-      ],
-      "aliases": [
-        "Systrum Sistum - SSR2",
-        "Systrum Sistum (SSR2)"
-      ],
+      "languages": ["english"],
+      "tags": ["electro", "electronica", "idm", "techno"],
+      "aliases": ["Systrum Sistum - SSR2", "Systrum Sistum (SSR2)"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:49:47.207Z",
@@ -312,18 +289,9 @@
       "state": "New South Wales",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "news talk",
-        "sport",
-        "talkback"
-      ],
-      "aliases": [
-        "2SM SRN Sydney",
-        "2SM Sydney 1269AM"
-      ],
+      "languages": ["english"],
+      "tags": ["news talk", "sport", "talkback"],
+      "aliases": ["2SM SRN Sydney", "2SM Sydney 1269AM"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:49:49.677Z",
@@ -356,17 +324,9 @@
       "state": "Victoria",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "8bit",
-        "game",
-        "retro"
-      ],
-      "aliases": [
-        "8-bit Remix Radio"
-      ],
+      "languages": ["english"],
+      "tags": ["8bit", "game", "retro"],
+      "aliases": ["8-bit Remix Radio"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:49:49.942Z",
@@ -399,17 +359,9 @@
       "state": "Queensland",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "arts",
-        "brisbane",
-        "classical"
-      ],
-      "aliases": [
-        "4MBS Classic FM - Brisbane"
-      ],
+      "languages": ["english"],
+      "tags": ["arts", "brisbane", "classical"],
+      "aliases": ["4MBS Classic FM - Brisbane"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:49:50.630Z",
@@ -444,9 +396,7 @@
       "lon": null,
       "languages": [],
       "tags": [],
-      "aliases": [
-        "Lainchan Radio Main"
-      ],
+      "aliases": ["Lainchan Radio Main"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:50:14.214Z",
@@ -480,14 +430,8 @@
       "lat": null,
       "lon": null,
       "languages": [],
-      "tags": [
-        "outrun",
-        "retrowave",
-        "synthwave"
-      ],
-      "aliases": [
-        "Nightride FM"
-      ],
+      "tags": ["outrun", "retrowave", "synthwave"],
+      "aliases": ["Nightride FM"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:50:15.421Z",
@@ -543,9 +487,7 @@
         "sport",
         "talk"
       ],
-      "aliases": [
-        "Lofty Community Media"
-      ],
+      "aliases": ["Lofty Community Media"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:50:16.371Z",
@@ -578,21 +520,9 @@
       "state": "New South Wales",
       "lat": null,
       "lon": null,
-      "languages": [
-        "cantonese",
-        "chinese",
-        "mandarin"
-      ],
-      "tags": [
-        "cantonese",
-        "chinese",
-        "mandarin",
-        "news"
-      ],
-      "aliases": [
-        "2CR Australia Chinese Radio",
-        "2CR"
-      ],
+      "languages": ["cantonese", "chinese", "mandarin"],
+      "tags": ["cantonese", "chinese", "mandarin", "news"],
+      "aliases": ["2CR Australia Chinese Radio", "2CR"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:50:19.393Z",
@@ -625,9 +555,7 @@
       "state": "Queensland",
       "lat": null,
       "lon": null,
-      "languages": [
-        "american english"
-      ],
+      "languages": ["american english"],
       "tags": [],
       "aliases": [
         "A.i.R - Hip Hop, Rap, Trap & Grime",
@@ -665,13 +593,9 @@
       "state": "",
       "lat": null,
       "lon": null,
-      "languages": [
-        "cantonese"
-      ],
+      "languages": ["cantonese"],
       "tags": [],
-      "aliases": [
-        "Sound of Hope Australia Cantonese"
-      ],
+      "aliases": ["Sound of Hope Australia Cantonese"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:50:29.020Z",
@@ -704,15 +628,9 @@
       "state": "Victoria",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "70s 80s 90s music"
-      ],
-      "aliases": [
-        "ASP Radio"
-      ],
+      "languages": ["english"],
+      "tags": ["70s 80s 90s music"],
+      "aliases": ["ASP Radio"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:50:46.862Z",
@@ -745,18 +663,9 @@
       "state": "New South Wales",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "classical",
-        "contemporary",
-        "jazz",
-        "sydney"
-      ],
-      "aliases": [
-        "2MBS Fine Music Sydney AAC 256"
-      ],
+      "languages": ["english"],
+      "tags": ["classical", "contemporary", "jazz", "sydney"],
+      "aliases": ["2MBS Fine Music Sydney AAC 256"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:50:50.131Z",
@@ -790,10 +699,7 @@
       "lat": null,
       "lon": null,
       "languages": [],
-      "tags": [
-        "brisbane",
-        "independent"
-      ],
+      "tags": ["brisbane", "independent"],
       "aliases": [
         "4zzz",
         "4ZZZ - Brisbane - 102.1 FM (MP3)",
@@ -832,17 +738,9 @@
       "state": "Victoria",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "70s",
-        "80s",
-        "90s"
-      ],
-      "aliases": [
-        "Streamless FM"
-      ],
+      "languages": ["english"],
+      "tags": ["70s", "80s", "90s"],
+      "aliases": ["Streamless FM"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:50:56.104Z",
@@ -875,15 +773,9 @@
       "state": "South Australia",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "community"
-      ],
-      "aliases": [
-        "Trax FM Port Pirie"
-      ],
+      "languages": ["english"],
+      "tags": ["community"],
+      "aliases": ["Trax FM Port Pirie"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:51:58.643Z",
@@ -916,9 +808,7 @@
       "state": "New South Wales",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
+      "languages": ["english"],
       "tags": [
         "acid jazz",
         "chill",
@@ -928,9 +818,7 @@
         "smooth jazz",
         "soul"
       ],
-      "aliases": [
-        "FSJ Radio - XRN Australia"
-      ],
+      "aliases": ["FSJ Radio - XRN Australia"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:52:04.140Z",
@@ -963,15 +851,8 @@
       "state": "Northern Territory",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "adult contemporary",
-        "full service",
-        "news",
-        "talk"
-      ],
+      "languages": ["english"],
+      "tags": ["adult contemporary", "full service", "news", "talk"],
       "aliases": [
         "104.1 Territory FM - Darwin - 104.1 FM (MP3)",
         "Territory FM Darwin"
@@ -1005,15 +886,12 @@
       "bitrate": 64,
       "homepage": "https://joy.org.au/",
       "sourcePage": "https://joy.org.au/",
-      "state": "",
+      "state": "Victoria",
       "lat": null,
       "lon": null,
       "languages": [],
       "tags": [],
-      "aliases": [
-        "JOY 94.9",
-        "JOY 94.9 Out Loud Proud"
-      ],
+      "aliases": ["JOY 94.9", "JOY 94.9 Out Loud Proud"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:52:29.589Z",
@@ -1031,7 +909,12 @@
         "ownerPageTitle": "\n    Home    | JOY Media",
         "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
         "audiblePlaybackVerified": false
-      }
+      },
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "metro",
+      "geographySourcePage": "https://joy.org.au/"
     },
     {
       "id": "au-1feaddbdf699fb488647",
@@ -1048,9 +931,7 @@
       "lon": null,
       "languages": [],
       "tags": [],
-      "aliases": [
-        "TEABBA RADIO"
-      ],
+      "aliases": ["TEABBA RADIO"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:52:31.668Z",
@@ -1083,16 +964,9 @@
       "state": "Queensland",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "reading",
-        "spoken word"
-      ],
-      "aliases": [
-        "4RPH Reading Radio"
-      ],
+      "languages": ["english"],
+      "tags": ["reading", "spoken word"],
+      "aliases": ["4RPH Reading Radio"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:52:32.543Z",
@@ -1127,9 +1001,7 @@
       "lon": null,
       "languages": [],
       "tags": [],
-      "aliases": [
-        "100.9 Port Stephens FM"
-      ],
+      "aliases": ["100.9 Port Stephens FM"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:52:57.335Z",
@@ -1162,19 +1034,9 @@
       "state": "Queensland",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "brisbane",
-        "classical",
-        "crossover",
-        "jazz",
-        "light classics"
-      ],
-      "aliases": [
-        "MBS Light - Brisbane"
-      ],
+      "languages": ["english"],
+      "tags": ["brisbane", "classical", "crossover", "jazz", "light classics"],
+      "aliases": ["MBS Light - Brisbane"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:52:57.345Z",
@@ -1207,15 +1069,9 @@
       "state": "New South Wales",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "gospel"
-      ],
-      "aliases": [
-        "3ABN Australia Radio"
-      ],
+      "languages": ["english"],
+      "tags": ["gospel"],
+      "aliases": ["3ABN Australia Radio"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:53:03.185Z",
@@ -1248,15 +1104,9 @@
       "state": "",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "community"
-      ],
-      "aliases": [
-        "One FM 98.5 Shepparton"
-      ],
+      "languages": ["english"],
+      "tags": ["community"],
+      "aliases": ["One FM 98.5 Shepparton"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:53:53.149Z",
@@ -1289,19 +1139,9 @@
       "state": "New South Wales",
       "lat": null,
       "lon": null,
-      "languages": [
-        "portuguese"
-      ],
-      "tags": [
-        "94 fm",
-        "australia",
-        "petersham",
-        "portuguese",
-        "sydney"
-      ],
-      "aliases": [
-        "Portuguese Radio Australia"
-      ],
+      "languages": ["portuguese"],
+      "tags": ["94 fm", "australia", "petersham", "portuguese", "sydney"],
+      "aliases": ["Portuguese Radio Australia"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:53:54.257Z",
@@ -1334,16 +1174,9 @@
       "state": "",
       "lat": null,
       "lon": null,
-      "languages": [
-        "mandarin"
-      ],
-      "tags": [
-        "australia",
-        "mandarin"
-      ],
-      "aliases": [
-        "Sound of Hope Australia Mandarin"
-      ],
+      "languages": ["mandarin"],
+      "tags": ["australia", "mandarin"],
+      "aliases": ["Sound of Hope Australia Mandarin"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:53:56.987Z",
@@ -1376,16 +1209,9 @@
       "state": "",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "community",
-        "indigenous"
-      ],
-      "aliases": [
-        "CherbOURg Radio"
-      ],
+      "languages": ["english"],
+      "tags": ["community", "indigenous"],
+      "aliases": ["CherbOURg Radio"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:53:58.642Z",
@@ -1420,10 +1246,7 @@
       "lon": null,
       "languages": [],
       "tags": [],
-      "aliases": [
-        "90.1 Happy FM",
-        "90.1 Happy Fm"
-      ],
+      "aliases": ["90.1 Happy FM", "90.1 Happy Fm"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:53:59.850Z",
@@ -1458,9 +1281,7 @@
       "lon": null,
       "languages": [],
       "tags": [],
-      "aliases": [
-        "2MFM"
-      ],
+      "aliases": ["2MFM"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:54:10.799Z",
@@ -1494,15 +1315,8 @@
       "lat": null,
       "lon": null,
       "languages": [],
-      "tags": [
-        "dj",
-        "electronic",
-        "hip hop",
-        "house"
-      ],
-      "aliases": [
-        "QUIVR"
-      ],
+      "tags": ["dj", "electronic", "hip hop", "house"],
+      "aliases": ["QUIVR"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:54:16.247Z",
@@ -1535,10 +1349,7 @@
       "state": "New South Wales",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english",
-        "persian"
-      ],
+      "languages": ["english", "persian"],
       "tags": [
         "24/7",
         "ai music",
@@ -1550,9 +1361,7 @@
         "sydney",
         "world music"
       ],
-      "aliases": [
-        "MIBL Radio — Instrumental"
-      ],
+      "aliases": ["MIBL Radio — Instrumental"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:54:19.648Z",
@@ -1585,12 +1394,8 @@
       "state": "Victoria",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "community radio"
-      ],
+      "languages": ["english"],
+      "tags": ["community radio"],
       "aliases": [
         "Alpine FM - Kiewa Valley / Ovens Valley - Mount Beauty - 96.5 FM / 92.9 FM (MP3)"
       ],
@@ -1626,20 +1431,9 @@
       "state": "South Australia",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "adelaide",
-        "blues",
-        "classical",
-        "jazz",
-        "world music"
-      ],
-      "aliases": [
-        "5MBS 99.9FM",
-        "5MBS"
-      ],
+      "languages": ["english"],
+      "tags": ["adelaide", "blues", "classical", "jazz", "world music"],
+      "aliases": ["5MBS 99.9FM", "5MBS"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:54:19.655Z",
@@ -1672,15 +1466,9 @@
       "state": "",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "community"
-      ],
-      "aliases": [
-        "PARADISE FM101.9 Ballina"
-      ],
+      "languages": ["english"],
+      "tags": ["community"],
+      "aliases": ["PARADISE FM101.9 Ballina"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:54:41.180Z",
@@ -1713,18 +1501,9 @@
       "state": "New South Wales",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "community radio",
-        "information",
-        "music",
-        "variety"
-      ],
-      "aliases": [
-        "Triple A FM - Wagga Wagga - 107.1 FM (HTTPS) (MP3)"
-      ],
+      "languages": ["english"],
+      "tags": ["community radio", "information", "music", "variety"],
+      "aliases": ["Triple A FM - Wagga Wagga - 107.1 FM (HTTPS) (MP3)"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:54:44.685Z",
@@ -1757,13 +1536,8 @@
       "state": "Victoria",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "community radio",
-        "miscellaneous"
-      ],
+      "languages": ["english"],
+      "tags": ["community radio", "miscellaneous"],
       "aliases": [
         "EMFM - Echuca Moama Community Radio - Echuca - 104.7 FM (AAC+)"
       ],
@@ -1799,15 +1573,9 @@
       "state": "",
       "lat": null,
       "lon": null,
-      "languages": [
-        "englsih"
-      ],
-      "tags": [
-        "community politics music radical"
-      ],
-      "aliases": [
-        "4ZZZ Digital"
-      ],
+      "languages": ["englsih"],
+      "tags": ["community politics music radical"],
+      "aliases": ["4ZZZ Digital"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:54:45.913Z",
@@ -1841,14 +1609,8 @@
       "lat": null,
       "lon": null,
       "languages": [],
-      "tags": [
-        "chillsynth",
-        "chillwave",
-        "instrumental"
-      ],
-      "aliases": [
-        "Nightride FM Chillsynth"
-      ],
+      "tags": ["chillsynth", "chillwave", "instrumental"],
+      "aliases": ["Nightride FM Chillsynth"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:54:47.963Z",
@@ -1881,16 +1643,9 @@
       "state": "Victoria",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "community radio"
-      ],
-      "aliases": [
-        "Radio Mansfield 99.7FM",
-        "Radio Mansfield"
-      ],
+      "languages": ["english"],
+      "tags": ["community radio"],
+      "aliases": ["Radio Mansfield 99.7FM", "Radio Mansfield"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:54:47.974Z",
@@ -1925,9 +1680,7 @@
       "lon": null,
       "languages": [],
       "tags": [],
-      "aliases": [
-        "Eastside Radio 89.7FM"
-      ],
+      "aliases": ["Eastside Radio 89.7FM"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:55:12.464Z",
@@ -1962,9 +1715,7 @@
       "lon": null,
       "languages": [],
       "tags": [],
-      "aliases": [
-        "Vibe Nation Radio"
-      ],
+      "aliases": ["Vibe Nation Radio"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:55:13.056Z",
@@ -1999,9 +1750,7 @@
       "lon": null,
       "languages": [],
       "tags": [],
-      "aliases": [
-        "Retro FM"
-      ],
+      "aliases": ["Retro FM"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:55:21.865Z",
@@ -2034,9 +1783,7 @@
       "state": "New South Wales",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
+      "languages": ["english"],
       "tags": [
         "commercial",
         "hot adult contemporary",
@@ -2044,9 +1791,7 @@
         "mainstream",
         "top 40"
       ],
-      "aliases": [
-        "C91.3 FM - Macarthur's Radio Station"
-      ],
+      "aliases": ["C91.3 FM - Macarthur's Radio Station"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:57:51.664Z",
@@ -2079,10 +1824,7 @@
       "state": "New South Wales",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english",
-        "persian"
-      ],
+      "languages": ["english", "persian"],
       "tags": [
         "24/7",
         "ai music",
@@ -2093,9 +1835,7 @@
         "sydney",
         "world music"
       ],
-      "aliases": [
-        "MIBL Radio"
-      ],
+      "aliases": ["MIBL Radio"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:58:25.111Z",
@@ -2128,19 +1868,9 @@
       "state": "",
       "lat": null,
       "lon": null,
-      "languages": [
-        "english"
-      ],
-      "tags": [
-        "blues",
-        "classic jazz",
-        "gospel",
-        "swing",
-        "vocal"
-      ],
-      "aliases": [
-        "Swingtime Radio"
-      ],
+      "languages": ["english"],
+      "tags": ["blues", "classic jazz", "gospel", "swing", "vocal"],
+      "aliases": ["Swingtime Radio"],
       "playbackKind": "live",
       "streamFormat": "progressive",
       "verifiedAt": "2026-09-17T08:59:03.386Z",
@@ -2172,15 +1902,9 @@
       "state": "National",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "radio"
-      ],
-      "aliases": [
-        "ABC AFL"
-      ],
+      "languages": ["English"],
+      "tags": ["radio"],
+      "aliases": ["ABC AFL"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -2192,9 +1916,7 @@
         "sequence": 5287034,
         "secondSequence": 5287036,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:52:39.121Z"
-        ],
+        "dates": ["2026-09-17T08:52:39.121Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2216,17 +1938,9 @@
       "state": "Victoria",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "news",
-        "talk",
-        "local"
-      ],
-      "aliases": [
-        "ABC Ballarat Local Radio"
-      ],
+      "languages": ["English"],
+      "tags": ["news", "talk", "local"],
+      "aliases": ["ABC Ballarat Local Radio"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -2238,9 +1952,7 @@
         "sequence": 5266508,
         "secondSequence": 5266510,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:52:39.722Z"
-        ],
+        "dates": ["2026-09-17T08:52:39.722Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2262,15 +1974,9 @@
       "state": "Northern Territory",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "radio"
-      ],
-      "aliases": [
-        "ABC Classic NT HLS"
-      ],
+      "languages": ["English"],
+      "tags": ["radio"],
+      "aliases": ["ABC Classic NT HLS"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -2282,9 +1988,7 @@
         "sequence": 5320690,
         "secondSequence": 5320692,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:52:43.109Z"
-        ],
+        "dates": ["2026-09-17T08:52:43.109Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2306,17 +2010,9 @@
       "state": "Victoria",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "news",
-        "talk",
-        "local"
-      ],
-      "aliases": [
-        "ABC Radio Goulburn Murray"
-      ],
+      "languages": ["English"],
+      "tags": ["news", "talk", "local"],
+      "aliases": ["ABC Radio Goulburn Murray"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -2328,9 +2024,7 @@
         "sequence": 5230627,
         "secondSequence": 5230632,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:52:14.355Z"
-        ],
+        "dates": ["2026-09-17T08:52:14.355Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2352,17 +2046,9 @@
       "state": "New South Wales",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "news",
-        "talk",
-        "local"
-      ],
-      "aliases": [
-        "ABC South East NSW"
-      ],
+      "languages": ["English"],
+      "tags": ["news", "talk", "local"],
+      "aliases": ["ABC South East NSW"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -2374,9 +2060,7 @@
         "sequence": 5266686,
         "secondSequence": 5266688,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:52:43.706Z"
-        ],
+        "dates": ["2026-09-17T08:52:43.706Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2398,17 +2082,9 @@
       "state": "Queensland",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "news",
-        "talk",
-        "local"
-      ],
-      "aliases": [
-        "ABC Local Radio 630 North Queensland 20230609"
-      ],
+      "languages": ["English"],
+      "tags": ["news", "talk", "local"],
+      "aliases": ["ABC Local Radio 630 North Queensland 20230609"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -2420,9 +2096,7 @@
         "sequence": 5230638,
         "secondSequence": 5230641,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:52:34.329Z"
-        ],
+        "dates": ["2026-09-17T08:52:34.329Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2444,17 +2118,9 @@
       "state": "New South Wales",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "news",
-        "talk",
-        "local"
-      ],
-      "aliases": [
-        "ABC North Coast"
-      ],
+      "languages": ["English"],
+      "tags": ["news", "talk", "local"],
+      "aliases": ["ABC North Coast"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -2466,9 +2132,7 @@
         "sequence": 5266319,
         "secondSequence": 5266321,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:52:38.955Z"
-        ],
+        "dates": ["2026-09-17T08:52:38.955Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2490,14 +2154,8 @@
       "state": "Tasmania",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "news",
-        "talk",
-        "local"
-      ],
+      "languages": ["English"],
+      "tags": ["news", "talk", "local"],
       "aliases": [],
       "playbackKind": "live",
       "streamFormat": "hls",
@@ -2510,9 +2168,7 @@
         "sequence": 5230519,
         "secondSequence": 5230523,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:52:16.950Z"
-        ],
+        "dates": ["2026-09-17T08:52:16.950Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2534,16 +2190,9 @@
       "state": "National",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "radio"
-      ],
-      "aliases": [
-        "ABC Jazz HLS",
-        "ABC Jazz 20220701"
-      ],
+      "languages": ["English"],
+      "tags": ["radio"],
+      "aliases": ["ABC Jazz HLS", "ABC Jazz 20220701"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -2555,9 +2204,7 @@
         "sequence": 5281940,
         "secondSequence": 5281943,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:54:35.276Z"
-        ],
+        "dates": ["2026-09-17T08:54:35.276Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2579,14 +2226,8 @@
       "state": "Queensland",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "news",
-        "talk",
-        "local"
-      ],
+      "languages": ["English"],
+      "tags": ["news", "talk", "local"],
       "aliases": [
         "ABC 106.5MHz FM Mount Isa QLD Northwest Queensland Local Radio"
       ],
@@ -2601,9 +2242,7 @@
         "sequence": 5248831,
         "secondSequence": 5248833,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:54:40.349Z"
-        ],
+        "dates": ["2026-09-17T08:54:40.349Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2625,16 +2264,9 @@
       "state": "South Australia",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "radio"
-      ],
-      "aliases": [
-        "ABC Classic SA HLS",
-        "ABC Classic FM (SA)"
-      ],
+      "languages": ["English"],
+      "tags": ["radio"],
+      "aliases": ["ABC Classic SA HLS", "ABC Classic FM (SA)"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -2646,9 +2278,7 @@
         "sequence": 5230741,
         "secondSequence": 5230743,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:54:41.116Z"
-        ],
+        "dates": ["2026-09-17T08:54:41.116Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2670,15 +2300,9 @@
       "state": "Western Australia",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "radio"
-      ],
-      "aliases": [
-        "ABC Classic WA HLS"
-      ],
+      "languages": ["English"],
+      "tags": ["radio"],
+      "aliases": ["ABC Classic WA HLS"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -2690,9 +2314,7 @@
         "sequence": 5230685,
         "secondSequence": 5230688,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:54:36.295Z"
-        ],
+        "dates": ["2026-09-17T08:54:36.295Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2714,14 +2336,8 @@
       "state": "Queensland",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "news",
-        "talk",
-        "local"
-      ],
+      "languages": ["English"],
+      "tags": ["news", "talk", "local"],
       "aliases": [
         "612 ABC Brisbane",
         "ABC 612kHz AM Brisbane QLD Queensland Local Radio 20220701",
@@ -2738,9 +2354,7 @@
         "sequence": 5230698,
         "secondSequence": 5230701,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:54:58.354Z"
-        ],
+        "dates": ["2026-09-17T08:54:58.354Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2762,18 +2376,9 @@
       "state": "Northern Territory",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "news",
-        "talk",
-        "local"
-      ],
-      "aliases": [
-        "105.7 ABC Darwin",
-        "ABC Radio DARWIN"
-      ],
+      "languages": ["English"],
+      "tags": ["news", "talk", "local"],
+      "aliases": ["105.7 ABC Darwin", "ABC Radio DARWIN"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -2785,9 +2390,7 @@
         "sequence": 5287049,
         "secondSequence": 5287052,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:55:01.121Z"
-        ],
+        "dates": ["2026-09-17T08:55:01.121Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2809,16 +2412,9 @@
       "state": "New South Wales",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "radio"
-      ],
-      "aliases": [
-        "ABC Classic HLS",
-        "ABC Classic FM 20220701"
-      ],
+      "languages": ["English"],
+      "tags": ["radio"],
+      "aliases": ["ABC Classic HLS", "ABC Classic FM 20220701"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -2830,9 +2426,7 @@
         "sequence": 5266782,
         "secondSequence": 5266786,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:55:23.731Z"
-        ],
+        "dates": ["2026-09-17T08:55:23.731Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2854,18 +2448,9 @@
       "state": "Victoria",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "news",
-        "talk",
-        "local"
-      ],
-      "aliases": [
-        "ABC Radio Melbourne",
-        "774 ABC Melbourne"
-      ],
+      "languages": ["English"],
+      "tags": ["news", "talk", "local"],
+      "aliases": ["ABC Radio Melbourne", "774 ABC Melbourne"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -2877,9 +2462,7 @@
         "sequence": 5266448,
         "secondSequence": 5266452,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:55:23.721Z"
-        ],
+        "dates": ["2026-09-17T08:55:23.721Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2887,7 +2470,12 @@
         "liveVerified": true,
         "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
         "audiblePlaybackVerified": false
-      }
+      },
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "metro",
+      "geographySourcePage": "https://www.abc.net.au/listen/live/melbourne"
     },
     {
       "id": "au-feb7d7e2b344b20d432d",
@@ -2901,12 +2489,8 @@
       "state": "New South Wales",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "radio"
-      ],
+      "languages": ["English"],
+      "tags": ["radio"],
       "aliases": [
         "ABC Radio National HLS",
         "ABC Radio National Live 20220701",
@@ -2923,9 +2507,7 @@
         "sequence": 5266688,
         "secondSequence": 5266691,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:55:29.707Z"
-        ],
+        "dates": ["2026-09-17T08:55:29.707Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2947,14 +2529,8 @@
       "state": "New South Wales",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "news",
-        "talk",
-        "local"
-      ],
+      "languages": ["English"],
+      "tags": ["news", "talk", "local"],
       "aliases": [
         "ABC 702kHz AM Sydney NSW Local Radio 20220701",
         "702 ABC Sydney",
@@ -2971,9 +2547,7 @@
         "sequence": 5266700,
         "secondSequence": 5266703,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:55:31.718Z"
-        ],
+        "dates": ["2026-09-17T08:55:31.718Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -2995,15 +2569,9 @@
       "state": "Queensland",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "radio"
-      ],
-      "aliases": [
-        "ABC Classic QLD HLS"
-      ],
+      "languages": ["English"],
+      "tags": ["radio"],
+      "aliases": ["ABC Classic QLD HLS"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -3015,9 +2583,7 @@
         "sequence": 5230714,
         "secondSequence": 5230717,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:56:32.361Z"
-        ],
+        "dates": ["2026-09-17T08:56:32.361Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -3039,16 +2605,9 @@
       "state": "National",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "radio"
-      ],
-      "aliases": [
-        "ABC News Radio",
-        "ABC NewsRadio"
-      ],
+      "languages": ["English"],
+      "tags": ["radio"],
+      "aliases": ["ABC News Radio", "ABC NewsRadio"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -3060,9 +2619,7 @@
         "sequence": 5281926,
         "secondSequence": 5281933,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:56:27.248Z"
-        ],
+        "dates": ["2026-09-17T08:56:27.248Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -3084,18 +2641,9 @@
       "state": "Australian Capital Territory",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "news",
-        "talk",
-        "local"
-      ],
-      "aliases": [
-        "666 ABC Canberra",
-        "ABC Radio Canberra"
-      ],
+      "languages": ["English"],
+      "tags": ["news", "talk", "local"],
+      "aliases": ["666 ABC Canberra", "ABC Radio Canberra"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -3107,9 +2655,7 @@
         "sequence": 5230745,
         "secondSequence": 5230749,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:57:03.109Z"
-        ],
+        "dates": ["2026-09-17T08:57:03.109Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -3131,15 +2677,9 @@
       "state": "South Australia",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "radio"
-      ],
-      "aliases": [
-        "ABC Radio National SA HLS"
-      ],
+      "languages": ["English"],
+      "tags": ["radio"],
+      "aliases": ["ABC Radio National SA HLS"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -3151,9 +2691,7 @@
         "sequence": 5230672,
         "secondSequence": 5230679,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:56:27.107Z"
-        ],
+        "dates": ["2026-09-17T08:56:27.107Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -3175,16 +2713,9 @@
       "state": "National",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "radio"
-      ],
-      "aliases": [
-        "ABC Radio Australia 20220701",
-        "ABC Radio Australia"
-      ],
+      "languages": ["English"],
+      "tags": ["radio"],
+      "aliases": ["ABC Radio Australia 20220701", "ABC Radio Australia"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -3196,9 +2727,7 @@
         "sequence": 5230651,
         "secondSequence": 5230658,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:56:30.363Z"
-        ],
+        "dates": ["2026-09-17T08:56:30.363Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -3220,16 +2749,9 @@
       "state": "National",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "radio"
-      ],
-      "aliases": [
-        "ABC Country HLS",
-        "ABC Country 20220701"
-      ],
+      "languages": ["English"],
+      "tags": ["radio"],
+      "aliases": ["ABC Country HLS", "ABC Country 20220701"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -3241,9 +2763,7 @@
         "sequence": 5306821,
         "secondSequence": 5306828,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:56:29.261Z"
-        ],
+        "dates": ["2026-09-17T08:56:29.261Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -3265,14 +2785,8 @@
       "state": "Queensland",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "news",
-        "talk",
-        "local"
-      ],
+      "languages": ["English"],
+      "tags": ["news", "talk", "local"],
       "aliases": [
         "ABC 540kHz AM Longreach QLD Western Queensland Local Radio 20220701"
       ],
@@ -3287,9 +2801,7 @@
         "sequence": 5230901,
         "secondSequence": 5230908,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:56:30.350Z"
-        ],
+        "dates": ["2026-09-17T08:56:30.350Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -3311,15 +2823,9 @@
       "state": "National",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "radio"
-      ],
-      "aliases": [
-        "Triple j Hottest"
-      ],
+      "languages": ["English"],
+      "tags": ["radio"],
+      "aliases": ["Triple j Hottest"],
       "playbackKind": "live",
       "streamFormat": "hls",
       "liveOnly": true,
@@ -3331,9 +2837,7 @@
         "sequence": 5287108,
         "secondSequence": 5287115,
         "advance": true,
-        "dates": [
-          "2026-09-17T08:56:33.141Z"
-        ],
+        "dates": ["2026-09-17T08:56:33.141Z"],
         "fresh": true,
         "segmentStatus": 200,
         "segmentContentType": "video/mp2t",
@@ -3355,13 +2859,8 @@
       "state": "National",
       "lat": null,
       "lon": null,
-      "languages": [
-        "English"
-      ],
-      "tags": [
-        "news",
-        "talk"
-      ],
+      "languages": ["English"],
+      "tags": ["news", "talk"],
       "aliases": [],
       "playbackKind": "live",
       "streamFormat": "hls",
@@ -3397,11 +2896,7 @@
       "lat": null,
       "lon": null,
       "languages": [],
-      "tags": [
-        "news",
-        "talk",
-        "multilingual"
-      ],
+      "tags": ["news", "talk", "multilingual"],
       "aliases": [],
       "playbackKind": "live",
       "streamFormat": "hls",
@@ -3423,11 +2918,951 @@
         "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
         "audiblePlaybackVerified": false
       }
+    },
+    {
+      "id": "au-058675629defde960c6e",
+      "name": "3CR 855 AM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://playerservices.streamtheworld.com/api/livestream-redirect/3CRAAC.aac",
+      "codec": "AAC",
+      "bitrate": null,
+      "homepage": "https://www.3cr.org.au/",
+      "sourcePage": "https://www.3cr.org.au/",
+      "state": "Victoria",
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "metro",
+      "geographySourcePage": "https://www.3cr.org.au/",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": ["community radio", "current affairs", "multilingual"],
+      "aliases": ["3CR 855 AM"],
+      "playbackKind": "live",
+      "liveOnly": true,
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:00:36.894383+00:00",
+      "credit": "3CR 855 AM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:00:36.894383+00:00",
+        "status": 200,
+        "finalUrl": "https://28803.live.streamtheworld.com:443/3CRAAC.aac",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff152802e9ffc211a94adb68b62a1d8",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "3CR Community Radio 855 AM",
+        "officialStreamEvidence": "Official homepage embeds Triton td-player station=3CR; Radio Browser supplied the public AAC transport.",
+        "officialStreamSourcePage": "https://www.3cr.org.au/",
+        "geographicEvidence": "Official homepage locates the station at 21 Smith Street, Fitzroy, Melbourne.",
+        "method": "Official broadcaster source and geography reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. No audible programme identity check.",
+        "audiblePlaybackVerified": false
+      },
+      "locality": "Fitzroy"
+    },
+    {
+      "id": "au-275e752f651445205b7b",
+      "name": "3ZZZ 92.3FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://playerservices.streamtheworld.com/api/livestream-redirect/3ZZZAAC.aac",
+      "codec": "AAC",
+      "bitrate": null,
+      "homepage": "https://www.3zzz.com.au/",
+      "sourcePage": "https://www.3zzz.com.au/",
+      "state": "Victoria",
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "metro",
+      "geographySourcePage": "https://www.3zzz.com.au/",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": ["community radio", "multilingual"],
+      "aliases": ["3ZZZ 92.3FM"],
+      "playbackKind": "live",
+      "liveOnly": true,
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:00:34.499427+00:00",
+      "credit": "3ZZZ 92.3FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:00:34.499427+00:00",
+        "status": 200,
+        "finalUrl": "https://23193.live.streamtheworld.com:443/3ZZZAAC.aac",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff1528033dffc211a8d735bbffffd2f",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Home - 3ZZZ",
+        "officialStreamEvidence": "Official stationnow API lists 3ZZZAAC.aac with an optional distributor query.",
+        "officialStreamSourcePage": "https://www.3zzz.com.au/wp-json/metaradio/v1/stationnow/?station=1",
+        "geographicEvidence": "Official homepage identifies the station as serving multicultural Melbourne.",
+        "method": "Official broadcaster source and geography reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. No audible programme identity check.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-0edb1e806930ec0c9495",
+      "name": "3KND Kool N Deadly",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://playerservices.streamtheworld.com/api/livestream-redirect/3KNDAAC.aac",
+      "codec": "AAC",
+      "bitrate": null,
+      "homepage": "https://www.3knd.org.au/",
+      "sourcePage": "https://www.3knd.org.au/",
+      "state": "Victoria",
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "metro",
+      "geographySourcePage": "https://www.3knd.org.au/",
+      "lat": null,
+      "lon": null,
+      "languages": ["english"],
+      "tags": ["community radio", "indigenous"],
+      "aliases": ["3KND Kool N Deadly"],
+      "playbackKind": "live",
+      "liveOnly": true,
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:00:33.601479+00:00",
+      "credit": "3KND Kool N Deadly / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:00:33.601479+00:00",
+        "status": 200,
+        "finalUrl": "https://23203.live.streamtheworld.com:443/3KNDAAC.aac",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff1528028dffc211a8efba7e000ff23",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Radio | 3KND Kool 'N' Deadly | Bundoora",
+        "officialStreamEvidence": "Official homepage links player.listenlive.co/71121, whose configuration identifies the 3KND mount.",
+        "officialStreamSourcePage": "https://player.listenlive.co/71121",
+        "geographicEvidence": "Official homepage describes Melbourne Indigenous radio and gives its Bundoora studio address.",
+        "method": "Official broadcaster source and geography reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. No audible programme identity check.",
+        "audiblePlaybackVerified": false
+      },
+      "locality": "Bundoora"
+    },
+    {
+      "id": "au-3a2df191bed65b426bff",
+      "name": "SYN 90.7FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://playerservices.streamtheworld.com/api/livestream-redirect/3SYNAAC.aac",
+      "codec": "AAC",
+      "bitrate": null,
+      "homepage": "https://www.syn.org.au/",
+      "sourcePage": "https://www.syn.org.au/",
+      "state": "Victoria",
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "metro",
+      "geographySourcePage": "https://www.syn.org.au/about",
+      "lat": null,
+      "lon": null,
+      "languages": ["english"],
+      "tags": ["community radio", "youth", "student radio", "independent"],
+      "aliases": ["SYN 90.7FM"],
+      "playbackKind": "live",
+      "liveOnly": true,
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:00:34.497043+00:00",
+      "credit": "SYN 90.7FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:00:34.497043+00:00",
+        "status": 200,
+        "finalUrl": "https://28793.live.streamtheworld.com:443/3SYNAAC.aac",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff15280303ffc210a8fffcd0057ff31",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "SYN Media",
+        "officialStreamEvidence": "Official homepage offers its live player; public 3SYNAAC transport discovered through Radio Browser AU.",
+        "officialStreamSourcePage": "https://www.syn.org.au/",
+        "geographicEvidence": "Official About page says SYN 90.7 FM broadcasts across Naarm/Melbourne.",
+        "method": "Official broadcaster source and geography reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. No audible programme identity check.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-f9363ea9af7b1d3e956a",
+      "name": "3WBC 94.1FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://stream.tcom.net.au/3wbc",
+      "codec": "AAC",
+      "bitrate": null,
+      "homepage": "https://www.3wbc.org.au/",
+      "sourcePage": "https://www.3wbc.org.au/",
+      "state": "Victoria",
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "suburban",
+      "geographySourcePage": "https://www.3wbc.org.au/",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": ["community radio", "multilingual", "local news"],
+      "aliases": ["3WBC 94.1FM"],
+      "playbackKind": "live",
+      "liveOnly": true,
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:00:21.450390+00:00",
+      "credit": "3WBC 94.1FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:00:21.450390+00:00",
+        "status": 200,
+        "finalUrl": "https://stream.tcom.net.au/3wbc",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff15c4030c0ec013c9fb2dc368904da",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "94.1FM 3WBC &#8211; The Voice Of The Inner East",
+        "officialStreamEvidence": "Exact stream URL embedded in official homepage player.",
+        "officialStreamSourcePage": "https://www.3wbc.org.au/",
+        "geographicEvidence": "Official homepage describes local content for the inner eastern suburbs of Melbourne.",
+        "method": "Official broadcaster source and geography reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. No audible programme identity check.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-a70cfcf85955f1dc3643",
+      "name": "96.5 Inner FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://playerservices.streamtheworld.com/api/livestream-redirect/3NRAAC.aac",
+      "codec": "AAC",
+      "bitrate": null,
+      "homepage": "https://www.innerfm.org.au/",
+      "sourcePage": "https://www.innerfm.org.au/",
+      "state": "Victoria",
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "suburban",
+      "geographySourcePage": "https://www.innerfm.org.au/about/",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": ["community radio", "multilingual", "easy listening"],
+      "aliases": ["96.5 Inner FM"],
+      "playbackKind": "live",
+      "liveOnly": true,
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:00:36.714320+00:00",
+      "credit": "96.5 Inner FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:00:36.714320+00:00",
+        "status": 200,
+        "finalUrl": "https://14533.live.streamtheworld.com:443/3NRAAC.aac",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff1528030fffc211a94e592a0d040b0",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Inner FM - 96.5 InnerFM",
+        "officialStreamEvidence": "Official homepage links player.listenlive.co/71581, whose configuration identifies the 3NR mount.",
+        "officialStreamSourcePage": "https://player.listenlive.co/71581",
+        "geographicEvidence": "Official About page identifies service to Banyule, Manningham and Darebin and Heidelberg studios.",
+        "method": "Official broadcaster source and geography reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. No audible programme identity check.",
+        "audiblePlaybackVerified": false
+      },
+      "locality": "Heidelberg"
+    },
+    {
+      "id": "au-fe492ed00ff8c9150487",
+      "name": "Plenty Valley FM 88.6",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://playerservices.streamtheworld.com/api/livestream-redirect/3PVRAAC.aac",
+      "codec": "AAC",
+      "bitrate": null,
+      "homepage": "https://www.pvfm.org.au/",
+      "sourcePage": "https://www.pvfm.org.au/",
+      "state": "Victoria",
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "suburban",
+      "geographySourcePage": "https://www.pvfm.org.au/",
+      "lat": null,
+      "lon": null,
+      "languages": ["english"],
+      "tags": ["community radio", "local news"],
+      "aliases": ["Plenty Valley FM 88.6"],
+      "playbackKind": "live",
+      "liveOnly": true,
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:00:36.846499+00:00",
+      "credit": "Plenty Valley FM 88.6 / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:00:36.846499+00:00",
+        "status": 200,
+        "finalUrl": "https://28803.live.streamtheworld.com:443/3PVRAAC.aac",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff152802dfffc211a8ff5f9dfee6b41",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Homepage - Plenty Valley FM 88.6",
+        "officialStreamEvidence": "Official stationnow API lists 3PVRAAC.aac with an optional distributor query.",
+        "officialStreamSourcePage": "https://www.pvfm.org.au/wp-json/metaradio/v1/stationnow/?station=1",
+        "geographicEvidence": "Official homepage identifies Melbourne outer north east coverage and Mill Park studios.",
+        "method": "Official broadcaster source and geography reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. No audible programme identity check.",
+        "audiblePlaybackVerified": false
+      },
+      "locality": "Mill Park"
+    },
+    {
+      "id": "au-82a3ff128aa3e5c483a3",
+      "name": "Radio Eastern FM 98.1",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://playerservices.streamtheworld.com/api/livestream-redirect/3ECBAAC.aac",
+      "codec": "AAC",
+      "bitrate": null,
+      "homepage": "https://www.radioeasternfm.com.au/",
+      "sourcePage": "https://www.radioeasternfm.com.au/",
+      "state": "Victoria",
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "suburban",
+      "geographySourcePage": "https://www.radioeasternfm.com.au/",
+      "lat": null,
+      "lon": null,
+      "languages": ["english"],
+      "tags": ["community radio", "local news"],
+      "aliases": ["Radio Eastern FM 98.1"],
+      "playbackKind": "live",
+      "liveOnly": true,
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:00:35.820872+00:00",
+      "credit": "Radio Eastern FM 98.1 / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:00:35.820872+00:00",
+        "status": 200,
+        "finalUrl": "https://23093.live.streamtheworld.com:443/3ECBAAC.aac",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff15280289ffc217a851d1d1f4e6198",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Homepage - Radio Eastern FM",
+        "officialStreamEvidence": "Exact stream URL listed in official stationnow API.",
+        "officialStreamSourcePage": "https://www.radioeasternfm.com.au/wp-json/metaradio/v1/stationnow/?station=1",
+        "geographicEvidence": "Official homepage metadata describes community radio in Melbourne outer east.",
+        "method": "Official broadcaster source and geography reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. No audible programme identity check.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-6243f3a3e7c821bf8b6b",
+      "name": "3MDR 97.1FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://playerservices.streamtheworld.com/api/livestream-redirect/3MDRAAC.aac",
+      "codec": "AAC",
+      "bitrate": null,
+      "homepage": "https://3mdr.com/",
+      "sourcePage": "https://3mdr.com/",
+      "state": "Victoria",
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "suburban",
+      "geographySourcePage": "https://3mdr.com/about/",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": ["community radio", "independent", "multilingual"],
+      "aliases": ["3MDR 97.1FM"],
+      "playbackKind": "live",
+      "liveOnly": true,
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:00:36.502399+00:00",
+      "credit": "3MDR 97.1FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:00:36.502399+00:00",
+        "status": 200,
+        "finalUrl": "https://28803.live.streamtheworld.com:443/3MDRAAC.aac",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff15280363ffc211a88000020003f21",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "3MDR 97.1FM",
+        "officialStreamEvidence": "Official broadcaster About page advertises livestream; public 3MDRAAC transport discovered through Radio Browser AU.",
+        "officialStreamSourcePage": "https://3mdr.com/",
+        "geographicEvidence": "Official About page states service from Ferntree Gully to Emerald and Silvan to Berwick, and Upwey South studios.",
+        "method": "Official broadcaster source and geography reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. No audible programme identity check.",
+        "audiblePlaybackVerified": false
+      },
+      "locality": "Upwey South"
+    },
+    {
+      "id": "au-01310b8d4d809c4b6d65",
+      "name": "88.3 Southern FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://stream.swifthosting.com.au/;",
+      "codec": "MP3",
+      "bitrate": null,
+      "homepage": "https://southernfm.com.au/",
+      "sourcePage": "https://southernfm.com.au/",
+      "state": "Victoria",
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "suburban",
+      "geographySourcePage": "https://southernfm.com.au/",
+      "lat": null,
+      "lon": null,
+      "languages": ["english"],
+      "tags": ["community radio", "local news"],
+      "aliases": ["88.3 Southern FM"],
+      "playbackKind": "live",
+      "liveOnly": true,
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:00:17.358892+00:00",
+      "credit": "88.3 Southern FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:00:17.358892+00:00",
+        "status": 200,
+        "finalUrl": "https://stream.swifthosting.com.au/;",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fffbe464df8309217253a37865728169",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "88.3 Southern FM - So Local",
+        "officialStreamEvidence": "Exact stream URL embedded in official homepage JavaScript player.",
+        "officialStreamSourcePage": "https://southernfm.com.au/assets/index-BzhH8Nyl.js",
+        "geographicEvidence": "Official homepage metadata identifies Bayside Melbourne community radio.",
+        "method": "Official broadcaster source and geography reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. No audible programme identity check.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-e8373e86a5f2f4af706b",
+      "name": "RPP FM 98.7",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://streaming.radio.co/sfbd79db12/listen",
+      "codec": "MP3",
+      "bitrate": null,
+      "homepage": "https://www.rppfm.com.au/",
+      "sourcePage": "https://www.rppfm.com.au/",
+      "state": "Victoria",
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "suburban",
+      "geographySourcePage": "https://www.rppfm.com.au/about",
+      "lat": null,
+      "lon": null,
+      "languages": ["english"],
+      "tags": ["community radio", "local news", "sport"],
+      "aliases": ["RPP FM 98.7"],
+      "playbackKind": "live",
+      "liveOnly": true,
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:00:19.510981+00:00",
+      "credit": "RPP FM 98.7 / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:00:19.510981+00:00",
+        "status": 200,
+        "finalUrl": "https://streaming.radio.co/sfbd79db12/listen",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fffb9244bf8003455ad461e613706407",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "RPP FM - Your Peninsula Radio | Engage with Local Radio - Tune In Now",
+        "officialStreamEvidence": "Exact stream URL embedded as data-url on official /programs-1 player page.",
+        "officialStreamSourcePage": "https://www.rppfm.com.au/programs-1",
+        "geographicEvidence": "Official About page states Mornington Peninsula, Frankston and southern Kingston coverage, and Mornington studios.",
+        "method": "Official broadcaster source and geography reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. No audible programme identity check.",
+        "audiblePlaybackVerified": false
+      },
+      "locality": "Mornington"
+    },
+    {
+      "id": "au-0b82f16e21502e343c1f",
+      "name": "Golden Days Radio 95.7FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://a2.asurahosting.com:6350/radio.aac",
+      "codec": "AAC",
+      "bitrate": null,
+      "homepage": "https://goldendaysradio.com/",
+      "sourcePage": "https://goldendaysradio.com/",
+      "state": "Victoria",
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "metro",
+      "geographySourcePage": "https://goldendaysradio.com/contacts/",
+      "lat": null,
+      "lon": null,
+      "languages": ["english"],
+      "tags": ["community radio", "nostalgia", "easy listening"],
+      "aliases": ["Golden Days Radio 95.7FM"],
+      "playbackKind": "live",
+      "liveOnly": true,
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:00:36.278985+00:00",
+      "credit": "Golden Days Radio 95.7FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:00:36.278985+00:00",
+        "status": 200,
+        "finalUrl": "https://a2.asurahosting.com:6350/radio.aac",
+        "contentType": "audio/aac",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff95c805540d0211b550dd5876181d0",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "GDR 95.7fm - GDR 95.7fm",
+        "officialStreamEvidence": "Official /gdr-streaming-player/ embeds Asura golden_days_radio player pointing to the same public station server.",
+        "officialStreamSourcePage": "https://goldendaysradio.com/gdr-streaming-player/",
+        "geographicEvidence": "Official contact page identifies studios in Glen Huntly.",
+        "method": "Official broadcaster source and geography reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. No audible programme identity check.",
+        "audiblePlaybackVerified": false
+      },
+      "locality": "Glen Huntly"
+    },
+    {
+      "id": "au-7a41818e132e688a38e8",
+      "name": "89.9 TheLight",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://stream.thelight.com.au:8130/stream/",
+      "codec": "AAC",
+      "bitrate": null,
+      "homepage": "https://www.thelight.com.au/",
+      "sourcePage": "https://www.thelight.com.au/",
+      "state": "Victoria",
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "metro",
+      "geographySourcePage": "https://www.thelight.com.au/",
+      "lat": null,
+      "lon": null,
+      "languages": ["english"],
+      "tags": ["community radio", "christian", "family"],
+      "aliases": ["89.9 TheLight"],
+      "playbackKind": "live",
+      "liveOnly": true,
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:00:34.518574+00:00",
+      "credit": "89.9 TheLight / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:00:34.518574+00:00",
+        "status": 200,
+        "finalUrl": "https://stream.thelight.com.au:8130/stream/",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff1588029418c211b554592648310a1",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "89.9 TheLight | Family-Friendly Christian Radio in Melbourne",
+        "officialStreamEvidence": "Public HTTPS stream on broadcaster thelight.com.au domain discovered through Radio Browser AU; broadcaster live-radio homepage reviewed.",
+        "officialStreamSourcePage": "https://www.thelight.com.au/",
+        "geographicEvidence": "Official homepage title identifies family-friendly Christian radio in Melbourne.",
+        "method": "Official broadcaster source and geography reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. No audible programme identity check.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-a3c3f6421e135f3d8f35",
+      "name": "Vision Australia Radio Melbourne",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://playerservices.streamtheworld.com/api/livestream-redirect/3RPHAAC.aac",
+      "codec": "AAC",
+      "bitrate": null,
+      "homepage": "https://radio.visionaustralia.org/",
+      "sourcePage": "https://radio.visionaustralia.org/",
+      "state": "Victoria",
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "metro",
+      "geographySourcePage": "https://radio.visionaustralia.org/",
+      "lat": null,
+      "lon": null,
+      "languages": ["english"],
+      "tags": ["community radio", "reading radio", "accessibility"],
+      "aliases": ["Vision Australia Radio Melbourne"],
+      "playbackKind": "live",
+      "liveOnly": true,
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:05:25.696057+00:00",
+      "credit": "Vision Australia Radio Melbourne / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:05:25.696057+00:00",
+        "status": 200,
+        "finalUrl": "https://23093.live.streamtheworld.com:443/3RPHAAC.aac",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff152802d5ffc211a94cdbe91031231",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Vision Australia Radio",
+        "officialStreamEvidence": "Official website Melbourne live-listen option links player.listenlive.co/65771, whose configuration identifies the 3RPH mount.",
+        "officialStreamSourcePage": "https://player.listenlive.co/65771",
+        "geographicEvidence": "Official website labels this regional live player Melbourne; other Vision Australia regional feeds are excluded.",
+        "method": "Official broadcaster source and geography reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. No audible programme identity check.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-9acabc0d5152d076e1fd",
+      "name": "Sunbury Radio 99.3FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://playerservices.streamtheworld.com/api/livestream-redirect/3NRGAAC.aac?dist=3nrgwebsite",
+      "codec": "AAC",
+      "bitrate": null,
+      "homepage": "https://www.sunburyradio.com.au/",
+      "sourcePage": "https://www.sunburyradio.com.au/",
+      "state": "Victoria",
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "suburban",
+      "geographySourcePage": "https://www.sunburyradio.com.au/",
+      "lat": null,
+      "lon": null,
+      "languages": ["english"],
+      "tags": ["community radio", "local news"],
+      "aliases": ["Sunbury Radio 99.3FM"],
+      "playbackKind": "live",
+      "liveOnly": true,
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:05:25.337879+00:00",
+      "credit": "Sunbury Radio 99.3FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:05:25.337879+00:00",
+        "status": 200,
+        "finalUrl": "https://28853.live.streamtheworld.com:443/3NRGAAC.aac?dist=3nrgwebsite",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff152802fdffc211a94c5b197014108",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Sunbury Radio - Local Community Radio for Sunbury &amp; Melbourne&#039;s North West",
+        "officialStreamEvidence": "Exact stream URL listed in official stationnow API.",
+        "officialStreamSourcePage": "https://www.sunburyradio.com.au/wp-json/metaradio/v1/stationnow/?station=1",
+        "geographicEvidence": "Official homepage title identifies service to Sunbury and Melbourne north west.",
+        "method": "Official broadcaster source and geography reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. No audible programme identity check.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-f739dda0f2754581e4b2",
+      "name": "Yarra Valley FM 99.1",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://live.yarravalleyfm.org.au:8443/stream",
+      "codec": "MP3",
+      "bitrate": null,
+      "homepage": "https://yarravalleyfm.org.au/",
+      "sourcePage": "https://yarravalleyfm.org.au/",
+      "state": "Victoria",
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "suburban",
+      "geographySourcePage": "https://yarravalleyfm.org.au/",
+      "lat": null,
+      "lon": null,
+      "languages": ["english"],
+      "tags": ["community radio", "local news"],
+      "aliases": ["Yarra Valley FM 99.1"],
+      "playbackKind": "live",
+      "liveOnly": true,
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:05:10.844002+00:00",
+      "credit": "Yarra Valley FM 99.1 / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:05:10.844002+00:00",
+        "status": 200,
+        "finalUrl": "https://live.yarravalleyfm.org.au:8443/stream",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fd59614a251ba36420206d7fa425aa95",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Welcome to Yarra Valley FM | Yarra Valley FM",
+        "officialStreamEvidence": "Exact stream URL published on official /listen.html live-simulcast page.",
+        "officialStreamSourcePage": "https://yarravalleyfm.org.au/listen.html",
+        "geographicEvidence": "Official homepage identifies Healesville studios and service to Yarra Ranges, Cardinia and eastern Melbourne metropolitan areas.",
+        "method": "Official broadcaster source and geography reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. No audible programme identity check.",
+        "audiblePlaybackVerified": false
+      },
+      "locality": "Healesville"
+    },
+    {
+      "id": "au-b019c5bd0030f1bd1f49",
+      "name": "3MBS Digital",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://playerservices.streamtheworld.com/api/livestream-redirect/3MBS_DAB.mp3",
+      "codec": "MP3",
+      "bitrate": null,
+      "homepage": "https://www.3mbs.org.au/",
+      "sourcePage": "https://www.3mbs.org.au/",
+      "state": "Victoria",
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "metro",
+      "geographySourcePage": "https://www.3mbs.org.au/",
+      "lat": null,
+      "lon": null,
+      "languages": ["english"],
+      "tags": ["community radio", "classical", "jazz"],
+      "aliases": ["3MBS Digital"],
+      "playbackKind": "live",
+      "liveOnly": true,
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:05:23.850318+00:00",
+      "credit": "3MBS Digital / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:05:23.850318+00:00",
+        "status": 200,
+        "finalUrl": "https://23203.live.streamtheworld.com:443/3MBS_DAB.mp3",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fffb92640000034b36d7eb0c1bb850e3",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "3MBS Melbourne 103.5FM - Home",
+        "officialStreamEvidence": "Exact 3MBS_DAB.mp3 URL in official page JavaScript switch for the DAB live channel; FM variant was not added.",
+        "officialStreamSourcePage": "https://www.3mbs.org.au/_next/static/chunks/pages/%5B%5B...slug%5D%5D-c098fc4014802ff7.js",
+        "geographicEvidence": "Official broadcaster site is branded 3MBS Melbourne.",
+        "method": "Official broadcaster source and geography reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. No audible programme identity check.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-cc8441434e5001792095",
+      "name": "GOLD104.3 Melbourne",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://ais-arn.streamguys1.com/au_004/playlist.m3u8?clienttype=web&iheart=true",
+      "codec": "AAC",
+      "bitrate": 48,
+      "homepage": "https://www.gold1043.com.au/",
+      "sourcePage": "https://www.gold1043.com.au/",
+      "state": "Victoria",
+      "lat": null,
+      "lon": null,
+      "languages": ["english"],
+      "tags": ["commercial radio", "melbourne", "classic hits"],
+      "aliases": ["GOLD104.3", "Gold 104.3 FM"],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "verifiedAt": "2026-09-17T21:00:26.542759Z",
+      "credit": "GOLD104.3 Melbourne / official broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:00:26.542759Z",
+        "status": 200,
+        "finalUrl": "https://27263.live.streamtheworld.com:443/ARN_GOLD1043AAC/HLS/playlist.m3u8",
+        "contentType": "application/vnd.apple.mpegurl",
+        "contentLength": "193",
+        "mediaUrl": "https://27263.live.streamtheworld.com:443/ARN_GOLD1043AAC/HLS/d3dea322-bbe3-4f06-af2f-98144f252d69/0/playlist.m3u8",
+        "mediaSequenceBefore": 1,
+        "endList": false,
+        "segmentUrl": "https://27263.live.streamtheworld.com:443/ARN_GOLD1043AAC/HLS/d3dea322-bbe3-4f06-af2f-98144f252d69/0/5.aac",
+        "segmentStatus": 200,
+        "segmentContentType": "audio/aacp",
+        "segmentBytesSampled": 16384,
+        "segmentFirstBytes": "49443304000000000a4d505249560000",
+        "mediaSequenceAfter": 5,
+        "advancingLiveSegments": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "GOLD104.3 Melbourne",
+        "officialStreamEvidence": "Exact streamUrl embedded in broadcaster homepage player configuration.",
+        "geographicEvidence": "Broadcaster homepage title explicitly identifies Melbourne.",
+        "method": "Official broadcaster homepage player URL; HLS master and media playlists fetched, AAC segment sampled, media sequence advanced on repeated media-playlist GET with no ENDLIST. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      },
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "metro",
+      "geographySourcePage": "https://www.gold1043.com.au/",
+      "liveOnly": true
+    },
+    {
+      "id": "au-ddcaaea88ae64a6a6bc0",
+      "name": "KIIS 1011 Melbourne",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://ais-arn.streamguys1.com/au_001/playlist.m3u8?clienttype=web&iheart=true",
+      "codec": "AAC",
+      "bitrate": 48,
+      "homepage": "https://www.kiis1011.com.au/",
+      "sourcePage": "https://www.kiis1011.com.au/",
+      "state": "Victoria",
+      "lat": null,
+      "lon": null,
+      "languages": ["english"],
+      "tags": ["commercial radio", "melbourne", "pop"],
+      "aliases": ["KIIS 1011", "KIIS 101.1 Melbourne"],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "verifiedAt": "2026-09-17T21:00:26.543795Z",
+      "credit": "KIIS 1011 Melbourne / official broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:00:26.543795Z",
+        "status": 200,
+        "finalUrl": "https://14533.live.streamtheworld.com:443/ARN_KIIS1011AAC/HLS/playlist.m3u8",
+        "contentType": "application/vnd.apple.mpegurl",
+        "contentLength": "193",
+        "mediaUrl": "https://14533.live.streamtheworld.com:443/ARN_KIIS1011AAC/HLS/16cc66b8-404f-4a16-9eda-831966335c4a/0/playlist.m3u8",
+        "mediaSequenceBefore": 1,
+        "endList": false,
+        "segmentUrl": "https://14533.live.streamtheworld.com:443/ARN_KIIS1011AAC/HLS/16cc66b8-404f-4a16-9eda-831966335c4a/0/4.aac",
+        "segmentStatus": 200,
+        "segmentContentType": "audio/aacp",
+        "segmentBytesSampled": 16384,
+        "segmentFirstBytes": "49443304000000000a35505249560000",
+        "mediaSequenceAfter": 4,
+        "advancingLiveSegments": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "KIIS 1011 Melbourne",
+        "officialStreamEvidence": "Exact streamUrl embedded in broadcaster homepage player configuration.",
+        "geographicEvidence": "Broadcaster homepage title explicitly identifies Melbourne.",
+        "method": "Official broadcaster homepage player URL; HLS master and media playlists fetched, AAC segment sampled, media sequence advanced on repeated media-playlist GET with no ENDLIST. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      },
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "metro",
+      "geographySourcePage": "https://www.kiis1011.com.au/",
+      "liveOnly": true
+    },
+    {
+      "id": "au-f2ecbf248cc9ed97c9ac",
+      "name": "3MP 1377 Melbourne",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://legacy.scahw.com.au/3mp_32",
+      "codec": "AAC",
+      "bitrate": 32,
+      "homepage": "https://3mp.com.au/",
+      "sourcePage": "https://3mp.com.au/",
+      "state": "Victoria",
+      "lat": null,
+      "lon": null,
+      "languages": ["english"],
+      "tags": ["commercial radio", "melbourne", "easy listening"],
+      "aliases": ["3MP"],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:03:07.460415Z",
+      "credit": "3MP / official broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:03:07.460415Z",
+        "status": 200,
+        "finalUrl": "https://sa46.scastream.com.au/3mp_32?sca3xx=1",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 8192,
+        "firstBytes": "fff958401a600001303428ac745b2202",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "1377 3MP",
+        "officialStreamEvidence": "Exact streamUrl embedded as domainInfo.streamingLink in official homepage.",
+        "geographicEvidence": "Homepage describes Melbourne's Easy Music - 1377 AM & DAB+ 3MP.",
+        "method": "Exact official homepage streamingLink; bounded progressive audio GET returned AAC bytes without a finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      },
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "metro",
+      "geographySourcePage": "https://3mp.com.au/",
+      "liveOnly": true
+    },
+    {
+      "id": "au-d11e371a5488dff9f4e1",
+      "name": "Magic 1278 Melbourne",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://legacy.scahw.com.au/3ee_32",
+      "codec": "AAC",
+      "bitrate": 32,
+      "homepage": "https://www.magic1278.com.au/",
+      "sourcePage": "https://www.magic1278.com.au/",
+      "state": "Victoria",
+      "lat": null,
+      "lon": null,
+      "languages": ["english"],
+      "tags": ["commercial radio", "melbourne", "classic hits"],
+      "aliases": ["Magic 1278"],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T21:03:07.461188Z",
+      "credit": "Magic 1278 / official broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T21:03:07.461188Z",
+        "status": 200,
+        "finalUrl": "https://sa46.scastream.com.au/3ee_32?sca3xx=1",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 8192,
+        "firstBytes": "fff9584015c000014c342db2d80a10d2",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Magic 1278",
+        "officialStreamEvidence": "Exact streamUrl embedded as domainInfo.streamingLink in official homepage.",
+        "geographicEvidence": "Official Melbourne-local programme text (Magic Mandy with the latest on Melbourne's roads; Melbourne's friendliest brekky host) in station homepage.",
+        "method": "Exact official homepage streamingLink; bounded progressive audio GET returned AAC bytes without a finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      },
+      "city": "Melbourne",
+      "region": "Greater Melbourne",
+      "metroArea": "melbourne",
+      "geographicScope": "metro",
+      "geographySourcePage": "https://www.magic1278.com.au/",
+      "liveOnly": true
     }
   ],
-  "excludedStationIds": [
-    "36adafc9-18f9-40af-a3ad-e608e313786c"
-  ],
+  "excludedStationIds": ["36adafc9-18f9-40af-a3ad-e608e313786c"],
   "excludedStreamUrls": [
     "https://dn721903.ca.archive.org/0/items/australian-forest-sounds/08%20Calm%20creek%20flowing%2C%20frogs%20and%20birds%20_Dereel%20VIC.mp3"
   ],

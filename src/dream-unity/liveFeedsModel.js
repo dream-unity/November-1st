@@ -125,6 +125,17 @@ export function normalizeFeedDirectory(kind, payload) {
         country: text(raw.country, 80),
         countryCode: text(raw.countryCode, 2),
         state: text(raw.state, 80),
+        city: text(raw.city, 100),
+        locality: text(raw.locality, 100),
+        region: text(raw.region, 100),
+        metroArea: raw.metroArea === 'melbourne' ? 'melbourne' : '',
+        metroMatch:
+          raw.countryCode === 'AU' &&
+          ['curated', 'community-metadata'].includes(raw.metroMatch)
+            ? raw.metroMatch
+            : '',
+        geographicScope: text(raw.geographicScope, 40),
+        geographySourcePage: publicRadioHttpsUrl(raw.geographySourcePage),
         tags: Array.isArray(raw.tags)
           ? raw.tags
               .map((value) => text(value, 80))
@@ -160,6 +171,13 @@ export function normalizeFeedDirectory(kind, payload) {
         countryName: country.value === '__unknown__' ? '' : country.name,
         city: text(raw.city, 100),
         state: text(raw.state, 80),
+        locality: text(raw.locality, 100),
+        region: text(raw.region, 100),
+        metroArea:
+          country.code === 'AU' &&
+          (raw.metroArea === 'melbourne' || raw.city === 'Melbourne')
+            ? 'melbourne'
+            : '',
         provider: text(raw.provider, 100),
         license: text(raw.license, 500),
         credit: text(raw.credit, 500),
@@ -213,6 +231,13 @@ export function normalizePublisherCameras(records) {
         name: text(row.name),
         city: text(row.city),
         state: text(row.state, 80),
+        locality: text(row.locality, 100),
+        region: text(row.region, 100),
+        metroArea:
+          row.country === 'AU' &&
+          (row.metroArea === 'melbourne' || row.city === 'Melbourne')
+            ? 'melbourne'
+            : '',
         country: row.country,
         countryName: text(row.countryName, 80),
         sourcePage,
@@ -230,6 +255,7 @@ export function filterFeedDirectory(
   region = '',
   mediaKind = 'all',
   country = '',
+  metroArea = '',
 ) {
   // Ukrainian names can contain decomposed letters and several apostrophe
   // forms. Match equivalent text without removing meaningful Cyrillic letters.
@@ -251,6 +277,7 @@ export function filterFeedDirectory(
     const itemRegion = item.feedType ? item.city : item.country;
     if (region && (itemRegion || '') !== region) return false;
     if (country && cameraCountry(item).value !== country) return false;
+    if (metroArea && item.metroArea !== metroArea) return false;
     const haystack = searchable(
       [
         item.name,
@@ -259,6 +286,9 @@ export function filterFeedDirectory(
         item.countryName,
         item.state,
         item.city,
+        item.locality,
+        item.region,
+        item.metroArea === 'melbourne' ? 'Melbourne Greater Melbourne' : '',
         item.provider,
         ...(item.tags || []),
         ...(item.languages || []),
@@ -273,7 +303,7 @@ export function filterFeedDirectory(
 
 export async function readFeedDirectory(
   kind,
-  { signal, country = '', fetchImpl = globalThis.fetch } = {},
+  { signal, country = '', city = '', fetchImpl = globalThis.fetch } = {},
 ) {
   if (!['radio', 'cctv'].includes(kind)) throw new Error('Unknown directory.');
   if (
@@ -281,12 +311,14 @@ export async function readFeedDirectory(
     (kind !== 'radio' || !Object.hasOwn(RADIO_COUNTRY_DIRECTORIES, country))
   )
     throw new Error('Unsupported country directory.');
+  if (city && (kind !== 'radio' || country !== 'AU' || city !== 'melbourne'))
+    throw new Error('Unsupported city directory.');
   const requestSignal = AbortSignal.any([
     ...(signal ? [signal] : []),
     AbortSignal.timeout(35_000),
   ]);
   const response = await fetchImpl(
-    `/api/${kind}/${kind === 'radio' ? 'stations' : 'sources'}${country ? `?country=${country}` : ''}`,
+    `/api/${kind}/${kind === 'radio' ? 'stations' : 'sources'}${country ? `?country=${country}` : ''}${city ? `&city=${city}` : ''}`,
     { signal: requestSignal, cache: 'no-store', credentials: 'same-origin' },
   );
   if (!response.ok)

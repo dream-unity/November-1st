@@ -30,6 +30,11 @@ test('hosted Australia radio reads the immutable source archive after cwd moves 
         playbackKind: 'live',
         verifiedAt: '2026-09-17T00:00:00Z',
         languages: ['English'],
+        city: 'Melbourne',
+        metroArea: 'melbourne',
+        locality: 'Brunswick East',
+        geographicScope: 'suburban',
+        geographySourcePage: 'https://example.org/about',
       },
     ]),
   );
@@ -75,6 +80,17 @@ test('hosted Australia radio reads the immutable source archive after cwd moves 
   assert.equal(result.stations[0].liveOnly, true);
   assert.equal(result.stations[0].lat, null);
   assert.equal(result.stations[0].lon, null);
+  const metroResponse = await fetch(
+    `${origin}/api/radio/stations?country=AU&city=melbourne&path=radio%2Fstations`,
+  );
+  assert.equal(metroResponse.status, 200);
+  const metro = await metroResponse.json();
+  assert.equal(metro.stations.length, 1);
+  assert.equal(metro.stations[0].locality, 'Brunswick East');
+  assert.equal(metro.stations[0].metroMatch, 'curated');
+  assert.equal(metro.coverage.metroArea, 'melbourne');
+  assert.equal(metro.coverage.countryStationCount, 1);
+  assert.equal(metro.updatedAt, result.updatedAt);
   const click = await fetch(
     `${origin}/api/radio/click/${result.stations[0].id}`,
     { method: 'POST' },

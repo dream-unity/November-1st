@@ -11,6 +11,7 @@ import {
   createAustraliaRadioDirectory,
   loadAustraliaRadioSources,
   loadAustraliaRadioExclusions,
+  melbourneRadioCatalog,
 } from '../radioAustralia.js';
 import {
   normalizeRadioBrowserStation,
@@ -489,6 +490,7 @@ export function createRadioProxyMiddleware({
         return;
       }
       const country = requestUrl.searchParams.get('country');
+      const city = requestUrl.searchParams.get('city');
       if (
         requestUrl.searchParams.getAll('country').length > 1 ||
         (country !== null && !countryDirectories.has(country.toUpperCase()))
@@ -499,10 +501,25 @@ export function createRadioProxyMiddleware({
         });
         return;
       }
+      if (
+        requestUrl.searchParams.getAll('city').length > 1 ||
+        (city !== null &&
+          (country?.toUpperCase() !== 'AU' ||
+            city.toLowerCase() !== 'melbourne'))
+      ) {
+        sendJson(res, 400, {
+          error:
+            'The city directory currently supports country=AU&city=melbourne; omit city for the complete country directory.',
+        });
+        return;
+      }
       try {
-        const catalog = country
+        const countryCatalog = country
           ? await countryDirectories.get(country.toUpperCase()).getCatalog()
           : await getCatalog();
+        const catalog = city
+          ? melbourneRadioCatalog(countryCatalog)
+          : countryCatalog;
         sendJson(res, 200, {
           stations: catalog.stations,
           updatedAt: catalog.updatedAt,

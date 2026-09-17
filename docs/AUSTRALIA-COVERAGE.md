@@ -1,5 +1,7 @@
 # Australian live camera and radio coverage
 
+This is the Australia-wide audit snapshot. See [Melbourne expansion](MELBOURNE-COVERAGE.md) for subsequent additions and current Melbourne coverage.
+
 Source audit date: **17 September 2026**. Source evidence, catalogue counts and deployed playback checks are recorded separately below. A listed feed is not a guarantee of current availability.
 
 ## Camera inventory

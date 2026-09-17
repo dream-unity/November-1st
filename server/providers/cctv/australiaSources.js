@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { normalizeGlobalCctvSources } from './globalSources.js';
-import { safePublicSourcePage } from './normalize.js';
+import { normalizeCctvGeography, safePublicSourcePage } from './normalize.js';
 
 const STATES = new Set([
   'Australian Capital Territory',
@@ -14,6 +14,30 @@ const STATES = new Set([
   'Western Australia',
   'External territories',
 ]);
+
+// Exact owner-page/stream pairs reviewed for public live playback. New hosts or
+// paths require publisher verification; the HLS relay confines child resources.
+const REVIEWED_HLS = new Map([
+  [
+    'https://prideshares.intjbilling.com/live/stream.m3u8',
+    'https://spotswoodtrailers.com.au/',
+  ],
+]);
+
+function approvedAustraliaHls(row) {
+  try {
+    const url = new URL(row.url);
+    return !url.username &&
+      !url.password &&
+      !url.search &&
+      !url.hash &&
+      REVIEWED_HLS.get(url.href) === safePublicSourcePage(row.sourcePage)
+      ? url.href
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 /** Reviewed public players only. No image, clip, arbitrary iframe, or private camera. */
 export function normalizeAustraliaCctvSources(records) {
@@ -44,11 +68,30 @@ export function normalizeAustraliaCctvSources(records) {
         row.locationAccuracy,
       ].every((value) => typeof value === 'string' && value.trim().length > 0),
   );
-  const sources = normalizeGlobalCctvSources(valid).map((row) => ({
-    ...row,
-    countryName: 'Australia',
-    snapshotUrl: null,
-  }));
+  const ids = new Set();
+  const media = new Set();
+  const sources = valid.flatMap((row) => {
+    const hlsUrl = row.feedType === 'hls' ? approvedAustraliaHls(row) : null;
+    const camera = hlsUrl
+      ? {
+          ...row,
+          url: hlsUrl,
+          embedUrl: null,
+          sourcePage: safePublicSourcePage(row.sourcePage),
+          provider: row.credit,
+          sourceKind: 'public-owner-live',
+          headingConfidence: 'low',
+          poseSource: undefined,
+          license:
+            row.rights ||
+            'Public owner-published live stream; footage remains the publisher’s property.',
+        }
+      : normalizeGlobalCctvSources([row])[0];
+    if (!camera || ids.has(camera.id) || media.has(camera.url)) return [];
+    ids.add(camera.id);
+    media.add(camera.url);
+    return [{ ...camera, countryName: 'Australia', snapshotUrl: null }];
+  });
   // If a deployment lowers the catalogue cap, retain a spread across states.
   const states = new Map();
   for (const row of sources) {
@@ -117,6 +160,7 @@ export function loadAustraliaPublisherCameras({
         id: row.id,
         name: row.name,
         city: row.city,
+        ...normalizeCctvGeography(row),
         state: row.state,
         country: 'AU',
         countryName: 'Australia',

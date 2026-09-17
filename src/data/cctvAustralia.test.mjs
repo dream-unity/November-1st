@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import {
   loadAustraliaCctvSources,
@@ -12,6 +13,7 @@ import {
 import { loadGlobalCctvSources } from '../../server/providers/cctv/globalSources.js';
 import { normalizeSourceItem } from '../../server/providers/cctv/normalize.js';
 import { allocateSourceCap } from '../../server/providers/cctv/cap.js';
+import { cctvProxy } from '../../server/providers/cctv.js';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const sample = {
@@ -33,6 +35,157 @@ const sample = {
   verification: 'Public owner stream status is live and embeddable.',
   locationAccuracy: 'Approximate scene location; not a surveyed camera pose',
 };
+const melbourneHls = {
+  ...sample,
+  id: 'au-spotswood-owner-live',
+  name: 'Spotswood Trailers — public yard camera',
+  city: 'Spotswood',
+  state: 'Victoria',
+  metroArea: 'melbourne',
+  locality: 'Spotswood',
+  region: 'Greater Melbourne',
+  lat: -37.826125,
+  lon: 144.877228,
+  feedType: 'hls',
+  url: 'https://prideshares.intjbilling.com/live/stream.m3u8',
+  embedUrl: null,
+  sourcePage: 'https://spotswoodtrailers.com.au/',
+};
+
+test('Melbourne geography is explicit, sanitized and retained for suburban scenes', () => {
+  const camera = normalizeSourceItem({
+    ...melbourneHls,
+    locality: ' Spotswood\n ',
+    region: ' Greater\t Melbourne ',
+  });
+  assert.equal(camera.metroArea, 'melbourne');
+  assert.equal(camera.locality, 'Spotswood');
+  assert.equal(camera.region, 'Greater Melbourne');
+  for (const patch of [
+    { metroArea: undefined },
+    { metroArea: 'Melbourne' },
+    { metroArea: 'melbourne\n' },
+    { country: 'UA' },
+  ])
+    assert.equal(
+      normalizeSourceItem({ ...melbourneHls, ...patch }).metroArea,
+      '',
+    );
+  assert.equal(
+    normalizeSourceItem({ ...melbourneHls, locality: 'x'.repeat(500) }).locality
+      .length,
+    100,
+  );
+  assert.equal(normalizeSourceItem({ ...melbourneHls, region: {} }).region, '');
+});
+
+test('Australian HLS admission requires the exact reviewed owner and stream pair', () => {
+  const [accepted] = normalizeAustraliaCctvSources([melbourneHls]);
+  assert.equal(accepted.url, melbourneHls.url);
+  assert.equal(accepted.feedType, 'hls');
+  assert.equal(accepted.embedUrl, null);
+  assert.equal(accepted.snapshotUrl, null);
+  assert.equal(accepted.sourceKind, 'public-owner-live');
+  assert.equal(accepted.liveOnly, true);
+  for (const patch of [
+    { url: 'https://prideshares.intjbilling.com/live/other.m3u8' },
+    { url: 'https://prideshares.intjbilling.com/private/stream.m3u8' },
+    {
+      url: 'https://prideshares.intjbilling.com.evil.example/live/stream.m3u8',
+    },
+    { url: 'http://prideshares.intjbilling.com/live/stream.m3u8' },
+    { url: `${melbourneHls.url}?archive=1` },
+    { url: `${melbourneHls.url}#archive` },
+    { url: 'https://user:secret@prideshares.intjbilling.com/live/stream.m3u8' },
+    { sourcePage: 'https://example.org/' },
+    { sourcePage: 'https://spotswoodtrailers.com.au/unreviewed' },
+    { liveOnly: false },
+    { playbackKind: 'clip' },
+    { verification: '' },
+    { feedType: 'mp4' },
+  ])
+    assert.deepEqual(
+      normalizeAustraliaCctvSources([{ ...melbourneHls, ...patch }]),
+      [],
+      JSON.stringify(patch),
+    );
+  assert.equal(
+    normalizeAustraliaCctvSources([
+      melbourneHls,
+      { ...melbourneHls, id: 'au-duplicate-live' },
+    ]).length,
+    1,
+  );
+});
+
+test('Melbourne source API retains metro metadata and live HLS cannot fall back to archives or frames', async (t) => {
+  const sourceRoot = await mkdtemp(
+    path.join(os.tmpdir(), 'gev-melbourne-hls-'),
+  );
+  const configured = {
+    CCTV_SOURCES_FILE: path.join(sourceRoot, 'absent.json'),
+    CCTV_SOURCES_JSON: JSON.stringify(
+      normalizeAustraliaCctvSources([melbourneHls]),
+    ),
+    CCTV_PREFER_AUSTIN: '0',
+    CCTV_FORCE_AUSTIN: '0',
+  };
+  const previous = Object.fromEntries(
+    Object.keys(configured).map((key) => [key, process.env[key]]),
+  );
+  Object.assign(process.env, configured);
+  const request = globalThis.fetch;
+  let ended = false;
+  t.mock.method(globalThis, 'fetch', async (url) => {
+    assert.equal(url, melbourneHls.url);
+    return new Response(
+      '#EXTM3U\n#EXT-X-TARGETDURATION:3\n#EXT-X-MEDIA-SEQUENCE:20\n#EXTINF:2.4,\nstream20.ts\n' +
+        (ended ? '#EXT-X-ENDLIST\n' : ''),
+      { headers: { 'Content-Type': 'application/vnd.apple.mpegurl' } },
+    );
+  });
+  let middleware;
+  cctvProxy({ sourceRoot }).configureServer({
+    middlewares: {
+      use(_path, callback) {
+        middleware = callback;
+      },
+    },
+  });
+  const server = createServer((req, res) => middleware(req, res));
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(async () => {
+    server.closeAllConnections();
+    await new Promise((resolve) => server.close(resolve));
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    await rm(sourceRoot, { recursive: true, force: true });
+  });
+  const origin = `http://127.0.0.1:${server.address().port}`;
+  const listed = await (await request(`${origin}/sources`)).json();
+  assert.equal(listed.sources[0].metroArea, 'melbourne');
+  assert.equal(listed.sources[0].locality, 'Spotswood');
+  assert.equal(listed.sources[0].region, 'Greater Melbourne');
+  const info = await (
+    await request(`${origin}/stream/${melbourneHls.id}`)
+  ).json();
+  assert.equal(info.frameUrl, null);
+  assert.equal(info.liveOnly, true);
+  const frame = await request(`${origin}/frame/${melbourneHls.id}`);
+  assert.equal(frame.status, 409);
+  const live = await request(`${origin}/media/${melbourneHls.id}`);
+  assert.equal(live.status, 200);
+  assert.match(
+    await live.text(),
+    /\/api\/cctv\/media\/au-spotswood-owner-live/,
+  );
+  ended = true;
+  const archive = await request(`${origin}/media/${melbourneHls.id}`);
+  assert.equal(archive.status, 410);
+  assert.equal((await archive.json()).code, 'CCTV_BROADCAST_ENDED');
+});
 
 test('Australian shipped cameras retain strict live policy, state and provenance without duplicate global media', async () => {
   const raw = JSON.parse(
@@ -162,7 +315,13 @@ test('publisher-only cameras require explicit live-only provenance and deduplica
     sourceRoot,
     'config/cctv_sources.australia-publisher.json',
   );
-  const publisher = { ...sample, access: 'publisher-only' };
+  const publisher = {
+    ...sample,
+    access: 'publisher-only',
+    metroArea: 'melbourne',
+    locality: ' Spotswood\n',
+    region: ' Greater\tMelbourne ',
+  };
   const rejected = [
     { liveOnly: false },
     { liveOnly: undefined },
@@ -193,6 +352,9 @@ test('publisher-only cameras require explicit live-only provenance and deduplica
   assert.equal(loaded[0].sourcePage, publisher.sourcePage);
   assert.equal(loaded[0].id, publisher.id);
   assert.equal(loaded[0].access, 'publisher-only');
+  assert.equal(loaded[0].metroArea, 'melbourne');
+  assert.equal(loaded[0].locality, 'Spotswood');
+  assert.equal(loaded[0].region, 'Greater Melbourne');
   assert.equal(
     loaded[0].embedUrl,
     undefined,

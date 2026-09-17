@@ -291,111 +291,110 @@ for (const [countryCode, countryName, sourceKind] of [
   ['UA', 'Ukraine', 'curated-ukraine'],
   ['AU', 'Australia', 'curated-australia'],
 ]) {
-test(`${countryName} deep links load the country catalogue and location-free stations still play without a false globe marker`, async () => {
-  const calls = [];
-  const ukrainian = {
-    ...station,
-    name: 'Українське радіо',
-    lat: null,
-    lon: null,
-    country: countryName,
-    countryCode,
-    sourceKind,
-  };
-  const f = fixture(async (url) => {
-    calls.push(url);
-    return Response.json({ stations: [ukrainian] });
-  });
-  globalThis.location.search = `?feed=radio&country=${countryCode}`;
-  let globeCalls = 0;
-  const feeds = installLiveFeeds({
-    openOnGlobe() {
-      globeCalls++;
-    },
-  });
-  try {
-    feeds.open('radio');
-    await flush();
-    assert.deepEqual(calls, [`/api/radio/stations?country=${countryCode}`]);
-    const country = find(
-      f.doc,
-      (node) => node.getAttribute('aria-label') === 'Filter by country',
-    );
-    assert.equal(country.value, countryName);
-    const list = find(f.doc, (node) => node.className === 'du-feeds-list');
-    click(
-      find(f.doc, (node) => node.dataset.feedId === station.id),
-      list,
-    );
-    await flush();
-    assert.match(f.doc.body.textContent, /Playing broadcaster audio/);
-    assert.match(f.doc.body.textContent, /no verified map location/);
-    assert.match(f.doc.body.textContent, /broadcaster’s published source/);
-    assert.equal(
-      find(f.doc, (node) => node.textContent === 'Globe location unavailable')
-        .disabled,
-      true,
-    );
-    assert.equal(globeCalls, 0);
-    feeds.destroy();
-    assert.equal(f.audio[0].paused, true);
-  } finally {
-    feeds.destroy();
-    f.restore();
-  }
-});
-
-test(`${countryName} remains discoverable when global results omit it and its shortcut retries a failed country request`, async () => {
-  const calls = [];
-  let uaRequests = 0;
-  const ukrainian = {
-    ...station,
-    id: '22345678-1234-1234-1234-123456789012',
-    name: 'Ukraine radio',
-    country: countryName,
-    countryCode,
-  };
-  const f = fixture(async (url) => {
-    calls.push(url);
-    if (url.includes(`?country=${countryCode}`)) {
-      uaRequests++;
-      return uaRequests === 1
-        ? new Response('offline', { status: 503 })
-        : Response.json({ stations: [ukrainian] });
+  test(`${countryName} deep links load the country catalogue and location-free stations still play without a false globe marker`, async () => {
+    const calls = [];
+    const ukrainian = {
+      ...station,
+      name: 'Українське радіо',
+      lat: null,
+      lon: null,
+      country: countryName,
+      countryCode,
+      sourceKind,
+    };
+    const f = fixture(async (url) => {
+      calls.push(url);
+      return Response.json({ stations: [ukrainian] });
+    });
+    globalThis.location.search = `?feed=radio&country=${countryCode}`;
+    let globeCalls = 0;
+    const feeds = installLiveFeeds({
+      openOnGlobe() {
+        globeCalls++;
+      },
+    });
+    try {
+      feeds.open('radio');
+      await flush();
+      assert.deepEqual(calls, [`/api/radio/stations?country=${countryCode}`]);
+      const country = find(
+        f.doc,
+        (node) => node.getAttribute('aria-label') === 'Filter by country',
+      );
+      assert.equal(country.value, countryName);
+      const list = find(f.doc, (node) => node.className === 'du-feeds-list');
+      click(
+        find(f.doc, (node) => node.dataset.feedId === station.id),
+        list,
+      );
+      await flush();
+      assert.match(f.doc.body.textContent, /Playing broadcaster audio/);
+      assert.match(f.doc.body.textContent, /no verified map location/);
+      assert.match(f.doc.body.textContent, /broadcaster’s published source/);
+      assert.equal(
+        find(f.doc, (node) => node.textContent === 'Globe location unavailable')
+          .disabled,
+        true,
+      );
+      assert.equal(globeCalls, 0);
+      feeds.destroy();
+      assert.equal(f.audio[0].paused, true);
+    } finally {
+      feeds.destroy();
+      f.restore();
     }
-    return Response.json({ stations: [station] });
   });
-  const feeds = installLiveFeeds();
-  try {
-    feeds.open('radio');
-    await flush();
-    const country = find(
-      f.doc,
-      (node) => node.getAttribute('aria-label') === 'Filter by country',
-    );
-    assert.ok(country.options.some((option) => option.value === countryName));
-    const shortcut = find(
-      f.doc,
-      (node) => node.textContent === `${countryName} stations`,
-    );
-    click(shortcut);
-    await flush();
-    assert.match(f.doc.body.textContent, /HTTP 503/);
-    click(shortcut);
-    await flush();
-    assert.equal(uaRequests, 2);
-    assert.ok(find(f.doc, (node) => node.dataset.feedId === ukrainian.id));
-    country.value = 'Example';
-    country.dispatchEvent(new Event('change'));
-    await flush();
-    assert.equal(calls.at(-1), '/api/radio/stations');
-    assert.ok(find(f.doc, (node) => node.dataset.feedId === station.id));
-  } finally {
-    feeds.destroy();
-    f.restore();
-  }
-});
 
+  test(`${countryName} remains discoverable when global results omit it and its shortcut retries a failed country request`, async () => {
+    const calls = [];
+    let uaRequests = 0;
+    const ukrainian = {
+      ...station,
+      id: '22345678-1234-1234-1234-123456789012',
+      name: 'Ukraine radio',
+      country: countryName,
+      countryCode,
+    };
+    const f = fixture(async (url) => {
+      calls.push(url);
+      if (url.includes(`?country=${countryCode}`)) {
+        uaRequests++;
+        return uaRequests === 1
+          ? new Response('offline', { status: 503 })
+          : Response.json({ stations: [ukrainian] });
+      }
+      return Response.json({ stations: [station] });
+    });
+    const feeds = installLiveFeeds();
+    try {
+      feeds.open('radio');
+      await flush();
+      const country = find(
+        f.doc,
+        (node) => node.getAttribute('aria-label') === 'Filter by country',
+      );
+      assert.ok(country.options.some((option) => option.value === countryName));
+      const shortcut = find(
+        f.doc,
+        (node) => node.textContent === `${countryName} stations`,
+      );
+      click(shortcut);
+      await flush();
+      assert.match(f.doc.body.textContent, /HTTP 503/);
+      click(shortcut);
+      await flush();
+      assert.equal(uaRequests, 2);
+      assert.ok(find(f.doc, (node) => node.dataset.feedId === ukrainian.id));
+      country.value = 'Example';
+      country.dispatchEvent(new Event('change'));
+      await flush();
+      assert.equal(calls.at(-1), '/api/radio/stations');
+      assert.ok(find(f.doc, (node) => node.dataset.feedId === station.id));
+    } finally {
+      feeds.destroy();
+      f.restore();
+    }
+  });
 }
 
 test('changing country while a request is pending aborts it and late country results cannot replace the chosen directory', async () => {
@@ -437,39 +436,369 @@ test('changing country while a request is pending aborts it and late country res
 
 test('publisher-only cameras remain links, filter by city, and never inflate playable-camera counts', async () => {
   const publisher = {
-    id: 'au-publisher-view', name: 'River view', country: 'AU', countryName: 'Australia',
-    state: 'South Australia', city: 'Adelaide', access: 'publisher-only',
-    sourcePage: 'https://www.cityofadelaide.com.au/webcams/river-torrens-and-elder-park/',
+    id: 'au-publisher-view',
+    name: 'River view',
+    country: 'AU',
+    countryName: 'Australia',
+    state: 'South Australia',
+    city: 'Adelaide',
+    access: 'publisher-only',
+    sourcePage:
+      'https://www.cityofadelaide.com.au/webcams/river-torrens-and-elder-park/',
     verifiedAt: '2026-09-17T08:48:00Z',
   };
-  const f = fixture(async () => Response.json({
-    sources: [{ id: 'au-camera', name: 'Coastal camera', city: 'Busselton', country: 'AU', countryName: 'Australia',
-      lat: -33.64, lon: 115.34, feedType: 'embed', playbackKind: 'live', embedUrl: 'https://www.youtube.com/embed/72vmq0Q3ueE' }],
-    publisherSources: [publisher, { ...publisher, id: 'unsafe', sourcePage: 'javascript:alert(1)' }],
-  }));
+  const f = fixture(async () =>
+    Response.json({
+      sources: [
+        {
+          id: 'au-camera',
+          name: 'Coastal camera',
+          city: 'Busselton',
+          country: 'AU',
+          countryName: 'Australia',
+          lat: -33.64,
+          lon: 115.34,
+          feedType: 'embed',
+          playbackKind: 'live',
+          embedUrl: 'https://www.youtube.com/embed/72vmq0Q3ueE',
+        },
+      ],
+      publisherSources: [
+        publisher,
+        { ...publisher, id: 'unsafe', sourcePage: 'javascript:alert(1)' },
+      ],
+    }),
+  );
   globalThis.location.search = '?feed=cctv&country=AU';
   const feeds = installLiveFeeds();
   try {
     feeds.open('cctv');
     await flush();
-    const links = find(f.doc, node => node.className === 'du-feed-publisher-links');
+    const links = find(
+      f.doc,
+      (node) => node.className === 'du-feed-publisher-links',
+    );
     assert.equal(links.hidden, false);
     assert.match(links.textContent, /1 additional camera links/);
-    assert.match(find(f.doc, node => node.className === 'du-feeds-count').textContent, /1 matching cameras/);
-    const link = all(links).find(node => node.tagName === 'A');
+    assert.match(
+      find(f.doc, (node) => node.className === 'du-feeds-count').textContent,
+      /1 matching cameras/,
+    );
+    const link = all(links).find((node) => node.tagName === 'A');
     assert.equal(link.href, publisher.sourcePage);
     assert.equal(link.target, '_blank');
     assert.match(link.rel, /noopener/);
-    const city = find(f.doc, node => node.getAttribute('aria-label') === 'Filter by city or region');
-    assert.ok(city.options.some(option => option.value === 'Adelaide'));
+    const city = find(
+      f.doc,
+      (node) => node.getAttribute('aria-label') === 'Filter by city or region',
+    );
+    assert.ok(city.options.some((option) => option.value === 'Adelaide'));
     city.value = 'Adelaide';
     city.dispatchEvent(new Event('change'));
     assert.equal(links.hidden, false);
-    assert.match(find(f.doc, node => node.className === 'du-feeds-count').textContent, /No in-app cameras/);
-    assert.equal(find(f.doc, node => node.dataset.feedId === publisher.id), undefined);
-    const media = find(f.doc, node => node.getAttribute('aria-label') === 'Camera media type');
+    assert.match(
+      find(f.doc, (node) => node.className === 'du-feeds-count').textContent,
+      /No in-app cameras/,
+    );
+    assert.equal(
+      find(f.doc, (node) => node.dataset.feedId === publisher.id),
+      undefined,
+    );
+    const media = find(
+      f.doc,
+      (node) => node.getAttribute('aria-label') === 'Camera media type',
+    );
     media.value = 'snapshot';
     media.dispatchEvent(new Event('change'));
+    assert.equal(links.hidden, true);
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('Melbourne deep link requests the city catalogue and country shortcuts leave that scope', async () => {
+  const requests = [];
+  const f = fixture(async (url) => {
+    requests.push(url);
+    return Response.json({
+      stations: [
+        {
+          ...station,
+          country: 'Australia',
+          countryCode: 'AU',
+          city: 'Melbourne',
+          locality: 'Fitzroy',
+          metroArea: 'melbourne',
+        },
+      ],
+    });
+  });
+  globalThis.location.search = '?feed=radio&country=AU&city=melbourne';
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('radio');
+    await flush();
+    assert.deepEqual(requests, [
+      '/api/radio/stations?country=AU&city=melbourne',
+    ]);
+    const area = find(
+      f.doc,
+      (node) =>
+        node.getAttribute('aria-label') === 'Filter by metropolitan area',
+    );
+    assert.equal(area.value, 'melbourne');
+    assert.equal(area.parentElement.hidden, false);
+    assert.match(f.doc.body.textContent, /Fitzroy/);
+    click(find(f.doc, (node) => node.textContent === 'Australia stations'));
+    await flush();
+    assert.equal(requests.at(-1), '/api/radio/stations?country=AU');
+    assert.equal(area.value, '');
+    click(find(f.doc, (node) => node.textContent === 'Ukraine stations'));
+    await flush();
+    assert.equal(requests.at(-1), '/api/radio/stations?country=UA');
+    assert.equal(area.parentElement.hidden, true);
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('a delayed Melbourne response cannot replace a later Australia directory selection', async () => {
+  const pending = [];
+  const f = fixture(
+    (url, options) =>
+      new Promise((resolve) => pending.push({ url, options, resolve })),
+  );
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('radio');
+    click(find(f.doc, (node) => node.textContent === 'Melbourne stations'));
+    assert.equal(
+      pending[1].url,
+      '/api/radio/stations?country=AU&city=melbourne',
+    );
+    click(find(f.doc, (node) => node.textContent === 'Australia stations'));
+    assert.equal(pending[2].url, '/api/radio/stations?country=AU');
+    assert.equal(pending[1].options.signal.aborted, true);
+    pending[2].resolve(
+      Response.json({
+        stations: [
+          {
+            ...station,
+            name: 'Current Australia',
+            country: 'Australia',
+            countryCode: 'AU',
+          },
+        ],
+      }),
+    );
+    await flush();
+    pending[1].resolve(
+      Response.json({
+        stations: [
+          {
+            ...station,
+            name: 'Obsolete Melbourne',
+            country: 'Australia',
+            countryCode: 'AU',
+          },
+        ],
+      }),
+    );
+    pending[0].resolve(Response.json({ stations: [] }));
+    await flush();
+    assert.match(f.doc.body.textContent, /Current Australia/);
+    assert.doesNotMatch(f.doc.body.textContent, /Obsolete Melbourne/);
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('a failed Melbourne request cannot display retained Australia stations under the city scope', async () => {
+  const pending = [];
+  const f = fixture(
+    (url, options) =>
+      new Promise((resolve) => pending.push({ url, options, resolve })),
+  );
+  globalThis.location.search = '?feed=radio&country=AU';
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('radio');
+    pending[0].resolve(
+      Response.json({
+        stations: [
+          {
+            ...station,
+            name: 'Sydney broadcaster',
+            country: 'Australia',
+            countryCode: 'AU',
+            state: 'New South Wales',
+          },
+        ],
+      }),
+    );
+    await flush();
+    const list = find(f.doc, (node) => node.className === 'du-feeds-list');
+    click(
+      find(f.doc, (node) => node.dataset.feedId === station.id),
+      list,
+    );
+    assert.equal(f.audio[0].paused, false);
+    click(find(f.doc, (node) => node.textContent === 'Melbourne stations'));
+    assert.equal(
+      pending[1].url,
+      '/api/radio/stations?country=AU&city=melbourne',
+    );
+    assert.equal(
+      list.children.length,
+      0,
+      'old AU results are hidden while the city loads',
+    );
+    assert.equal(f.audio[0].paused, true);
+    assert.doesNotMatch(
+      find(f.doc, (node) => node.className === 'du-feed-detail').textContent,
+      /Sydney broadcaster/,
+    );
+    pending[1].resolve(
+      Response.json({ error: 'Unavailable' }, { status: 503 }),
+    );
+    await flush();
+    assert.equal(
+      list.children.length,
+      0,
+      'a failed city request does not relabel old AU results',
+    );
+    assert.doesNotMatch(f.doc.body.textContent, /Previous directory retained/);
+    click(find(f.doc, (node) => node.textContent === 'Australia stations'));
+    assert.match(list.textContent, /Sydney broadcaster/);
+    click(find(f.doc, (node) => node.textContent === 'Refresh directory'));
+    assert.equal(pending[2].url, '/api/radio/stations?country=AU');
+    assert.match(
+      list.textContent,
+      /Sydney broadcaster/,
+      'same-scope refresh retains its catalogue',
+    );
+    pending[2].resolve(
+      Response.json({ error: 'Unavailable' }, { status: 503 }),
+    );
+    await flush();
+    assert.match(list.textContent, /Sydney broadcaster/);
+    assert.match(f.doc.body.textContent, /Previous directory retained/);
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('Melbourne community matches explain the inferred location in the list and player', async () => {
+  const f = fixture(async () =>
+    Response.json({
+      stations: [
+        {
+          ...station,
+          name: 'Melbourne community station',
+          country: 'Australia',
+          countryCode: 'AU',
+          state: 'Victoria',
+          sourceKind: 'radio-browser',
+          metroMatch: 'community-metadata',
+          lat: null,
+          lon: null,
+        },
+      ],
+    }),
+  );
+  globalThis.location.search = '?feed=radio&country=AU&city=melbourne';
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('radio');
+    await flush();
+    const list = find(f.doc, (node) => node.className === 'du-feeds-list');
+    assert.match(list.textContent, /Melbourne match from community listing/);
+    click(
+      find(f.doc, (node) => node.dataset.feedId === station.id),
+      list,
+    );
+    const detail = find(f.doc, (node) => node.className === 'du-feed-detail');
+    assert.match(detail.textContent, /community listing mentions Melbourne/);
+    assert.match(
+      detail.textContent,
+      /location has not been verified with the broadcaster/,
+    );
+    assert.match(detail.textContent, /no verified map location/);
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('Greater Melbourne includes explicitly reviewed suburbs and separate publisher links without treating all Victoria as Melbourne', async () => {
+  const metro = {
+    ...camera,
+    id: 'suburb-live',
+    name: 'Bayside live',
+    city: 'Mount Martha',
+    country: 'AU',
+    countryName: 'Australia',
+    state: 'Victoria',
+    metroArea: 'melbourne',
+    feedType: 'hls',
+    playbackKind: 'live',
+  };
+  const f = fixture(async () =>
+    Response.json({
+      sources: [
+        metro,
+        {
+          ...metro,
+          id: 'regional',
+          name: 'Regional camera',
+          city: 'Warrnambool',
+          metroArea: '',
+        },
+        { ...metro, id: 'still', feedType: 'image', playbackKind: 'snapshot' },
+      ],
+      publisherSources: [
+        {
+          id: 'metro-publisher',
+          name: 'Melbourne publisher',
+          city: 'South Yarra',
+          country: 'AU',
+          state: 'Victoria',
+          metroArea: 'melbourne',
+          access: 'publisher-only',
+          sourcePage: 'https://camera.example/live',
+          verifiedAt: '2026-09-17T00:00:00Z',
+        },
+      ],
+    }),
+  );
+  globalThis.location.search = '?feed=cctv&country=AU&city=melbourne';
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('cctv');
+    await flush();
+    const list = find(f.doc, (node) => node.className === 'du-feeds-list');
+    assert.equal(list.children.length, 1);
+    assert.equal(list.children[0].children[0].dataset.feedId, metro.id);
+    const links = find(
+      f.doc,
+      (node) => node.className === 'du-feed-publisher-links',
+    );
+    assert.equal(links.hidden, false);
+    assert.match(links.textContent, /1 additional camera links/);
+    const city = find(
+      f.doc,
+      (node) => node.getAttribute('aria-label') === 'Filter by city or region',
+    );
+    assert.ok(city.options.some((option) => option.value === 'Mount Martha'));
+    assert.ok(city.options.some((option) => option.value === 'South Yarra'));
+    assert.ok(!city.options.some((option) => option.value === 'Warrnambool'));
+    cameraFilter(f.doc, 'snapshot');
+    assert.equal(list.children.length, 1);
+    assert.equal(list.children[0].children[0].dataset.feedId, 'still');
     assert.equal(links.hidden, true);
   } finally {
     feeds.destroy();
@@ -883,7 +1212,10 @@ test('snapshot and other-video filters never silently pretend images or unknown 
     await flush();
     const list = find(f.doc, (node) => node.className === 'du-feeds-list');
     assert.equal(list.children.length, 0);
-    assert.match(f.doc.body.textContent, /No in-app cameras match this media type/);
+    assert.match(
+      f.doc.body.textContent,
+      /No in-app cameras match this media type/,
+    );
     cameraFilter(f.doc, 'snapshot');
     assert.equal(list.children.length, 1);
     cameraFilter(f.doc, 'video');
