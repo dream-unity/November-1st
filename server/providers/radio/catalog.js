@@ -8,6 +8,11 @@ import {
   loadUkraineRadioExclusions,
 } from '../radioUkraine.js';
 import {
+  createAustraliaRadioDirectory,
+  loadAustraliaRadioSources,
+  loadAustraliaRadioExclusions,
+} from '../radioAustralia.js';
+import {
   normalizeRadioBrowserStation,
   publicRadioStation,
   cleanRadioText,
@@ -77,6 +82,8 @@ export function createRadioProxyMiddleware({
   sourceRoot = process.cwd(),
   loadUkraineSources = () => loadUkraineRadioSources({ sourceRoot }),
   loadUkraineExclusions = () => loadUkraineRadioExclusions({ sourceRoot }),
+  loadAustraliaSources = () => loadAustraliaRadioSources({ sourceRoot }),
+  loadAustraliaExclusions = () => loadAustraliaRadioExclusions({ sourceRoot }),
 } = {}) {
   let mirrorCache = { origins: [...RADIO_FALLBACK_MIRRORS], cachedAt: 0 };
   let mirrorPromise = null;
@@ -228,7 +235,32 @@ export function createRadioProxyMiddleware({
     loadExclusions: loadUkraineExclusions,
   });
 
+  const australiaDirectory = createAustraliaRadioDirectory({
+    fetchPath,
+    now,
+    timeoutMs: catalogTimeoutMs,
+    loadSources: loadAustraliaSources,
+    loadExclusions: loadAustraliaExclusions,
+  });
+  const countryDirectories = new Map([
+    ['UA', ukraineDirectory],
+    ['AU', australiaDirectory],
+  ]);
+
   async function collectCatalog(signal) {
+    // Documented finite recordings must stay excluded when a user returns to
+    // the global directory as well as when browsing the relevant country.
+    const excludedIds = new Set();
+    const excludedUrls = new Set();
+    for (const load of [loadUkraineExclusions, loadAustraliaExclusions]) {
+      try {
+        const exclusions = load();
+        for (const id of exclusions?.stationIds || []) excludedIds.add(id);
+        for (const url of exclusions?.streamUrls || []) excludedUrls.add(url);
+      } catch {
+        /* Optional editorial exclusions must not block the whole directory. */
+      }
+    }
     const queries = [
       null,
       'news',
@@ -277,7 +309,12 @@ export function createRadioProxyMiddleware({
             );
           const stations = rows
             .map(normalizeRadioBrowserStation)
-            .filter(Boolean);
+            .filter(
+              (station) =>
+                station &&
+                !excludedIds.has(station.id) &&
+                !excludedUrls.has(station.streamUrl),
+            );
           const requestedTag = cleanRadioText(tag, 80)
             .toLocaleLowerCase()
             .replace(/[_-]+/g, ' ')
@@ -454,17 +491,17 @@ export function createRadioProxyMiddleware({
       const country = requestUrl.searchParams.get('country');
       if (
         requestUrl.searchParams.getAll('country').length > 1 ||
-        (country !== null && country.toUpperCase() !== 'UA')
+        (country !== null && !countryDirectories.has(country.toUpperCase()))
       ) {
         sendJson(res, 400, {
           error:
-            'The country directory currently supports country=UA; omit country for the global directory.',
+            'The country directory currently supports country=UA or country=AU; omit country for the global directory.',
         });
         return;
       }
       try {
         const catalog = country
-          ? await ukraineDirectory.getCatalog()
+          ? await countryDirectories.get(country.toUpperCase()).getCatalog()
           : await getCatalog();
         sendJson(res, 200, {
           stations: catalog.stations,
@@ -494,10 +531,12 @@ export function createRadioProxyMiddleware({
         return;
       }
       const id = clickMatch[1].toLowerCase();
-      const ukraineStationKind = ukraineDirectory.stationKind(id);
+      const countryStationKind = [...countryDirectories.values()]
+        .map((directory) => directory.stationKind(id))
+        .find(Boolean);
       if (
         !RADIO_UUID_RE.test(id) ||
-        (!servedStationIds.has(id) && !ukraineStationKind)
+        (!servedStationIds.has(id) && !countryStationKind)
       ) {
         sendJson(res, 404, { error: 'Unknown radio station' });
         return;
@@ -505,7 +544,7 @@ export function createRadioProxyMiddleware({
       res.writeHead(204, { 'Cache-Control': 'no-store' });
       res.end();
       // Editorial UUIDs are application identities, never Radio Browser vote IDs.
-      if (ukraineStationKind === 'curated-ukraine') return;
+      if (countryStationKind?.startsWith('curated-')) return;
       void fetchPath(
         `/json/url/${id}`,
         AbortSignal.timeout(RADIO_CLICK_TIMEOUT_MS),

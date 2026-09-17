@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import { createPlayback, createRadioStreamPlayer } from './playback.js';
 import { RADIO_STREAM_TIMEOUT_MS } from './policy.js';
 
-function harness(t, { play = () => Promise.resolve() } = {}) {
+function harness(
+  t,
+  { play = () => Promise.resolve(), hlsOptions, nativeHls = false } = {},
+) {
   t.mock.timers.enable({ apis: ['setTimeout'] });
   const media = [];
   const reports = [];
@@ -28,6 +31,9 @@ function harness(t, { play = () => Promise.resolve() } = {}) {
       this.emit('play');
       return play(this);
     }
+    canPlayType() {
+      return nativeHls ? 'probably' : '';
+    }
     removeAttribute(key) {
       if (key === 'src') this.src = '';
     }
@@ -36,6 +42,7 @@ function harness(t, { play = () => Promise.resolve() } = {}) {
   const player = createRadioStreamPlayer({
     audioFactory: () => new FakeAudio(),
     onState: (state) => reports.push(state),
+    hlsOptions,
   });
   t.after(() => player.destroy());
   const station = {
@@ -68,6 +75,232 @@ test('direct play calls media synchronously and a stalled stream has a finite er
   media[0].emit('pause');
   media[0].emit('playing');
   assert.equal(player.getState().audioState, 'error');
+});
+
+const hlsStation = {
+  id: 'curated-au-live',
+  name: 'Australian broadcaster',
+  streamUrl: 'https://radio.example.com/live.m3u8',
+  streamFormat: 'hls',
+  liveOnly: true,
+  playbackKind: 'live',
+  sourceKind: 'curated-australia',
+};
+
+function fakeHls() {
+  const instances = [];
+  class FakeHls {
+    static Events = {
+      LEVEL_LOADED: 'level',
+      AUDIO_TRACK_LOADED: 'audio-track',
+      ERROR: 'error',
+    };
+    static isSupported = () => true;
+    constructor() {
+      this.listeners = new Map();
+      instances.push(this);
+    }
+    on(event, handler) {
+      this.listeners.set(event, handler);
+    }
+    emit(event, data) {
+      this.listeners.get(event)?.(event, data);
+    }
+    attachMedia(audio) {
+      this.audio = audio;
+      audio.src = 'blob:media-source';
+    }
+    loadSource(url) {
+      this.url = url;
+    }
+    destroy() {
+      this.destroyed = true;
+    }
+  }
+  return { HlsClass: FakeHls, instances };
+}
+
+test('curated HLS preserves the tap, waits for live proof, and releases all resources on pause/resume', async (t) => {
+  const hls = fakeHls();
+  let calls = 0;
+  const { player, media } = harness(t, {
+    hlsOptions: hls,
+    play: () => {
+      calls++;
+      return Promise.resolve();
+    },
+  });
+  player.setStation(hlsStation);
+  const pending = player.play();
+  assert.equal(
+    calls,
+    1,
+    'HLS play is synchronous, without awaiting a module import',
+  );
+  assert.equal(media[0].muted, true);
+  media[0].emit('playing');
+  assert.equal(
+    player.getState().audioState,
+    'loading',
+    'no live label before playlist proof',
+  );
+  hls.instances[0].emit('level', { details: { live: true } });
+  assert.equal(await pending, true);
+  assert.equal(media[0].muted, false);
+  assert.equal(player.getState().audioState, 'playing');
+  player.pause();
+  assert.equal(hls.instances[0].destroyed, true);
+  assert.equal(media[0].src, '');
+  assert.equal(player.getState().audioState, 'paused');
+  const resumed = player.play();
+  hls.instances[0].emit('level', { details: { live: false } });
+  hls.instances[1].emit('level', { details: { live: true } });
+  assert.equal(await resumed, true);
+  player.destroy();
+  assert.equal(hls.instances[1].destroyed, true);
+});
+
+test('recorded HLS and a live station becoming finite are terminal, never snapshot or recording fallbacks', async (t) => {
+  const hls = fakeHls();
+  const { player, media } = harness(t, { hlsOptions: hls });
+  player.setStation(hlsStation);
+  const recorded = player.play();
+  hls.instances[0].emit('level', { details: { live: false } });
+  assert.equal(await recorded, false);
+  assert.match(player.getState().audioError, /recording or ended/);
+  assert.equal(media[0].muted, true);
+  assert.equal(media[0].src, '');
+  assert.equal(hls.instances[0].destroyed, true);
+  const live = player.play();
+  hls.instances[1].emit('level', { details: { live: true } });
+  assert.equal(await live, true);
+  hls.instances[1].emit('audio-track', {
+    details: { live: false, type: 'VOD' },
+  });
+  assert.equal(player.getState().audioState, 'error');
+  assert.equal(hls.instances[1].destroyed, true);
+});
+
+test('HLS network errors clean up, and station switching cancels pending HLS without stale events', async (t) => {
+  const hls = fakeHls();
+  const { player, media, station } = harness(t, { hlsOptions: hls });
+  player.setStation(hlsStation);
+  const failed = player.play();
+  hls.instances[0].emit('error', { fatal: true });
+  assert.equal(await failed, false);
+  assert.match(player.getState().audioError, /blocked/);
+  const pending = player.play();
+  player.setStation(station);
+  assert.equal(await pending, false);
+  assert.equal(hls.instances[1].destroyed, true);
+  hls.instances[1].emit('level', { details: { live: true } });
+  media[1].emit('playing');
+  assert.equal(player.getState().audioState, 'stopped');
+  assert.equal(await player.play(), true);
+});
+
+test('community HLS is rejected without invoking media or the HLS library', async (t) => {
+  const hls = fakeHls();
+  let plays = 0;
+  const { player } = harness(t, {
+    hlsOptions: hls,
+    play: () => {
+      plays++;
+    },
+  });
+  player.setStation({ ...hlsStation, sourceKind: 'community' });
+  assert.equal(await player.play(), false);
+  assert.match(player.getState().audioError, /not been verified/);
+  assert.equal(plays, 0);
+  assert.equal(hls.instances.length, 0);
+});
+
+test('unsupported HLS has a clear retryable error without trying progressive playback', async (t) => {
+  const { player, media } = harness(t, {
+    hlsOptions: { HlsClass: { isSupported: () => false } },
+  });
+  player.setStation(hlsStation);
+  assert.equal(await player.play(), false);
+  assert.match(
+    player.getState().audioError,
+    /cannot play this live radio format/,
+  );
+  assert.equal(media[0].src, '');
+});
+
+test('native HLS follows published master references and stays muted until a live media manifest is checked', async (t) => {
+  const requests = [];
+  const fetchImpl = async (url, options) => {
+    requests.push({ url, options });
+    return new Response(
+      requests.length === 1
+        ? '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=128000\naudio/live.m3u8\n'
+        : '#EXTM3U\n#EXT-X-TARGETDURATION:6\n#EXT-X-MEDIA-SEQUENCE:123\n#EXTINF:6,\nsegment123.aac\n',
+    );
+  };
+  const { player, media } = harness(t, {
+    nativeHls: true,
+    hlsOptions: { fetchImpl },
+  });
+  player.setStation(hlsStation);
+  const pending = player.play();
+  assert.equal(media[0].src, hlsStation.streamUrl);
+  assert.equal(media[0].muted, true);
+  assert.equal(await pending, true);
+  assert.equal(media[0].muted, false);
+  assert.equal(requests[1].url, 'https://radio.example.com/audio/live.m3u8');
+  assert.equal(requests[0].options.credentials, 'omit');
+  player.pause();
+  assert.equal(requests[0].options.signal.aborted, true);
+  t.mock.timers.tick(60_000);
+  assert.equal(requests.length, 2);
+});
+
+test('native HLS refuses ENDLIST, VOD, unavailable manifests and unsafe variant URLs', async (t) => {
+  let manifest = '#EXTM3U\n#EXTINF:6,\nsegment.aac\n#EXT-X-ENDLIST\n';
+  const { player, media } = harness(t, {
+    nativeHls: true,
+    hlsOptions: { fetchImpl: async () => new Response(manifest) },
+  });
+  player.setStation(hlsStation);
+  for (const text of [
+    manifest,
+    '#EXTM3U\n#EXT-X-PLAYLIST-TYPE:VOD\n#EXTINF:6,\na.aac',
+    '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=128000\nhttps://127.0.0.1/live.m3u8\n',
+    '<html>Access denied</html>',
+  ]) {
+    manifest = text;
+    assert.equal(await player.play(), false);
+    assert.equal(player.getState().audioState, 'error');
+    assert.equal(media.at(-1).muted, true);
+    assert.equal(media.at(-1).src, '');
+  }
+});
+
+test('native HLS cancellation aborts a pending manifest and never unmutes retired audio', async (t) => {
+  let resolve;
+  let signal;
+  const { player, media } = harness(t, {
+    nativeHls: true,
+    hlsOptions: {
+      fetchImpl: (_url, options) => {
+        signal = options.signal;
+        return new Promise((done) => {
+          resolve = done;
+        });
+      },
+    },
+  });
+  player.setStation(hlsStation);
+  const pending = player.play();
+  player.stop();
+  assert.equal(await pending, false);
+  assert.equal(signal.aborted, true);
+  resolve(new Response('#EXTM3U\n#EXTINF:6,\na.aac'));
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.equal(player.getState().audioState, 'stopped');
+  assert.equal(media[0].muted, true);
 });
 
 test('playing clears startup timeout, buffering times out, and Retry creates new media', async (t) => {

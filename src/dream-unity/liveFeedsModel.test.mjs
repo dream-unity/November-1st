@@ -146,15 +146,16 @@ test('Ukrainian searches match country names, Cyrillic case, equivalent letters 
   assert.equal(filterFeedDirectory([station], 'Україна').length, 0);
 });
 
-test('the Ukraine directory is requested explicitly and unsupported country paths never reach the network', async () => {
+test('supported country directories are requested explicitly and unsupported country paths never reach the network', async () => {
   const calls = [];
   const fetchImpl = async (url) => {
     calls.push(url);
     return Response.json({ stations: [station] });
   };
-  await readFeedDirectory('radio', { country: 'UA', fetchImpl });
-  assert.deepEqual(calls, ['/api/radio/stations?country=UA']);
-  for (const country of ['GB', '../stations', 'UA&secret=x'])
+  for (const country of ['UA', 'AU'])
+    await readFeedDirectory('radio', { country, fetchImpl });
+  assert.deepEqual(calls, ['/api/radio/stations?country=UA', '/api/radio/stations?country=AU']);
+  for (const country of ['GB', '../stations', 'UA&secret=x', 'AU&secret=x', 'toString', '__proto__'])
     await assert.rejects(
       readFeedDirectory('radio', { country, fetchImpl }),
       /Unsupported country/,
@@ -163,7 +164,7 @@ test('the Ukraine directory is requested explicitly and unsupported country path
     readFeedDirectory('cctv', { country: 'UA', fetchImpl }),
     /Unsupported country/,
   );
-  assert.equal(calls.length, 1);
+  assert.equal(calls.length, 2);
 });
 
 test('search matches all words across location, station genre and language with exact region filtering', () => {

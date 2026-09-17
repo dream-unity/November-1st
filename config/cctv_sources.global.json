@@ -1495,7 +1495,9 @@
     },
     "category": "public view",
     "embedUrl": "https://www.youtube-nocookie.com/embed/5uZa3-RMFos",
-    "verifiedAt": "2026-09-17T05:59:00.454445+00:00"
+    "verifiedAt": "2026-09-17T05:59:00.454445+00:00",
+    "liveOnly": true,
+    "state": "New South Wales"
   },
   {
     "id": "global-kr-seoul-station",
@@ -1915,7 +1917,9 @@
     },
     "category": "public view",
     "embedUrl": "https://www.youtube-nocookie.com/embed/l_8DrACHpwY",
-    "verifiedAt": "2026-09-17T06:00:09.830672+00:00"
+    "verifiedAt": "2026-09-17T06:00:09.830672+00:00",
+    "liveOnly": true,
+    "state": "Victoria"
   },
   {
     "id": "global-tw-taipei-riverside",

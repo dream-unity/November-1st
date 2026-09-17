@@ -287,22 +287,26 @@ test('radio plays only after station click, synchronously stops globe audio, and
   }
 });
 
-test('Ukraine deep links load the country catalogue and location-free stations still play without a false globe marker', async () => {
+for (const [countryCode, countryName, sourceKind] of [
+  ['UA', 'Ukraine', 'curated-ukraine'],
+  ['AU', 'Australia', 'curated-australia'],
+]) {
+test(`${countryName} deep links load the country catalogue and location-free stations still play without a false globe marker`, async () => {
   const calls = [];
   const ukrainian = {
     ...station,
     name: 'Українське радіо',
     lat: null,
     lon: null,
-    country: 'Ukraine',
-    countryCode: 'UA',
-    sourceKind: 'curated-ukraine',
+    country: countryName,
+    countryCode,
+    sourceKind,
   };
   const f = fixture(async (url) => {
     calls.push(url);
     return Response.json({ stations: [ukrainian] });
   });
-  globalThis.location.search = '?feed=radio&country=UA';
+  globalThis.location.search = `?feed=radio&country=${countryCode}`;
   let globeCalls = 0;
   const feeds = installLiveFeeds({
     openOnGlobe() {
@@ -312,12 +316,12 @@ test('Ukraine deep links load the country catalogue and location-free stations s
   try {
     feeds.open('radio');
     await flush();
-    assert.deepEqual(calls, ['/api/radio/stations?country=UA']);
+    assert.deepEqual(calls, [`/api/radio/stations?country=${countryCode}`]);
     const country = find(
       f.doc,
       (node) => node.getAttribute('aria-label') === 'Filter by country',
     );
-    assert.equal(country.value, 'Ukraine');
+    assert.equal(country.value, countryName);
     const list = find(f.doc, (node) => node.className === 'du-feeds-list');
     click(
       find(f.doc, (node) => node.dataset.feedId === station.id),
@@ -341,19 +345,19 @@ test('Ukraine deep links load the country catalogue and location-free stations s
   }
 });
 
-test('Ukraine remains discoverable when global results omit it and its shortcut retries a failed country request', async () => {
+test(`${countryName} remains discoverable when global results omit it and its shortcut retries a failed country request`, async () => {
   const calls = [];
   let uaRequests = 0;
   const ukrainian = {
     ...station,
     id: '22345678-1234-1234-1234-123456789012',
     name: 'Ukraine radio',
-    country: 'Ukraine',
-    countryCode: 'UA',
+    country: countryName,
+    countryCode,
   };
   const f = fixture(async (url) => {
     calls.push(url);
-    if (url.includes('?country=UA')) {
+    if (url.includes(`?country=${countryCode}`)) {
       uaRequests++;
       return uaRequests === 1
         ? new Response('offline', { status: 503 })
@@ -369,10 +373,10 @@ test('Ukraine remains discoverable when global results omit it and its shortcut 
       f.doc,
       (node) => node.getAttribute('aria-label') === 'Filter by country',
     );
-    assert.ok(country.options.some((option) => option.value === 'Ukraine'));
+    assert.ok(country.options.some((option) => option.value === countryName));
     const shortcut = find(
       f.doc,
-      (node) => node.textContent === 'Ukraine stations',
+      (node) => node.textContent === `${countryName} stations`,
     );
     click(shortcut);
     await flush();
@@ -391,6 +395,8 @@ test('Ukraine remains discoverable when global results omit it and its shortcut 
     f.restore();
   }
 });
+
+}
 
 test('changing country while a request is pending aborts it and late country results cannot replace the chosen directory', async () => {
   const pending = [];
@@ -423,6 +429,48 @@ test('changing country while a request is pending aborts it and late country res
     await flush();
     assert.doesNotMatch(f.doc.body.textContent, /Late Ukraine/);
     assert.ok(find(f.doc, (node) => node.dataset.feedId === station.id));
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('publisher-only cameras remain links, filter by city, and never inflate playable-camera counts', async () => {
+  const publisher = {
+    id: 'au-publisher-view', name: 'River view', country: 'AU', countryName: 'Australia',
+    state: 'South Australia', city: 'Adelaide', access: 'publisher-only',
+    sourcePage: 'https://www.cityofadelaide.com.au/webcams/river-torrens-and-elder-park/',
+    verifiedAt: '2026-09-17T08:48:00Z',
+  };
+  const f = fixture(async () => Response.json({
+    sources: [{ id: 'au-camera', name: 'Coastal camera', city: 'Busselton', country: 'AU', countryName: 'Australia',
+      lat: -33.64, lon: 115.34, feedType: 'embed', playbackKind: 'live', embedUrl: 'https://www.youtube.com/embed/72vmq0Q3ueE' }],
+    publisherSources: [publisher, { ...publisher, id: 'unsafe', sourcePage: 'javascript:alert(1)' }],
+  }));
+  globalThis.location.search = '?feed=cctv&country=AU';
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('cctv');
+    await flush();
+    const links = find(f.doc, node => node.className === 'du-feed-publisher-links');
+    assert.equal(links.hidden, false);
+    assert.match(links.textContent, /1 additional camera links/);
+    assert.match(find(f.doc, node => node.className === 'du-feeds-count').textContent, /1 matching cameras/);
+    const link = all(links).find(node => node.tagName === 'A');
+    assert.equal(link.href, publisher.sourcePage);
+    assert.equal(link.target, '_blank');
+    assert.match(link.rel, /noopener/);
+    const city = find(f.doc, node => node.getAttribute('aria-label') === 'Filter by city or region');
+    assert.ok(city.options.some(option => option.value === 'Adelaide'));
+    city.value = 'Adelaide';
+    city.dispatchEvent(new Event('change'));
+    assert.equal(links.hidden, false);
+    assert.match(find(f.doc, node => node.className === 'du-feeds-count').textContent, /No in-app cameras/);
+    assert.equal(find(f.doc, node => node.dataset.feedId === publisher.id), undefined);
+    const media = find(f.doc, node => node.getAttribute('aria-label') === 'Camera media type');
+    media.value = 'snapshot';
+    media.dispatchEvent(new Event('change'));
+    assert.equal(links.hidden, true);
   } finally {
     feeds.destroy();
     f.restore();
@@ -835,7 +883,7 @@ test('snapshot and other-video filters never silently pretend images or unknown 
     await flush();
     const list = find(f.doc, (node) => node.className === 'du-feeds-list');
     assert.equal(list.children.length, 0);
-    assert.match(f.doc.body.textContent, /No cameras match this media type/);
+    assert.match(f.doc.body.textContent, /No in-app cameras match this media type/);
     cameraFilter(f.doc, 'snapshot');
     assert.equal(list.children.length, 1);
     cameraFilter(f.doc, 'video');

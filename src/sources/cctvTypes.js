@@ -33,6 +33,50 @@ export function normalizeCctvEmbedUrl(value) {
     return '';
   try {
     const url = new URL(value);
+    // These aliases are published by the named camera owners. This is not an
+    // allowlist for arbitrary surveillance players or arbitrary subdomains.
+    const publicAliases = {
+      'g3.ipcamlive.com': ['69421e5731fe2', '69421e4b4c166', '694222843b74d'],
+      'g1.ipcamlive.com': ['boatramp'],
+    };
+    if (Object.hasOwn(publicAliases, url.hostname)) {
+      const alias = url.searchParams.get('alias');
+      const options = new Set([
+        'autoplay',
+        'mute',
+        'disableautofullscreen',
+        'disabledownloadbutton',
+        'disableframecapture',
+        'disablefullscreen',
+        'disableuserpause',
+        'disablezoombutton',
+        'disabletimelapseplayer',
+        'disablestorageplayer',
+      ]);
+      const seen = new Set();
+      if (
+        url.protocol !== 'https:' ||
+        url.username ||
+        url.password ||
+        url.port ||
+        url.hash ||
+        url.pathname !== '/player/player.php' ||
+        !publicAliases[url.hostname].includes(alias)
+      )
+        return '';
+      for (const [key, option] of url.searchParams) {
+        if (
+          seen.has(key) ||
+          (key !== 'alias' &&
+            (!options.has(key) || !['0', '1'].includes(option)))
+        )
+          return '';
+        seen.add(key);
+      }
+      // Canonical identity excludes optional player controls, so duplicates
+      // cannot appear merely because one source requests autoplay or mute.
+      return `${url.origin}/player/player.php?alias=${alias}`;
+    }
     if (
       url.protocol !== 'https:' ||
       url.username ||
@@ -48,6 +92,14 @@ export function normalizeCctvEmbedUrl(value) {
   } catch {
     return '';
   }
+}
+
+export function cctvEmbedProvider(value) {
+  const normalized = normalizeCctvEmbedUrl(value);
+  if (!normalized) return '';
+  return new URL(normalized).hostname === 'www.youtube-nocookie.com'
+    ? 'youtube'
+    : 'ipcamlive';
 }
 
 /** Containers alone do not prove a source is live; only declared live sources do. */

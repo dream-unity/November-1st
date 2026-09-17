@@ -1,4 +1,4 @@
-import { normalizeCctvEmbedUrl } from './cctvTypes.js';
+import { normalizeCctvEmbedUrl, cctvEmbedProvider } from './cctvTypes.js';
 import { readResponseJsonCapped } from './httpBody.js';
 
 const apiLoads = new WeakMap();
@@ -68,7 +68,7 @@ export function loadCctvYouTubeApi(
   return request;
 }
 
-function playerUrl(embedUrl, origin) {
+function playerUrl(embedUrl, origin, autoPlay = false) {
   const normalized = normalizeCctvEmbedUrl(embedUrl);
   if (!normalized)
     throw new Error('This camera does not have an approved video embed URL.');
@@ -76,6 +76,23 @@ function playerUrl(embedUrl, origin) {
   const page = new URL(origin);
   if (!['https:', 'http:'].includes(page.protocol) || page.origin !== origin)
     throw new Error('The video player requires an HTTP or HTTPS page origin.');
+  if (cctvEmbedProvider(normalized) === 'ipcamlive') {
+    // Owner player remains responsible for media delivery and permission.
+    // Never expose its optional recording/time-lapse views in live-only mode.
+    for (const key of [
+      'mute',
+      'disabletimelapseplayer',
+      'disablestorageplayer',
+      'disableframecapture',
+      'disabledownloadbutton',
+      'disableautofullscreen',
+      'disableuserpause',
+      'disablezoombutton',
+    ])
+      url.searchParams.set(key, '1');
+    url.searchParams.set('autoplay', autoPlay ? '1' : '0');
+    return url.href;
+  }
   url.search = new URLSearchParams({
     enablejsapi: '1',
     origin,
@@ -120,10 +137,13 @@ export function createCctvEmbedPlayback({
   requireLiveStatus = false,
   fetchImpl = globalThis.fetch,
   statusTimeoutMs = 8_000,
+  statusRecheckMs = 60_000,
   loadApi,
 }) {
   const ownerDocument = container?.ownerDocument;
   const ownerWindow = ownerDocument?.defaultView;
+  const provider = cctvEmbedProvider(embedUrl);
+  const strictLive = requireLiveStatus || provider === 'ipcamlive';
   let requestedActive = Boolean(initiallyActive);
   let active = requestedActive && !visibilityTarget?.hidden;
   let destroyed = false;
@@ -133,6 +153,7 @@ export function createCctvEmbedPlayback({
   let playerReady = false;
   let generation = 0;
   let timer = null;
+  let statusTimer = null;
   let state = 'loading';
   let liveStatus = 'unknown';
   let statusController = null;
@@ -152,6 +173,8 @@ export function createCctvEmbedPlayback({
   function unload() {
     generation++;
     clearTimer();
+    clearTimeout(statusTimer);
+    statusTimer = null;
     statusController?.abort();
     statusController = null;
     const oldPlayer = player;
@@ -262,6 +285,31 @@ export function createCctvEmbedPlayback({
       if (statusController === controller) statusController = null;
     }
   }
+  function schedulePublicRecheck(attempt) {
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(
+      async () => {
+        statusTimer = null;
+        if (!current(attempt)) return;
+        const checked = await checkLiveStatus();
+        if (!current(attempt)) return;
+        liveStatus = checked.status;
+        if (!(
+          checked.status === 'live' && Number.isFinite(checked.checkedAt)
+        )) {
+          fail(
+            checked.message ||
+              'The publisher’s current live status could not be confirmed. Retry later.',
+            'live-status-unconfirmed',
+          );
+          return;
+        }
+        lastStatusCheckedAt = checked.checkedAt;
+        schedulePublicRecheck(attempt);
+      },
+      Math.max(1_000, statusRecheckMs),
+    );
+  }
   function requestPlay() {
     if (!playerReady || !player || !active || destroyed) return;
     armTimer(generation, 'play-start-timeout');
@@ -283,7 +331,7 @@ export function createCctvEmbedPlayback({
     try {
       if (!container || !ownerDocument || !ownerWindow)
         throw new Error('The camera video requires a browser.');
-      url = playerUrl(embedUrl, ownerWindow.location.origin);
+      url = playerUrl(embedUrl, ownerWindow.location.origin, wantsPlayback);
     } catch (error) {
       fail(error.message, 'invalid-embed');
       return false;
@@ -329,7 +377,7 @@ export function createCctvEmbedPlayback({
             return null;
           }
           if (
-            requireLiveStatus &&
+            strictLive &&
             !['ended', 'unavailable'].includes(checked.status) &&
             !(checked.status === 'live' && Number.isFinite(checked.checkedAt))
           ) {
@@ -370,13 +418,14 @@ export function createCctvEmbedPlayback({
             'broadcast-ended-awaiting-fresh-status',
           );
           return null;
-        } else if (requireLiveStatus) {
+        } else if (strictLive) {
           fail(
             'Live-only camera playback requires a current live-status check. This camera has no available verification endpoint.',
             'live-status-unconfirmed',
           );
           return null;
         }
+        if (provider === 'ipcamlive') return { publicPlayer: true };
         return loadApi
           ? loadApi()
           : loadCctvYouTubeApi(ownerDocument, ownerWindow, timeoutMs);
@@ -395,6 +444,30 @@ export function createCctvEmbedPlayback({
         // YouTube error 153 requires a real referrer/client identity.
         iframe.referrerPolicy = 'strict-origin-when-cross-origin';
         iframe.setAttribute('frameborder', '0');
+        if (provider === 'ipcamlive') {
+          iframe.addEventListener('load', () => {
+            if (!current(attempt)) return;
+            clearTimer();
+            // A cross-origin frame's load event does not prove decoded video.
+            // This provider has no public playback-event API; keep that limit
+            // explicit instead of inventing a playing event.
+            publish(
+              'ready',
+              'The publisher reports this camera live. Its official player is open; use the video controls to watch. Playback status is shown inside that player.',
+              'provider-controls',
+            );
+            schedulePublicRecheck(attempt);
+          });
+          iframe.addEventListener('error', () => {
+            if (current(attempt))
+              fail(
+                'The official camera player could not load. Retry or open the source page.',
+                'player-load-error',
+              );
+          });
+          container.appendChild(iframe);
+          return;
+        }
         container.appendChild(iframe);
         player = new YT.Player(iframe, {
           events: {

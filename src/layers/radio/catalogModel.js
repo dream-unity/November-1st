@@ -72,6 +72,34 @@ export function createCatalogModel({
       value.every((item) =>
         cleanText(item, itemMaxLength, { allowEmpty: false }),
       );
+    const curated =
+      station?.metadataTrust === 'curated-public-source' &&
+      ((station.sourceKind === 'curated-australia' &&
+        station.countryCode === 'AU') ||
+        (station.sourceKind === 'curated-ukraine' &&
+          station.countryCode === 'UA')) &&
+      station.playbackKind === 'live' &&
+      isSafeRadioHttpsUrl(station.sourcePage) &&
+      typeof station.verifiedAt === 'string' &&
+      Number.isFinite(Date.parse(station.verifiedAt)) &&
+      ((station.streamFormat === 'progressive' && station.liveOnly === false) ||
+        (station.sourceKind === 'curated-australia' &&
+          station.streamFormat === 'hls' &&
+          station.liveOnly === true));
+    const community =
+      station?.metadataTrust === 'untrusted-community' &&
+      (station.streamFormat === undefined ||
+        station.streamFormat === 'progressive') &&
+      (station.liveOnly === undefined || station.liveOnly === false) &&
+      (station.sourceKind === undefined ||
+        station.sourceKind === 'radio-browser') &&
+      (station.playbackKind === undefined ||
+        station.playbackKind === 'unknown' ||
+        station.playbackKind === 'live') &&
+      (station.sourcePage == null || isSafeRadioHttpsUrl(station.sourcePage)) &&
+      (station.verifiedAt == null ||
+        (typeof station.verifiedAt === 'string' &&
+          Number.isFinite(Date.parse(station.verifiedAt))));
     return Boolean(
       station &&
       RADIO_UUID_RE.test(station.id) &&
@@ -91,7 +119,7 @@ export function createCatalogModel({
       cleanText(station.countryCode, 2) &&
       (station.countryCode === '' ||
         normalizeRadioCountryInput(station.countryCode).valid) &&
-      station.metadataTrust === 'untrusted-community' &&
+      (community || curated) &&
       cleanText(station.codec, 16, { allowEmpty: false }) &&
       /^(?:MP3|AAC(?:\+|-LC|-HE)?|HE-AAC)$/i.test(station.codec) &&
       (station.bitrate === null ||
@@ -117,6 +145,19 @@ export function createCatalogModel({
       metadataTrust: station.metadataTrust,
       codec: station.codec,
       bitrate: station.bitrate,
+      // Playback admission must survive both snapshot freezes and tuner drags.
+      ...Object.fromEntries(
+        [
+          'streamFormat',
+          'liveOnly',
+          'playbackKind',
+          'sourceKind',
+          'sourcePage',
+          'verifiedAt',
+        ]
+          .filter((key) => station[key] !== undefined)
+          .map((key) => [key, station[key]]),
+      ),
     });
   }
 

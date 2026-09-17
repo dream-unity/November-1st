@@ -187,6 +187,9 @@
       "server/providers/cctv/hls.js",
       "server/providers/cctv/globalSources.js",
       "server/providers/cctv/ukraineSources.js",
+      "server/providers/cctv/australiaSources.js",
+      "src/sources/radioBrowser.js",
+      "src/data/radioCountry.js",
       "server/providers/cctv/embedStatus.js"
     ],
     "external": []
@@ -197,6 +200,8 @@
     "modules": [
       "server/providers/radio.js",
       "server/providers/radioUkraine.js",
+      "server/providers/radioAustralia.js",
+      "server/providers/radio/countryDirectory.js",
       "server/providers/common/source-root.js",
       "server/providers/radio/catalog.js",
       "server/providers/radio/constants.js",
@@ -1119,9 +1124,11 @@
       "src/layers/radio/volume.js",
       "src/ui/radioTunerModel.js",
       "src/data/inputOwnership.js",
-      "src/sources/radioBrowser.js"
+      "src/sources/radioBrowser.js",
+      "src/layers/radio/hlsPlayback.js",
+      "src/sources/httpBody.js"
     ],
-    "external": ["cesium"]
+    "external": ["cesium", "hls.js"]
   },
   "submarine-cables": {
     "exports": ["./layers/submarine-cables"],
@@ -1854,7 +1861,8 @@
       "src/sources/cctvVideoPlayback.js",
       "src/sources/radioBrowser.js",
       "src/sources/cctvTypes.js",
-      "src/sources/cctvEmbedPlayback.js"
+      "src/sources/cctvEmbedPlayback.js",
+      "src/layers/radio/hlsPlayback.js"
     ],
     "external": [
       "@mapbox/vector-tile",
@@ -2254,7 +2262,8 @@
       "src/sources/cctvVideoPlayback.js",
       "src/sources/radioBrowser.js",
       "src/sources/cctvTypes.js",
-      "src/sources/cctvEmbedPlayback.js"
+      "src/sources/cctvEmbedPlayback.js",
+      "src/layers/radio/hlsPlayback.js"
     ],
     "external": [
       "cesium",

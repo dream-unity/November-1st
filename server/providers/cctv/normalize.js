@@ -6,6 +6,7 @@ import {
 export { normalizeFeedType, isVideoFeedType };
 import { directionToHeading } from '../../../src/data/directionText.js';
 import { haversineKm } from '../common/geo.js';
+import { publicRadioHttpsUrl } from '../../../src/sources/radioBrowser.js';
 /**
  * FNV-1a 32-bit hash of a string, used to derive deterministic pseudo-random
  * values (e.g. hue for synthetic SVG billboards, fallback heading angles).
@@ -494,6 +495,9 @@ export function normalizeSourceItem(item) {
     id: String(item.id || '').trim(),
     name: String(item.name || item.id || '').trim(),
     city: String(item.city || ''),
+    state: String(item.state || '')
+      .trim()
+      .slice(0, 80),
     cityId: String(item.cityId || ''),
     country: /^[A-Z]{2}$/.test(
       String(item.country || item.countryCode || '').toUpperCase(),
@@ -552,9 +556,7 @@ export function safePublicSourcePage(value) {
     return '';
   try {
     const url = new URL(value);
-    return url.protocol === 'https:' && !url.username && !url.password
-      ? url.href
-      : '';
+    return publicRadioHttpsUrl(value) ? url.href : '';
   } catch {
     return '';
   }

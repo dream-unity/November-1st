@@ -3,6 +3,7 @@ import {
   RADIO_STREAM_TIMEOUT_MS,
 } from './policy.js';
 import { publicRadioHttpsUrl } from '../../sources/radioBrowser.js';
+import { createLiveRadioHls, isCuratedLiveRadioHls } from './hlsPlayback.js';
 
 export function createPlayback({
   state: layerState,
@@ -11,10 +12,19 @@ export function createPlayback({
   source,
   audioFactory = null,
   onAudioElement = null,
+  hlsOptions = {},
 }) {
   let streamTimer = null;
   let cancelPendingPlay = null;
+  let hlsTransport = null;
+  let hlsVerified = true;
   const cancelled = Symbol('radio-play-cancelled');
+
+  function releaseHls() {
+    const retired = hlsTransport;
+    hlsTransport = null;
+    retired?.destroy();
+  }
 
   function clearStreamDeadline() {
     if (streamTimer !== null) clearTimeout(streamTimer);
@@ -42,6 +52,7 @@ export function createPlayback({
     layerState._playGeneration += 1;
     layerState._activePlaybackAttempt = null;
     cancelPendingPlayback();
+    releaseHls();
     layerState._audioState = 'error';
     layerState._audioError = message;
     // Do not leave synthesized tuner hiss audible after a terminal stream error.
@@ -86,6 +97,8 @@ export function createPlayback({
     cancelPendingPlayback();
     const previousAudio = layerState._audio;
     layerState._audio = null;
+    releaseHls();
+    hlsVerified = true;
     if (previousAudio) {
       try {
         previousAudio.pause();
@@ -117,6 +130,7 @@ export function createPlayback({
     audio.addEventListener('playing', () => {
       if (layerState._audio !== audio) return;
       if (!audioEventBelongsToActiveAttempt(audio)) return;
+      if (!hlsVerified) return;
       if (!['loading', 'buffering', 'playing'].includes(layerState._audioState))
         return;
       clearStreamDeadline();
@@ -252,26 +266,60 @@ export function createPlayback({
     }
     layerState._audioError = null;
     layerState._audioState = 'loading';
-    if (
-      layerState._audioStationId !== station.id ||
-      layerState._audio.src !== station.streamUrl
-    ) {
-      layerState._audio.pause();
-      layerState._audio.src = station.streamUrl;
-      layerState._audioStationId = station.id;
-    }
+    const audio = layerState._audio;
+    layerState._audioStationId = station.id;
     parts.presentation.emitState();
 
     try {
       const cancellation = new Promise((resolve) => {
         cancelPendingPlay = resolve;
       });
-      armStreamDeadline(layerState._audio);
+      let liveReady = Promise.resolve();
+      const requestedHls =
+        station.streamFormat === 'hls' ||
+        /\.m3u8(?:[?#]|$)/i.test(station.streamUrl);
+      if (requestedHls) {
+        if (!isCuratedLiveRadioHls(station))
+          throw new Error(
+            'This HLS station has not been verified as a live broadcaster. Choose another station.',
+          );
+        hlsVerified = false;
+        // Native HLS can begin decoding before our manifest check returns.
+        // Keep it silent until proof; this also preserves the originating tap.
+        const originalMuted = Boolean(audio.muted);
+        audio.muted = true;
+        let resolveLive;
+        liveReady = new Promise((resolve) => {
+          resolveLive = resolve;
+        });
+        const transport = createLiveRadioHls({
+          ...hlsOptions,
+          audio,
+          streamUrl: station.streamUrl,
+          onLive() {
+            if (!audioEventBelongsToActiveAttempt(audio)) return;
+            hlsVerified = true;
+            audio.muted = originalMuted;
+            resolveLive();
+          },
+          onError(message) {
+            failPlayback(audio, message);
+          },
+        });
+        if (!audioEventBelongsToActiveAttempt(audio)) {
+          transport.destroy();
+          return false;
+        }
+        hlsTransport = transport;
+      } else audio.src = station.streamUrl;
+      armStreamDeadline(audio);
       // Calling play synchronously preserves the originating click/tap gesture.
-      const playback = layerState._audio.play();
+      const playback = audio.play();
       if (
-        playback?.then &&
-        (await Promise.race([playback, cancellation])) === cancelled
+        (await Promise.race([
+          Promise.all([playback, liveReady]),
+          cancellation,
+        ])) === cancelled
       )
         return false;
       if (
@@ -305,7 +353,9 @@ export function createPlayback({
         layerState._audio,
         requiresGesture
           ? 'Tap Play to allow audio in your browser.'
-          : 'Broadcaster stream could not be started. Retry Play or choose another station.',
+          : error?.message?.startsWith('This ')
+            ? error.message
+            : 'Broadcaster stream could not be started. Retry Play or choose another station.',
         { fallback: !requiresGesture },
       );
       return false;
@@ -413,6 +463,7 @@ export function createPlayback({
     layerState._playFallbackOrigin = 'programmatic';
     layerState._playFallbackAttemptId = null;
     layerState._activePlaybackAttempt = null;
+    releaseHls();
     if (layerState._audio) {
       layerState._audio.pause();
       layerState._audio.removeAttribute('src');
@@ -464,7 +515,13 @@ export function createPlayback({
     layerState._playFallbackOrigin = 'programmatic';
     layerState._playFallbackAttemptId = null;
     layerState._activePlaybackAttempt = null;
+    const wasHls = Boolean(hlsTransport);
+    releaseHls();
     layerState._audio?.pause();
+    if (wasHls && layerState._audio) {
+      layerState._audio.removeAttribute('src');
+      layerState._audio.load();
+    }
     layerState._audioState = 'paused';
     parts.presentation.emitState();
     if (origin === 'user' || origin === 'voice') {
@@ -492,6 +549,7 @@ export function createRadioStreamPlayer({
   onAudioElement = null,
   audioFactory = null,
   recordClick = () => {},
+  hlsOptions = {},
 } = {}) {
   let station = null;
   let destroyed = false;
@@ -525,6 +583,7 @@ export function createRadioStreamPlayer({
     state,
     audioFactory,
     onAudioElement,
+    hlsOptions,
     source: { recordClick },
     parts: {
       interaction: { radioPresentationAllowed: () => !destroyed },
@@ -540,7 +599,13 @@ export function createRadioStreamPlayer({
       const streamUrl = publicRadioHttpsUrl(next?.streamUrl);
       if (destroyed || !streamUrl || typeof next?.id !== 'string' || !next.id)
         return false;
-      if (station?.id === next.id && station.streamUrl === streamUrl)
+      if (
+        station?.id === next.id &&
+        station.streamUrl === streamUrl &&
+        ['streamFormat', 'liveOnly', 'playbackKind', 'sourceKind'].every(
+          (key) => station[key] === next[key],
+        )
+      )
         return true;
       playback.stopRadioPlayback();
       station = { ...next, streamUrl };

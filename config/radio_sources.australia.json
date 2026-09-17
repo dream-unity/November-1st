@@ -1,0 +1,3441 @@
+{
+  "description": "Australian live radio directory. Public broadcaster streams verified at the recorded time; availability can change. No map coordinates are inferred. Community directory metadata is kept separate from curated verification.",
+  "stations": [
+    {
+      "id": "au-ce86277080bf531b7c01",
+      "name": "2NURFM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://playerservices.streamtheworld.com/api/livestream-redirect/2NURFM.mp3",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://www.2nurfm.com.au/",
+      "sourcePage": "https://www.2nurfm.com.au/",
+      "state": "New South Wales",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "easy listening"
+      ],
+      "aliases": [
+        "2NURFM"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:59:05.528Z",
+      "credit": "2NURFM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:59:05.528Z",
+        "status": 200,
+        "finalUrl": "https://23193.live.streamtheworld.com/2NURFM.mp3",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fffb9064000ff0000069000000080000",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "2NUR FM 103.7 - Good Times &amp; Great Music",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-a95b19992dffe337ec23",
+      "name": "Perth 6IX",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://playerservices.streamtheworld.com/api/livestream-redirect/6IX.mp3",
+      "codec": "MP3",
+      "bitrate": 64,
+      "homepage": "https://www.6ix.com.au/",
+      "sourcePage": "https://www.6ix.com.au/",
+      "state": "Western Australia",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "classic hits 60s 70a 80s"
+      ],
+      "aliases": [
+        "Perth 6IX"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:59:05.532Z",
+      "credit": "Perth 6IX / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:59:05.532Z",
+        "status": 200,
+        "finalUrl": "https://23193.live.streamtheworld.com/6IX.mp3",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff38264000ed983713b3cc2740cd303",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Home - 6iX",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-ee31f2795f4e80271eed",
+      "name": "PBS 106.7FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://playerservices.streamtheworld.com/api/livestream-redirect/3PBS_FMAACHIGH.aac",
+      "codec": "AAC",
+      "bitrate": 192,
+      "homepage": "https://www.pbsfm.org.au/",
+      "sourcePage": "https://www.pbsfm.org.au/",
+      "state": "Victoria",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [
+        "australian music",
+        "blues",
+        "community radio",
+        "electronic",
+        "funk",
+        "global",
+        "heavy metal",
+        "hip hop",
+        "independent",
+        "indie",
+        "jazz",
+        "rock",
+        "roots",
+        "soul"
+      ],
+      "aliases": [
+        "PBS 106.7FM"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:59:08.118Z",
+      "credit": "PBS 106.7FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:59:08.118Z",
+        "status": 200,
+        "finalUrl": "https://28793.live.streamtheworld.com/3PBS_FMAACHIGH.aac",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff14e803edffc210b1505d29cc52100",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "PBS FM | PBS amplifies under-represented music and supports the local music community",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-9f734527d85b7b9f91a0",
+      "name": "Triple R 102.7FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://ondemand.rrr.org.au/getstream?id=wshq",
+      "codec": "AAC",
+      "bitrate": null,
+      "homepage": "https://www.rrr.org.au/",
+      "sourcePage": "https://www.rrr.org.au/",
+      "state": "Victoria",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "community radio",
+        "independent"
+      ],
+      "aliases": [
+        "Triple R 102.7FM",
+        "Triple R"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:59:10.831Z",
+      "credit": "Triple R 102.7FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:59:10.831Z",
+        "status": 200,
+        "finalUrl": "https://realtime.rrr.org.au/p1h",
+        "contentType": "audio/aac",
+        "contentLength": null,
+        "bytesSampled": 16378,
+        "firstBytes": "a73ebdeb0e5c7adb58edbc3fe10f5479",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Triple R 102.7FM, Melbourne Independent Radio ",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-24b9c5282b4af13d72c1",
+      "name": "Community Radio 2XX",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://playerservices.streamtheworld.com/api/livestream-redirect/2XX.mp3",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://www.2xxfm.org.au/",
+      "sourcePage": "https://www.2xxfm.org.au/",
+      "state": "Australian Capital Territory",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [],
+      "aliases": [
+        "Community Radio 2XX"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:59:58.327Z",
+      "credit": "Community Radio 2XX / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:59:58.327Z",
+        "status": 200,
+        "finalUrl": "https://23193.live.streamtheworld.com/2XX.mp3",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fffb92640008e3824b559b4f1a643ae1",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "2XXfm 98.3 - Canberra&#039;s Oldest Community Radio Station",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-2cf9be25d38d4915a67c",
+      "name": "Systrum Sistum - SSR2",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://systrum.net:8443/SSR2",
+      "codec": "MP3",
+      "bitrate": 256,
+      "homepage": "https://www.systrum.net/",
+      "sourcePage": "https://www.systrum.net/",
+      "state": "Queensland",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "electro",
+        "electronica",
+        "idm",
+        "techno"
+      ],
+      "aliases": [
+        "Systrum Sistum - SSR2",
+        "Systrum Sistum (SSR2)"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:49:47.207Z",
+      "credit": "Systrum Sistum - SSR2 / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:49:47.207Z",
+        "status": 200,
+        "finalUrl": "https://systrum.net:8443/SSR2",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "3d3bff0c292cd73d5a57636ee74cc4ed",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Systrum Sistum | SSR",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-a9b24fc6c5edd461213e",
+      "name": "Rebel 99.4 Gold Coast",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://s8.yesstreaming.net:17099/RblGC",
+      "codec": "AAC",
+      "bitrate": 64,
+      "homepage": "https://rebelfm.com.au/listen-live/goldcoast/",
+      "sourcePage": "https://rebelfm.com.au/listen-live/goldcoast/",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [],
+      "aliases": [
+        "Rebel 99.4 Gold Coast",
+        "Rebel FM - Gold Coast - 99.4 FM (AAC)",
+        "Rebel FM - Canungra - 93.7 FM (AAC)"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:49:49.675Z",
+      "credit": "Rebel 99.4 Gold Coast / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:49:49.675Z",
+        "status": 200,
+        "finalUrl": "https://s8.yesstreaming.net:17099/RblGC",
+        "contentType": "audio/aac",
+        "contentLength": null,
+        "bytesSampled": 12989,
+        "firstBytes": "fff158802a019c211b556d218862622b",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Gold Coast | Rebel FM",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-4a1e48d0e56203c8920b",
+      "name": "2SM SRN Sydney",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://cast4.asurahosting.com/proxy/2sm1269/stream",
+      "codec": "AAC",
+      "bitrate": 32,
+      "homepage": "https://2sm.com.au/",
+      "sourcePage": "https://2sm.com.au/",
+      "state": "New South Wales",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "news talk",
+        "sport",
+        "talkback"
+      ],
+      "aliases": [
+        "2SM SRN Sydney",
+        "2SM Sydney 1269AM"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:49:49.677Z",
+      "credit": "2SM SRN Sydney / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:49:49.677Z",
+        "status": 200,
+        "finalUrl": "https://cast4.asurahosting.com/proxy/2sm1269/stream",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 8192,
+        "firstBytes": "fff15840148148012e34294891222488",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Sydney's 2SM 1269",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-d72420fe8c39a1ea18a1",
+      "name": "8-bit Remix Radio",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://terminal-dystopia.com/radio/stream.mp3",
+      "codec": "MP3",
+      "bitrate": 192,
+      "homepage": "https://terminal-dystopia.com/",
+      "sourcePage": "https://terminal-dystopia.com/",
+      "state": "Victoria",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "8bit",
+        "game",
+        "retro"
+      ],
+      "aliases": [
+        "8-bit Remix Radio"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:49:49.942Z",
+      "credit": "8-bit Remix Radio / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:49:49.942Z",
+        "status": 200,
+        "finalUrl": "https://terminal-dystopia.com/radio/stream.mp3",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 14000,
+        "firstBytes": "8ce842ac73b0a9cc8c1a2ab9118e9d2b",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Terminal Dystopia",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-c58557e6cb71a8b0cd2c",
+      "name": "4MBS Classic FM - Brisbane",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://stream.4mbs.com.au/4mbsclassicfm",
+      "codec": "AAC",
+      "bitrate": 256,
+      "homepage": "https://www.4mbs.com.au/",
+      "sourcePage": "https://www.4mbs.com.au/",
+      "state": "Queensland",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "arts",
+        "brisbane",
+        "classical"
+      ],
+      "aliases": [
+        "4MBS Classic FM - Brisbane"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:49:50.630Z",
+      "credit": "4MBS Classic FM - Brisbane / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:49:50.630Z",
+        "status": 200,
+        "finalUrl": "https://stream.4mbs.com.au/4mbsclassicfm",
+        "contentType": "audio/aac",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "a1e13ada2ac41503480995361dae10e3",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "4MBS Classic FM 103.7 - 4MBS Classic FM 103.7",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-6c162b2935a0bc2a86db",
+      "name": "Lainchan Radio Main",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://radio.lainchan.org/listen/lainchan_radio_main/radio.mp3",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://radio.lainchan.org/public/lainchan_radio_main",
+      "sourcePage": "https://radio.lainchan.org/public/lainchan_radio_main",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [],
+      "aliases": [
+        "Lainchan Radio Main"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:50:14.214Z",
+      "credit": "Lainchan Radio Main / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:50:14.214Z",
+        "status": 200,
+        "finalUrl": "https://radio.lainchan.org/listen/lainchan_radio_main/radio.mp3",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 15788,
+        "firstBytes": "fffb92647a8002932fdee9e613a456eb",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Lainchan Radio Main - AzuraCast",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-25f3fa2a9c67764903ff",
+      "name": "Nightride FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://stream.nightride.fm/nightride.mp3",
+      "codec": "MP3",
+      "bitrate": 320,
+      "homepage": "https://nightride.fm/?station=nightride",
+      "sourcePage": "https://nightride.fm/?station=nightride",
+      "state": "Tasmania",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [
+        "outrun",
+        "retrowave",
+        "synthwave"
+      ],
+      "aliases": [
+        "Nightride FM"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:50:15.421Z",
+      "credit": "Nightride FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:50:15.421Z",
+        "status": 200,
+        "finalUrl": "https://stream.nightride.fm/nightride.mp3",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 8192,
+        "firstBytes": "92f4e01025413a18ad8eb731246f2824",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Synthwave Radio - Free 24/7 Live Streaming | Nightride FM",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-44db97f968398d105a03",
+      "name": "Lofty Community Media",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://stream01.sigile.net/lofty-48-aac",
+      "codec": "AAC",
+      "bitrate": 24,
+      "homepage": "https://lofty.org.au/",
+      "sourcePage": "https://lofty.org.au/",
+      "state": "South Australia",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [
+        "adelaide hills",
+        "australian",
+        "christian",
+        "community access media",
+        "country",
+        "folk",
+        "football",
+        "funk",
+        "hfl",
+        "jazz",
+        "local information",
+        "mixed genre",
+        "mount barker",
+        "music",
+        "news",
+        "pop",
+        "rock",
+        "south australia",
+        "sport",
+        "talk"
+      ],
+      "aliases": [
+        "Lofty Community Media"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:50:16.371Z",
+      "credit": "Lofty Community Media / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:50:16.371Z",
+        "status": 200,
+        "finalUrl": "https://stream01.sigile.net/lofty-48-aac",
+        "contentType": "audio/aac",
+        "contentLength": null,
+        "bytesSampled": 10731,
+        "firstBytes": "fff1584010e21001563300345589b404",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Home - Lofty Community Media",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-2bb89e1e9f92527aa2f6",
+      "name": "2CR Australia Chinese Radio",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://streaming.shoutcast.com/2cr-chinese-radio",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://www.2cr.com.au/",
+      "sourcePage": "https://www.2cr.com.au/",
+      "state": "New South Wales",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "cantonese",
+        "chinese",
+        "mandarin"
+      ],
+      "tags": [
+        "cantonese",
+        "chinese",
+        "mandarin",
+        "news"
+      ],
+      "aliases": [
+        "2CR Australia Chinese Radio",
+        "2CR"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:50:19.393Z",
+      "credit": "2CR Australia Chinese Radio / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:50:19.393Z",
+        "status": 200,
+        "finalUrl": "https://streaming.shoutcast.com/2cr-chinese-radio",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 12254,
+        "firstBytes": "fffb9404cb00025429555309126c4aa5",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "首頁 - 2CR澳洲中文廣播電台",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-e0de307782a3ba1b01bd",
+      "name": "A.i.R - Hip Hop, Rap, Trap & Grime",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://radio.autismo.biz/all",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://radio.autismo.biz/",
+      "sourcePage": "https://radio.autismo.biz/",
+      "state": "Queensland",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "american english"
+      ],
+      "tags": [],
+      "aliases": [
+        "A.i.R - Hip Hop, Rap, Trap & Grime",
+        "A.i.R Station - Hip Hop, Rap, Trap & Grime"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:50:29.019Z",
+      "credit": "A.i.R - Hip Hop, Rap, Trap & Grime / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:50:29.019Z",
+        "status": 200,
+        "finalUrl": "https://radio.autismo.biz/all",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 12288,
+        "firstBytes": "39441bf23e60a23019767f148e37df2a",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Autismo Internet Radio",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-d195cab2036d7a863a6f",
+      "name": "Sound of Hope Australia Cantonese",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://sohcan.out.airtime.pro:8000/sohcan_a",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://www.soundofhope.org/",
+      "sourcePage": "https://www.soundofhope.org/",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "cantonese"
+      ],
+      "tags": [],
+      "aliases": [
+        "Sound of Hope Australia Cantonese"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:50:29.020Z",
+      "credit": "Sound of Hope Australia Cantonese / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:50:29.020Z",
+        "status": 200,
+        "finalUrl": "https://sohcan.out.airtime.pro:8000/sohcan_a",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fffb9264a08003613f54334f3da04346",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "希望之声",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-4b8f0717572133d13bb9",
+      "name": "ASP Radio",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://aspradio.au/listen/asp_radio/radio.mp3",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://aspradio.au/public/asp_radio",
+      "sourcePage": "https://aspradio.au/public/asp_radio",
+      "state": "Victoria",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "70s 80s 90s music"
+      ],
+      "aliases": [
+        "ASP Radio"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:50:46.862Z",
+      "credit": "ASP Radio / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:50:46.862Z",
+        "status": 200,
+        "finalUrl": "https://aspradio.au/listen/asp_radio/radio.mp3",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 11533,
+        "firstBytes": "fffb9264de82037056d8cb092be23ae2",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "ASP Radio - AzuraCast",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-a6c01eae5491a78ac709",
+      "name": "2MBS Fine Music Sydney",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://radio12.shoutcast.net.au:2020/stream/2MBS-ICE",
+      "codec": "AAC",
+      "bitrate": 256,
+      "homepage": "https://www.2mbsfinemusicsydney.com/",
+      "sourcePage": "https://www.2mbsfinemusicsydney.com/",
+      "state": "New South Wales",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "classical",
+        "contemporary",
+        "jazz",
+        "sydney"
+      ],
+      "aliases": [
+        "2MBS Fine Music Sydney AAC 256"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:50:50.131Z",
+      "credit": "2MBS Fine Music Sydney / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:50:50.131Z",
+        "status": 200,
+        "finalUrl": "https://radio12.shoutcast.net.au:2020/stream/2MBS-ICE",
+        "contentType": "audio/aac; charset=UTF-8",
+        "contentLength": null,
+        "bytesSampled": 11800,
+        "firstBytes": "fff150805b80e8211b0eeb9f5e27efc8",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "2MBS Fine Music Sydney",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-347a2f429295a5055a17",
+      "name": "4zzz",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://iheart.4zzz.org.au/4zzz",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://4zzz.org.au/",
+      "sourcePage": "https://4zzz.org.au/",
+      "state": "Queensland",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [
+        "brisbane",
+        "independent"
+      ],
+      "aliases": [
+        "4zzz",
+        "4ZZZ - Brisbane - 102.1 FM (MP3)",
+        "4ZZZ FM",
+        "4ZZZ Community Radio"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:50:55.298Z",
+      "credit": "4zzz / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:50:55.298Z",
+        "status": 200,
+        "finalUrl": "https://iheart.4zzz.org.au/4zzz",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "ccfbdef5c422f108bc14de3e1d72744c",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "4ZZZ - Community Radio Brisbane",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-50c7ac816b39c59f630f",
+      "name": "Streamless FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://live.streamless.fm/listen",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://streamless.fm/",
+      "sourcePage": "https://streamless.fm/",
+      "state": "Victoria",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "70s",
+        "80s",
+        "90s"
+      ],
+      "aliases": [
+        "Streamless FM"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:50:56.104Z",
+      "credit": "Streamless FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:50:56.104Z",
+        "status": 200,
+        "finalUrl": "https://live.streamless.fm/listen",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 14764,
+        "firstBytes": "2904a1dade9a17629671077efffb9244",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Streamless FM: the songs radio forgot",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-845f60247ba5f113ade9",
+      "name": "Trax FM Port Pirie",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://stream01.sigile.net/traxfm-64-aac",
+      "codec": "AAC",
+      "bitrate": 64,
+      "homepage": "https://traxfm.org.au/",
+      "sourcePage": "https://traxfm.org.au/",
+      "state": "South Australia",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "community"
+      ],
+      "aliases": [
+        "Trax FM Port Pirie"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:51:58.643Z",
+      "credit": "Trax FM Port Pirie / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:51:58.643Z",
+        "status": 200,
+        "finalUrl": "https://stream01.sigile.net/traxfm-64-aac",
+        "contentType": "audio/aac",
+        "contentLength": null,
+        "bytesSampled": 10615,
+        "firstBytes": "fff95c802f015c211b4f0de733b2ffeb",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Trax FM &#8211; Part of Your Community, Part of Your Life",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-d00fa3b89787e5b94aeb",
+      "name": "FSJ Radio - XRN Australia",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://us01.xrn.com.au/listen/fsj/FsjSd",
+      "codec": "AAC",
+      "bitrate": 64,
+      "homepage": "https://xrn.com.au/",
+      "sourcePage": "https://xrn.com.au/",
+      "state": "New South Wales",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "acid jazz",
+        "chill",
+        "chillout",
+        "funk",
+        "jazz",
+        "smooth jazz",
+        "soul"
+      ],
+      "aliases": [
+        "FSJ Radio - XRN Australia"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:52:04.140Z",
+      "credit": "FSJ Radio - XRN Australia / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:52:04.140Z",
+        "status": 200,
+        "finalUrl": "https://us01.xrn.com.au/listen/fsj/FsjSd",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff95c802a0170211b552dc651614158",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "XRN — The X Radio Network | Internet Radio &amp; Online Radio",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-84b6aeb4e4e671c73307",
+      "name": "104.1 Territory FM - Darwin - 104.1 FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://streaming.territoryfm.com:8443/TerritoryFM",
+      "codec": "MP3",
+      "bitrate": 185,
+      "homepage": "https://territoryfm.com/",
+      "sourcePage": "https://territoryfm.com/",
+      "state": "Northern Territory",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "adult contemporary",
+        "full service",
+        "news",
+        "talk"
+      ],
+      "aliases": [
+        "104.1 Territory FM - Darwin - 104.1 FM (MP3)",
+        "Territory FM Darwin"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:52:28.499Z",
+      "credit": "104.1 Territory FM - Darwin - 104.1 FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:52:28.499Z",
+        "status": 200,
+        "finalUrl": "https://streaming.territoryfm.com:8443/TerritoryFM",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "711a61a3b460127de7b27edf438c0c9d",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Home - Territory FM 104.1",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-df8c2690eb6703c6783c",
+      "name": "JOY 94.9",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://stream.joy.org.au/proxy/joy949?mp=/live",
+      "codec": "AAC",
+      "bitrate": 64,
+      "homepage": "https://joy.org.au/",
+      "sourcePage": "https://joy.org.au/",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [],
+      "aliases": [
+        "JOY 94.9",
+        "JOY 94.9 Out Loud Proud"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:52:29.589Z",
+      "credit": "JOY 94.9 / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:52:29.589Z",
+        "status": 200,
+        "finalUrl": "https://stream.joy.org.au/proxy/joy949?mp=/live",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 11943,
+        "firstBytes": "fff950801b616c211954b5aa96c54508",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "\n    Home    | JOY Media",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-1feaddbdf699fb488647",
+      "name": "TEABBA RADIO",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://firstnationsmedia.stream/8014/stream",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://www.teabba.com.au/",
+      "sourcePage": "https://www.teabba.com.au/",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [],
+      "aliases": [
+        "TEABBA RADIO"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:52:31.668Z",
+      "credit": "TEABBA RADIO / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:52:31.668Z",
+        "status": 200,
+        "finalUrl": "https://firstnationsmedia.stream/8014/stream",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 15910,
+        "firstBytes": "fffb92645d00038a3dda730c1d303182",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "\r\n    \n    TEABBA | Home\n  \r\n  ",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-66fb63a1270272e9122c",
+      "name": "4RPH Reading Radio",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://audio-edge-vqwx4.yyz.g.radiomast.io/2416c895-f32d-4faa-90a6-b2cf9212488d",
+      "codec": "AAC",
+      "bitrate": 48,
+      "homepage": "https://readingradio.org.au/",
+      "sourcePage": "https://readingradio.org.au/",
+      "state": "Queensland",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "reading",
+        "spoken word"
+      ],
+      "aliases": [
+        "4RPH Reading Radio"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:52:32.543Z",
+      "credit": "4RPH Reading Radio / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:52:32.543Z",
+        "status": 200,
+        "finalUrl": "https://audio-edge-vqwx4.yyz.g.radiomast.io/2416c895-f32d-4faa-90a6-b2cf9212488d",
+        "contentType": "audio/aac",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff158801e81dc211a957cb1622d2a38",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Home - Reading Radio",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-baaa3a91dc01bdda9b59",
+      "name": "100.9 Port Stephens FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://audio-edge-jfbmv.sin.d.radiomast.io/8df8102b-51bf-45fb-aac5-aa0254d6b177?t=heatwave",
+      "codec": "MP3",
+      "bitrate": 192,
+      "homepage": "https://www.psrfm.org.au/",
+      "sourcePage": "https://www.psrfm.org.au/",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [],
+      "aliases": [
+        "100.9 Port Stephens FM"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:52:57.335Z",
+      "credit": "100.9 Port Stephens FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:52:57.335Z",
+        "status": 200,
+        "finalUrl": "https://audio-edge-jfbmv.sin.d.radiomast.io/8df8102b-51bf-45fb-aac5-aa0254d6b177?t=heatwave",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fffbb204ed0e64bb58d6030f627098ab",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Home - Port Stephens Radio FM",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-c2be8e585a51b61749bb",
+      "name": "MBS Light - Brisbane",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://stream.4mbs.com.au/mbslight",
+      "codec": "AAC",
+      "bitrate": 128,
+      "homepage": "https://www.mbslight.com.au/",
+      "sourcePage": "https://www.mbslight.com.au/",
+      "state": "Queensland",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "brisbane",
+        "classical",
+        "crossover",
+        "jazz",
+        "light classics"
+      ],
+      "aliases": [
+        "MBS Light - Brisbane"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:52:57.345Z",
+      "credit": "MBS Light - Brisbane / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:52:57.345Z",
+        "status": 200,
+        "finalUrl": "https://stream.4mbs.com.au/mbslight",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "3844a00d55cb10a4c108af0026a94c58",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Homepage - MBS Light",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-eabeb45f92b688343f3e",
+      "name": "3ABN Australia Radio",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://stream.3abnaustralia.org.au:8443/stream",
+      "codec": "AAC",
+      "bitrate": 56,
+      "homepage": "https://www.3abnaustralia.org.au/",
+      "sourcePage": "https://www.3abnaustralia.org.au/",
+      "state": "New South Wales",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "gospel"
+      ],
+      "aliases": [
+        "3ABN Australia Radio"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:53:03.185Z",
+      "credit": "3ABN Australia Radio / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:53:03.185Z",
+        "status": 200,
+        "finalUrl": "https://stream.3abnaustralia.org.au:8443/stream",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 11200,
+        "firstBytes": "4c80361ffc211a14bd199b03b6d11c2d",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "3ABN Australia",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-846466bdb263c13425c5",
+      "name": "One FM 98.5 Shepparton",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://s2.radio.co/sae3372059/listen",
+      "codec": "AAC",
+      "bitrate": 96,
+      "homepage": "https://fm985.com.au/",
+      "sourcePage": "https://fm985.com.au/",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "community"
+      ],
+      "aliases": [
+        "One FM 98.5 Shepparton"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:53:53.149Z",
+      "credit": "One FM 98.5 Shepparton / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:53:53.149Z",
+        "status": 200,
+        "finalUrl": "https://s2.radio.co/sae3372059/listen",
+        "contentType": "audio/aac",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff15080210114211a08ea7f1fe0355d",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "One FM | Live and Local",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-4c52329f8cd655ed4d1a",
+      "name": "Portuguese Radio Australia",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://s2.radio.co/sdff54b89f/listen",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://www.portugueseradio.com/",
+      "sourcePage": "https://www.portugueseradio.com/",
+      "state": "New South Wales",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "portuguese"
+      ],
+      "tags": [
+        "94 fm",
+        "australia",
+        "petersham",
+        "portuguese",
+        "sydney"
+      ],
+      "aliases": [
+        "Portuguese Radio Australia"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:53:54.257Z",
+      "credit": "Portuguese Radio Australia / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:53:54.257Z",
+        "status": 200,
+        "finalUrl": "https://s2.radio.co/sdff54b89f/listen",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fffb92646980034b5858cb06135262ab",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Portuguese News Online | Portuguese Radio Australia",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-bc68cadfc1cdb8ef7a24",
+      "name": "Sound of Hope Australia Mandarin",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://ozvoice.out.airtime.pro/ozvoice_a",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://www.soundofhope.org/",
+      "sourcePage": "https://www.soundofhope.org/",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "mandarin"
+      ],
+      "tags": [
+        "australia",
+        "mandarin"
+      ],
+      "aliases": [
+        "Sound of Hope Australia Mandarin"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:53:56.987Z",
+      "credit": "Sound of Hope Australia Mandarin / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:53:56.987Z",
+        "status": 200,
+        "finalUrl": "https://ozvoice.out.airtime.pro/ozvoice_a",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 11285,
+        "firstBytes": "fffb9264f400046d66576b0c2c742f40",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "希望之声",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-2a3b5daeb7bf1c9ada8e",
+      "name": "CherbOURg Radio",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://s8.yesstreaming.net:17114/stream?1723719859375",
+      "codec": "AAC",
+      "bitrate": 64,
+      "homepage": "https://www.facebook.com/CherbourgRadio",
+      "sourcePage": "https://www.facebook.com/CherbourgRadio",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "community",
+        "indigenous"
+      ],
+      "aliases": [
+        "CherbOURg Radio"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:53:58.642Z",
+      "credit": "CherbOURg Radio / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:53:58.642Z",
+        "status": 200,
+        "finalUrl": "https://s8.yesstreaming.net:17114/stream?1723719859375",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 8202,
+        "firstBytes": "fff15c802d61bc210b551da9d508a138",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Cherbourg Us Mob Radio 94.1FM",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-b93ba1cdb3f7149e3a47",
+      "name": "90.1 Happy FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://stream.sigile.net/happyfm-128-mp3?1692452622660",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://happyfm.org.au/",
+      "sourcePage": "https://happyfm.org.au/",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [],
+      "aliases": [
+        "90.1 Happy FM",
+        "90.1 Happy Fm"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:53:59.850Z",
+      "credit": "90.1 Happy FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:53:59.850Z",
+        "status": 200,
+        "finalUrl": "https://stream.sigile.net/happyfm-128-mp3?1692452622660",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fffb9260bd0003d8645cd1e835fe3dec",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "90.1 Happy FM - Home Page",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-16d9dce31e761e789c1a",
+      "name": "2MFM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://live.2mfm.org.au/",
+      "codec": "MP3",
+      "bitrate": null,
+      "homepage": "https://2mfm.org.au/",
+      "sourcePage": "https://2mfm.org.au/",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [],
+      "aliases": [
+        "2MFM"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:54:10.799Z",
+      "credit": "2MFM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:10.799Z",
+        "status": 200,
+        "finalUrl": "https://live.2mfm.org.au/",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 8192,
+        "firstBytes": "138cde7f4025fffd0207fedc25a219c0",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Muslim Community Radio &#8211; Your Voice, Your Faith, Your Community on Air",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-555a72421169c8dda82c",
+      "name": "QUIVR",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://s2.radio.co/s7348c2995/listen",
+      "codec": "MP3",
+      "bitrate": 192,
+      "homepage": "https://thequivr.com/",
+      "sourcePage": "https://thequivr.com/",
+      "state": "Queensland",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [
+        "dj",
+        "electronic",
+        "hip hop",
+        "house"
+      ],
+      "aliases": [
+        "QUIVR"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:54:16.247Z",
+      "credit": "QUIVR / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:16.247Z",
+        "status": 200,
+        "finalUrl": "https://s2.radio.co/s7348c2995/listen",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fffbb264ce00f7476d577769e0000000",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Home - QUIVR",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-d751f12c5b1aa3d10d21",
+      "name": "MIBL Radio — Instrumental",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://www.miblradio.com.au/mibl2",
+      "codec": "MP3",
+      "bitrate": 320,
+      "homepage": "https://www.miblradio.com.au/",
+      "sourcePage": "https://www.miblradio.com.au/",
+      "state": "New South Wales",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english",
+        "persian"
+      ],
+      "tags": [
+        "24/7",
+        "ai music",
+        "ambient",
+        "australia",
+        "electronic",
+        "instrumental",
+        "persian",
+        "sydney",
+        "world music"
+      ],
+      "aliases": [
+        "MIBL Radio — Instrumental"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:54:19.648Z",
+      "credit": "MIBL Radio — Instrumental / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:19.648Z",
+        "status": 200,
+        "finalUrl": "https://www.miblradio.com.au/mibl2",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 11200,
+        "firstBytes": "30238c9726e94e456ed488a5f42de314",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "MIBL Radio — The World&#039;s First Radio Station Born of Human Artistry and AI",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-b56bcf2ad81585fe74ff",
+      "name": "Alpine FM - Kiewa Valley / Ovens Valley - Mount Beauty - 96.5 FM / 92.9 FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://stream.sigile.net/3vkv-128-mp3",
+      "codec": "MP3",
+      "bitrate": 96,
+      "homepage": "https://www.alpinefm.org.au/",
+      "sourcePage": "https://www.alpinefm.org.au/",
+      "state": "Victoria",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "community radio"
+      ],
+      "aliases": [
+        "Alpine FM - Kiewa Valley / Ovens Valley - Mount Beauty - 96.5 FM / 92.9 FM (MP3)"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:54:19.653Z",
+      "credit": "Alpine FM - Kiewa Valley / Ovens Valley - Mount Beauty - 96.5 FM / 92.9 FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:19.653Z",
+        "status": 200,
+        "finalUrl": "https://stream.sigile.net/3vkv-128-mp3",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fffb70605783022240dde8c51cfe2f88",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Homepage - Alpine FM 96.5 &amp; 92.9",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-b72a239c7f27349044ea",
+      "name": "5MBS 99.9FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://stream.sigile.net/5mbs-128-mp3",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://5mbs.com/",
+      "sourcePage": "https://5mbs.com/",
+      "state": "South Australia",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "adelaide",
+        "blues",
+        "classical",
+        "jazz",
+        "world music"
+      ],
+      "aliases": [
+        "5MBS 99.9FM",
+        "5MBS"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:54:19.655Z",
+      "credit": "5MBS 99.9FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:19.655Z",
+        "status": 200,
+        "finalUrl": "https://stream.sigile.net/5mbs-128-mp3",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fffb9204de8002ee2dd26b2c19c85822",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Radio 5mbs 99.9FM",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-f6144237d02e3a314366",
+      "name": "PARADISE FM101.9 Ballina",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://stream2.cnmns.net/paradisefm-mp3",
+      "codec": "MP3",
+      "bitrate": 64,
+      "homepage": "https://www.paradisefm.org.au/",
+      "sourcePage": "https://www.paradisefm.org.au/",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "community"
+      ],
+      "aliases": [
+        "PARADISE FM101.9 Ballina"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:54:41.180Z",
+      "credit": "PARADISE FM101.9 Ballina / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:41.180Z",
+        "status": 200,
+        "finalUrl": "https://stream2.cnmns.net/paradisefm-mp3",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "7459131b45b7d00c134f782e30a89da7",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Paradise FM - Ballina Community Radio - 101.9FM",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-24f39ece0bb545e5efd6",
+      "name": "Triple A FM - Wagga Wagga - 107.1 FM (HTTPS)",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://stream.tripleafm.com.au//",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://tripleafm.net.au/",
+      "sourcePage": "https://tripleafm.net.au/",
+      "state": "New South Wales",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "community radio",
+        "information",
+        "music",
+        "variety"
+      ],
+      "aliases": [
+        "Triple A FM - Wagga Wagga - 107.1 FM (HTTPS) (MP3)"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:54:44.685Z",
+      "credit": "Triple A FM - Wagga Wagga - 107.1 FM (HTTPS) / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:44.685Z",
+        "status": 200,
+        "finalUrl": "https://stream.tripleafm.com.au//",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 10136,
+        "firstBytes": "fffb9264ea0e03a260571b0c2d224d0b",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Triple A FM - The Riverina&#39;s Best Music Mix",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-c1c6fabdbb0bde2a6f89",
+      "name": "EMFM - Echuca Moama Community Radio - Echuca - 104.7 FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://emfm-https.rezuru.com:9300/;",
+      "codec": "AAC",
+      "bitrate": 32,
+      "homepage": "https://radioemfm.org.au/",
+      "sourcePage": "https://radioemfm.org.au/",
+      "state": "Victoria",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "community radio",
+        "miscellaneous"
+      ],
+      "aliases": [
+        "EMFM - Echuca Moama Community Radio - Echuca - 104.7 FM (AAC+)"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:54:45.910Z",
+      "credit": "EMFM - Echuca Moama Community Radio - Echuca - 104.7 FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:45.910Z",
+        "status": 200,
+        "finalUrl": "https://emfm-https.rezuru.com:9300/;",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 15905,
+        "firstBytes": "fff15c40196150016234a8ac84630944",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "EMFM - Community Radio Echuca",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-d9ad8126dec596df2c6a",
+      "name": "4ZZZ Digital",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://iheart.4zzz.org.au/zed-digital",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://4zzz.org.au/",
+      "sourcePage": "https://4zzz.org.au/",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "englsih"
+      ],
+      "tags": [
+        "community politics music radical"
+      ],
+      "aliases": [
+        "4ZZZ Digital"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:54:45.913Z",
+      "credit": "4ZZZ Digital / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:45.913Z",
+        "status": 200,
+        "finalUrl": "https://iheart.4zzz.org.au/zed-digital",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "4a72dc84e5f2986617695eb2bdc3daff",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "4ZZZ - Community Radio Brisbane",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-f2512229a0984dc9969b",
+      "name": "Nightride FM Chillsynth",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://stream.nightride.fm/chillsynth.mp3",
+      "codec": "MP3",
+      "bitrate": 320,
+      "homepage": "https://nightride.fm/?station=chillsynth",
+      "sourcePage": "https://nightride.fm/?station=chillsynth",
+      "state": "Tasmania",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [
+        "chillsynth",
+        "chillwave",
+        "instrumental"
+      ],
+      "aliases": [
+        "Nightride FM Chillsynth"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:54:47.963Z",
+      "credit": "Nightride FM Chillsynth / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:47.963Z",
+        "status": 200,
+        "finalUrl": "https://stream.nightride.fm/chillsynth.mp3",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 10992,
+        "firstBytes": "0782b07322cb7b2b369cd0e49e4d1434",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Synthwave Radio - Free 24/7 Live Streaming | Nightride FM",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-74a4068e9cc4bec2154c",
+      "name": "Radio Mansfield 99.7FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://c7.radioboss.fm:18291/stream",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://radiomansfield.org.au/",
+      "sourcePage": "https://radiomansfield.org.au/",
+      "state": "Victoria",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "community radio"
+      ],
+      "aliases": [
+        "Radio Mansfield 99.7FM",
+        "Radio Mansfield"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:54:47.974Z",
+      "credit": "Radio Mansfield 99.7FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:47.974Z",
+        "status": 200,
+        "finalUrl": "https://c7.radioboss.fm:18291/stream",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fffb9064e500f41068dd6b082cf40000",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Radio Mansfield 99.7FM &#8211; Your voice in the high country",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-515258ace93f1aabef50",
+      "name": "Eastside Radio 89.7FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://streamer.eastsidefm.org/stream",
+      "codec": "AAC",
+      "bitrate": 192,
+      "homepage": "https://eastsidefm.org/",
+      "sourcePage": "https://eastsidefm.org/",
+      "state": "New South Wales",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [],
+      "aliases": [
+        "Eastside Radio 89.7FM"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:55:12.464Z",
+      "credit": "Eastside Radio 89.7FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:55:12.464Z",
+        "status": 200,
+        "finalUrl": "https://streamer.eastsidefm.org/stream",
+        "contentType": "audio/aac",
+        "contentLength": null,
+        "bytesSampled": 9800,
+        "firstBytes": "91001d98475f918d607c320b18b31256",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Eastside Radio | Eastside Radio 89.7FM",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-8f1a3a2719e86505144f",
+      "name": "Vibe Nation Radio",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://listen.vibenation.live/vibe",
+      "codec": "AAC",
+      "bitrate": 128,
+      "homepage": "https://vibenation.live/",
+      "sourcePage": "https://vibenation.live/",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [],
+      "aliases": [
+        "Vibe Nation Radio"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:55:13.056Z",
+      "credit": "Vibe Nation Radio / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:55:13.056Z",
+        "status": 200,
+        "finalUrl": "https://listen.vibenation.live/vibe",
+        "contentType": "audio/aac",
+        "contentLength": null,
+        "bytesSampled": 8192,
+        "firstBytes": "1ba3352ffbbecb8c035b4e93ebced169",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Vibe Nation Home - Vibe Nation Radio",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-79e67a1b6127ba4b6ea0",
+      "name": "Retro FM",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://cast6.asurahosting.com/proxy/retrofmp/stream?ver=663457",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://retrofm.com.au/",
+      "sourcePage": "https://retrofm.com.au/",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [],
+      "aliases": [
+        "Retro FM"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:55:21.865Z",
+      "credit": "Retro FM / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:55:21.865Z",
+        "status": 200,
+        "finalUrl": "https://cast6.asurahosting.com/proxy/retrofmp/stream?ver=663457",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 8192,
+        "firstBytes": "ee7fe7fbb9a13bbf11281800443e1840",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Home | Retro FM",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-9fbd1c39ed56239e08ec",
+      "name": "C91.3 FM - Macarthur's Radio Station",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://ice9.securenetsystems.net/C913",
+      "codec": "AAC",
+      "bitrate": 64,
+      "homepage": "https://c913.com.au/",
+      "sourcePage": "https://c913.com.au/",
+      "state": "New South Wales",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "commercial",
+        "hot adult contemporary",
+        "local radio",
+        "mainstream",
+        "top 40"
+      ],
+      "aliases": [
+        "C91.3 FM - Macarthur's Radio Station"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:57:51.664Z",
+      "credit": "C91.3 FM - Macarthur's Radio Station / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:57:51.664Z",
+        "status": 200,
+        "finalUrl": "https://ice9.securenetsystems.net/C913",
+        "contentType": "audio/aacp",
+        "contentLength": null,
+        "bytesSampled": 16384,
+        "firstBytes": "fff95c802e41f0211b55441d66901182",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "C91.3FM Macarthur's Radio Station",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-a1de620a5c2876eea227",
+      "name": "MIBL Radio",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://www.miblradio.com.au/mibl",
+      "codec": "MP3",
+      "bitrate": 320,
+      "homepage": "https://www.miblradio.com.au/",
+      "sourcePage": "https://www.miblradio.com.au/",
+      "state": "New South Wales",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english",
+        "persian"
+      ],
+      "tags": [
+        "24/7",
+        "ai music",
+        "ambient",
+        "australia",
+        "electronic",
+        "persian",
+        "sydney",
+        "world music"
+      ],
+      "aliases": [
+        "MIBL Radio"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:58:25.111Z",
+      "credit": "MIBL Radio / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:58:25.111Z",
+        "status": 200,
+        "finalUrl": "https://www.miblradio.com.au/mibl",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 8400,
+        "firstBytes": "faab6b8584925cca29a6da77057c31ee",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "MIBL Radio — The World&#039;s First Radio Station Born of Human Artistry and AI",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-975ad1e6bcacc9ec68d5",
+      "name": "Swingtime Radio",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://15113.live.streamtheworld.com/SAM04AAC169.mp3",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://swingtimeradio.com/",
+      "sourcePage": "https://swingtimeradio.com/",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "english"
+      ],
+      "tags": [
+        "blues",
+        "classic jazz",
+        "gospel",
+        "swing",
+        "vocal"
+      ],
+      "aliases": [
+        "Swingtime Radio"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "progressive",
+      "verifiedAt": "2026-09-17T08:59:03.386Z",
+      "credit": "Swingtime Radio / public broadcaster stream",
+      "verification": {
+        "checkedAt": "2026-09-17T08:59:03.386Z",
+        "status": 200,
+        "finalUrl": "https://15113.live.streamtheworld.com/SAM04AAC169.mp3",
+        "contentType": "audio/mpeg",
+        "contentLength": null,
+        "bytesSampled": 11374,
+        "firstBytes": "fffb9044cf0022ea3853e30f558052e6",
+        "continuousTransport": true,
+        "ownerPageStatus": 200,
+        "ownerPageTitle": "Home - Swing Radio",
+        "method": "Radio Browser used for discovery; public broadcaster homepage reviewed; bounded continuous audio GET returned audio bytes with no finite Content-Length. Audible programme identity was not verified.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-223a7941b1ab4b7b7e2d",
+      "name": "ABC Sport Extra",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038314/itinerantone/masterhq.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/news/sport/audio",
+      "sourcePage": "https://www.abc.net.au/news/sport/audio",
+      "state": "National",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "radio"
+      ],
+      "aliases": [
+        "ABC AFL"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:54:24.603Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:24.603Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2108593/itinerantone/v0-221.m3u8",
+        "sequence": 5287034,
+        "secondSequence": 5287036,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:52:39.121Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 3301,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-76d2d2107ee70a0eab6b",
+      "name": "ABC Radio Ballarat",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038263/localballarat/index.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/ballarat",
+      "sourcePage": "https://www.abc.net.au/ballarat",
+      "state": "Victoria",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "news",
+        "talk",
+        "local"
+      ],
+      "aliases": [
+        "ABC Ballarat Local Radio"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:54:24.648Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:24.648Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2106548/localballarat/v0-221.m3u8",
+        "sequence": 5266508,
+        "secondSequence": 5266510,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:52:39.722Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 15588,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-504b6e2032496e8e1ba7",
+      "name": "ABC Classic Northern Territory",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038323/classicfmnt/index.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/classic",
+      "sourcePage": "https://www.abc.net.au/classic",
+      "state": "Northern Territory",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "radio"
+      ],
+      "aliases": [
+        "ABC Classic NT HLS"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:54:24.654Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:24.654Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2108548/classicfmnt/v0-221.m3u8",
+        "sequence": 5320690,
+        "secondSequence": 5320692,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:52:43.109Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 945,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-a33620003cb692d580da",
+      "name": "ABC Radio Goulburn Murray",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2109424/localwodonga/v0-221.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/listen/live/goulburnmurray",
+      "sourcePage": "https://www.abc.net.au/listen/live/goulburnmurray",
+      "state": "Victoria",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "news",
+        "talk",
+        "local"
+      ],
+      "aliases": [
+        "ABC Radio Goulburn Murray"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:54:24.660Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:24.660Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2109424/localwodonga/v0-221.m3u8",
+        "sequence": 5230627,
+        "secondSequence": 5230632,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:52:14.355Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-027bbec80c79781bec59",
+      "name": "ABC Radio South East NSW",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038247/localsoutheastnsw/masterhq.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/listen/live/southeastnsw",
+      "sourcePage": "https://www.abc.net.au/listen/live/southeastnsw",
+      "state": "New South Wales",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "news",
+        "talk",
+        "local"
+      ],
+      "aliases": [
+        "ABC South East NSW"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:54:24.663Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:24.663Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2106383/localsoutheastnsw/v0-221.m3u8",
+        "sequence": 5266686,
+        "secondSequence": 5266688,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:52:43.706Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 948,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-1b86bf82bb88d1e40e61",
+      "name": "ABC Radio North Queensland",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038157-b/localnorthqld/masterhq.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/northqld",
+      "sourcePage": "https://www.abc.net.au/northqld",
+      "state": "Queensland",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "news",
+        "talk",
+        "local"
+      ],
+      "aliases": [
+        "ABC Local Radio 630 North Queensland 20230609"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:54:24.728Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:24.728Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2109463/localnorthqld/v0-221.m3u8",
+        "sequence": 5230638,
+        "secondSequence": 5230641,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:52:34.329Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-58bbf6d27c21de10c8af",
+      "name": "ABC Radio North Coast",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038170/localnorthcoast/index.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/listen/live/northcoast",
+      "sourcePage": "https://www.abc.net.au/listen/live/northcoast",
+      "state": "New South Wales",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "news",
+        "talk",
+        "local"
+      ],
+      "aliases": [
+        "ABC North Coast"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:54:24.773Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:24.773Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2106374/localnorthcoast/v0-221.m3u8",
+        "sequence": 5266319,
+        "secondSequence": 5266321,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:52:38.955Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-a6d204c02114032d6480",
+      "name": "ABC Radio Hobart",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://streaming.abc-cdn.net.au/audio/hls/localhobart.m3u8?source=web",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/listen/live/hobart",
+      "sourcePage": "https://www.abc.net.au/listen/live/hobart",
+      "state": "Tasmania",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "news",
+        "talk",
+        "local"
+      ],
+      "aliases": [],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:54:24.996Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:54:24.996Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2110357/localhobart/v0-221.m3u8",
+        "sequence": 5230519,
+        "secondSequence": 5230523,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:52:16.950Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 948,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-8429fc4651f93691f9fe",
+      "name": "ABC Jazz",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038319/abcjazz/index.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/jazz",
+      "sourcePage": "https://www.abc.net.au/jazz",
+      "state": "National",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "radio"
+      ],
+      "aliases": [
+        "ABC Jazz HLS",
+        "ABC Jazz 20220701"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:56:25.996Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:56:25.996Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2108543/abcjazz/v0-221.m3u8",
+        "sequence": 5281940,
+        "secondSequence": 5281943,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:54:35.276Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 1073,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-fba17610fb3313381926",
+      "name": "ABC Radio North West Queensland",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038355/localmtisa/masterhq.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/northwest",
+      "sourcePage": "https://www.abc.net.au/northwest",
+      "state": "Queensland",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "news",
+        "talk",
+        "local"
+      ],
+      "aliases": [
+        "ABC 106.5MHz FM Mount Isa QLD Northwest Queensland Local Radio"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:56:26.006Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:56:26.006Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2109417/localmtisa/v0-221.m3u8",
+        "sequence": 5248831,
+        "secondSequence": 5248833,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:54:40.349Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 945,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-431ffce7a5e431f21942",
+      "name": "ABC Classic South Australia",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038351/classicfmsa/index.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/classic",
+      "sourcePage": "https://www.abc.net.au/classic",
+      "state": "South Australia",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "radio"
+      ],
+      "aliases": [
+        "ABC Classic SA HLS",
+        "ABC Classic FM (SA)"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:56:26.605Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:56:26.605Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2108550/classicfmsa/v0-221.m3u8",
+        "sequence": 5230741,
+        "secondSequence": 5230743,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:54:41.116Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 948,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-0063f8a4f886b5b7abab",
+      "name": "ABC Classic Western Australia",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038349/classicfmwa/index.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/classic",
+      "sourcePage": "https://www.abc.net.au/classic",
+      "state": "Western Australia",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "radio"
+      ],
+      "aliases": [
+        "ABC Classic WA HLS"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:56:26.656Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:56:26.656Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2108552/classicfmwa/v0-221.m3u8",
+        "sequence": 5230685,
+        "secondSequence": 5230688,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:54:36.295Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 989,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-46da2af1975491a1afb2",
+      "name": "ABC Radio Brisbane",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://streaming.abc-cdn.net.au/audio/hls/localbrisbane.m3u8?source=web",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/listen/live/brisbane",
+      "sourcePage": "https://www.abc.net.au/listen/live/brisbane",
+      "state": "Queensland",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "news",
+        "talk",
+        "local"
+      ],
+      "aliases": [
+        "612 ABC Brisbane",
+        "ABC 612kHz AM Brisbane QLD Queensland Local Radio 20220701",
+        "ABC Radio Brisbane"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:56:54.130Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:56:54.130Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2109403/localbrisbane/v0-221.m3u8",
+        "sequence": 5230698,
+        "secondSequence": 5230701,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:54:58.354Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-72cfb03a7a068b04c06c",
+      "name": "ABC Radio Darwin",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://streaming.abc-cdn.net.au/audio/hls/localdarwin.m3u8?source=web",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/listen/live/darwin",
+      "sourcePage": "https://www.abc.net.au/listen/live/darwin",
+      "state": "Northern Territory",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "news",
+        "talk",
+        "local"
+      ],
+      "aliases": [
+        "105.7 ABC Darwin",
+        "ABC Radio DARWIN"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:56:57.159Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:56:57.159Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2109409/localdarwin/v0-221.m3u8",
+        "sequence": 5287049,
+        "secondSequence": 5287052,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:55:01.121Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-533fb5e2bd32425f604c",
+      "name": "ABC Classic",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038316/classicfmnsw/index.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/classic",
+      "sourcePage": "https://www.abc.net.au/classic",
+      "state": "New South Wales",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "radio"
+      ],
+      "aliases": [
+        "ABC Classic HLS",
+        "ABC Classic FM 20220701"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:57:26.319Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:57:26.319Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2108547/classicfmnsw/v0-221.m3u8",
+        "sequence": 5266782,
+        "secondSequence": 5266786,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:55:23.731Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-d5168376fdc9bbc685e6",
+      "name": "ABC Radio Melbourne",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038300/localmelbourne/masterhq.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/listen/live/melbourne",
+      "sourcePage": "https://www.abc.net.au/listen/live/melbourne",
+      "state": "Victoria",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "news",
+        "talk",
+        "local"
+      ],
+      "aliases": [
+        "ABC Radio Melbourne",
+        "774 ABC Melbourne"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:57:26.323Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:57:26.323Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2109416/localmelbourne/v0-221.m3u8",
+        "sequence": 5266448,
+        "secondSequence": 5266452,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:55:23.721Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-feb7d7e2b344b20d432d",
+      "name": "ABC Radio National",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038318/rnnsw/index.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/radionational",
+      "sourcePage": "https://www.abc.net.au/radionational",
+      "state": "New South Wales",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "radio"
+      ],
+      "aliases": [
+        "ABC Radio National HLS",
+        "ABC Radio National Live 20220701",
+        "Radio National SA"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:57:26.556Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:57:26.556Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2109448/rnnsw/v0-221.m3u8",
+        "sequence": 5266688,
+        "secondSequence": 5266691,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:55:29.707Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-84f40256cc187e98fefe",
+      "name": "ABC Radio Sydney",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038302/localsydney/masterhq.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/sydney",
+      "sourcePage": "https://www.abc.net.au/sydney",
+      "state": "New South Wales",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "news",
+        "talk",
+        "local"
+      ],
+      "aliases": [
+        "ABC 702kHz AM Sydney NSW Local Radio 20220701",
+        "702 ABC Sydney",
+        "ABC Radio Sydney"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:57:26.558Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:57:26.558Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2109422/localsydney/v0-221.m3u8",
+        "sequence": 5266700,
+        "secondSequence": 5266703,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:55:31.718Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-d26f3ae7e7b66364a9b2",
+      "name": "ABC Classic Queensland",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038352/classicfmqld/index.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/classic",
+      "sourcePage": "https://www.abc.net.au/classic",
+      "state": "Queensland",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "radio"
+      ],
+      "aliases": [
+        "ABC Classic QLD HLS"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:58:28.901Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:58:28.901Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2108549/classicfmqld/v0-221.m3u8",
+        "sequence": 5230714,
+        "secondSequence": 5230717,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:56:32.361Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-70fc5d78625df600e49e",
+      "name": "ABC NewsRadio",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2109425/newsradio/v0-221.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/listen/news",
+      "sourcePage": "https://www.abc.net.au/listen/news",
+      "state": "National",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "radio"
+      ],
+      "aliases": [
+        "ABC News Radio",
+        "ABC NewsRadio"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:59:04.313Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:59:04.313Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2109425/newsradio/v0-221.m3u8",
+        "sequence": 5281926,
+        "secondSequence": 5281933,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:56:27.248Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-f66b50934d8dec078ff3",
+      "name": "ABC Radio Canberra",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://streaming.abc-cdn.net.au/audio/hls/localcanberra.m3u8?source=web",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/listen/live/canberra",
+      "sourcePage": "https://www.abc.net.au/listen/live/canberra",
+      "state": "Australian Capital Territory",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "news",
+        "talk",
+        "local"
+      ],
+      "aliases": [
+        "666 ABC Canberra",
+        "ABC Radio Canberra"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:59:04.594Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:59:04.594Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2109407/localcanberra/v0-221.m3u8",
+        "sequence": 5230745,
+        "secondSequence": 5230749,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:57:03.109Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-1c08870bfa41fd45881c",
+      "name": "ABC Radio National South Australia",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038333/rnsa/index.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/radionational",
+      "sourcePage": "https://www.abc.net.au/radionational",
+      "state": "South Australia",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "radio"
+      ],
+      "aliases": [
+        "ABC Radio National SA HLS"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:59:04.597Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:59:04.597Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2109451/rnsa/v0-221.m3u8",
+        "sequence": 5230672,
+        "secondSequence": 5230679,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:56:27.107Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-a19defa42a1bdd25f7b8",
+      "name": "ABC Radio Australia",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038266/ramulti/masterhq.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/radio-australia/",
+      "sourcePage": "https://www.abc.net.au/radio-australia/",
+      "state": "National",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "radio"
+      ],
+      "aliases": [
+        "ABC Radio Australia 20220701",
+        "ABC Radio Australia"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:59:04.605Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:59:04.605Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2109446/ramulti/v0-221.m3u8",
+        "sequence": 5230651,
+        "secondSequence": 5230658,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:56:30.363Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-8d330b6ab13cb809bfd9",
+      "name": "ABC Country",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038322/abccountry/index.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/country",
+      "sourcePage": "https://www.abc.net.au/country",
+      "state": "National",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "radio"
+      ],
+      "aliases": [
+        "ABC Country HLS",
+        "ABC Country 20220701"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:59:04.606Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:59:04.606Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2108540/abccountry/v0-221.m3u8",
+        "sequence": 5306821,
+        "secondSequence": 5306828,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:56:29.261Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-13ba8bfb1a1c2207ba3f",
+      "name": "ABC Radio Western Queensland",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2038331/locallongreach/masterhq.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/westqld",
+      "sourcePage": "https://www.abc.net.au/westqld",
+      "state": "Queensland",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "news",
+        "talk",
+        "local"
+      ],
+      "aliases": [
+        "ABC 540kHz AM Longreach QLD Western Queensland Local Radio 20220701"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:59:05.522Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:59:05.522Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2109415/locallongreach/v0-221.m3u8",
+        "sequence": 5230901,
+        "secondSequence": 5230908,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:56:30.350Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-dac7862cd72704a0ecd8",
+      "name": "triple j Hottest",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://mediaserviceslive.akamaized.net/hls/live/2100183/triplejhottest/masterhq.m3u8",
+      "codec": "AAC",
+      "homepage": "https://www.abc.net.au/triplejhottest",
+      "sourcePage": "https://www.abc.net.au/triplejhottest",
+      "state": "National",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "radio"
+      ],
+      "aliases": [
+        "Triple j Hottest"
+      ],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T08:59:05.527Z",
+      "credit": "Australian Broadcasting Corporation",
+      "verification": {
+        "checkedAt": "2026-09-17T08:59:05.527Z",
+        "mediaUrl": "https://mediaserviceslive.akamaized.net/hls/live/2109455/triplejhottest/v0-221.m3u8",
+        "sequence": 5287108,
+        "secondSequence": 5287115,
+        "advance": true,
+        "dates": [
+          "2026-09-17T08:56:33.141Z"
+        ],
+        "fresh": true,
+        "segmentStatus": 200,
+        "segmentContentType": "video/mp2t",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-dc8704a0b44b6dc06f89",
+      "name": "SBS Radio 3",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://sbs-hls.streamguys1.com/hls/sbs3/playlist.m3u8?aw_0_1st.playerid=sbs-web",
+      "codec": "AAC",
+      "homepage": "https://www.sbs.com.au/audio/radio",
+      "sourcePage": "https://www.sbs.com.au/audio/radio",
+      "state": "National",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English"
+      ],
+      "tags": [
+        "news",
+        "talk"
+      ],
+      "aliases": [],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T09:00:20.859Z",
+      "credit": "SBS Audio",
+      "verification": {
+        "checkedAt": "2026-09-17T09:00:20.859Z",
+        "mediaUrl": "https://sbs-hls.streamguys1.com/hls/sbs3/playlist.m3u8?listeningSessionID=6a848a7b1ebcabd6_2564475_Em2976Yx_MTM5LjE4MC4xNzIuMjE0_0000000DB9E&downloadSessionID=0&aw_0_1st.playerid=sbs-web",
+        "sequence": 0,
+        "secondSequence": 2,
+        "advance": true,
+        "dates": [],
+        "fresh": false,
+        "segmentStatus": 200,
+        "segmentContentType": "application/octet-stream",
+        "bytesSampled": 15980,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    },
+    {
+      "id": "au-ab7737870899febacf12",
+      "name": "SBS Radio 1",
+      "country": "Australia",
+      "countryCode": "AU",
+      "streamUrl": "https://sbs-hls.streamguys1.com/hls/sbs1/playlist.m3u8?aw_0_1st.playerid=sbs-web",
+      "codec": "AAC",
+      "homepage": "https://www.sbs.com.au/audio/radio",
+      "sourcePage": "https://www.sbs.com.au/audio/radio",
+      "state": "National",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [
+        "news",
+        "talk",
+        "multilingual"
+      ],
+      "aliases": [],
+      "playbackKind": "live",
+      "streamFormat": "hls",
+      "liveOnly": true,
+      "verifiedAt": "2026-09-17T09:00:20.859Z",
+      "credit": "SBS Audio",
+      "verification": {
+        "checkedAt": "2026-09-17T09:00:20.859Z",
+        "mediaUrl": "https://sbs-hls.streamguys1.com/hls/sbs1/playlist.m3u8?listeningSessionID=6a848a7b1ebcabd6_2564475_kWpLtmSJ_MTM5LjE4MC4xNzIuMjE0_0000000DB9H&downloadSessionID=0&aw_0_1st.playerid=sbs-web",
+        "sequence": 0,
+        "secondSequence": 2,
+        "advance": true,
+        "dates": [],
+        "fresh": false,
+        "segmentStatus": 200,
+        "segmentContentType": "audio/aac",
+        "bytesSampled": 16384,
+        "liveVerified": true,
+        "method": "Owner radio pages reviewed; public HLS media playlist checked twice for advancing live sequence, absent ENDLIST, and successful segment bytes.",
+        "audiblePlaybackVerified": false
+      }
+    }
+  ],
+  "excludedStationIds": [
+    "36adafc9-18f9-40af-a3ad-e608e313786c"
+  ],
+  "excludedStreamUrls": [
+    "https://dn721903.ca.archive.org/0/items/australian-forest-sounds/08%20Calm%20creek%20flowing%2C%20frogs%20and%20birds%20_Dereel%20VIC.mp3"
+  ],
+  "exclusionNotes": [
+    {
+      "stationId": "36adafc9-18f9-40af-a3ad-e608e313786c",
+      "reason": "Finite three-hour archive recording, not a running live radio stream.",
+      "sourcePage": "https://archive.org/details/australian-forest-sounds"
+    }
+  ]
+}

@@ -99,6 +99,10 @@ export function createModel({ state: layerState, services, parts, source }) {
       'metadataTrust',
       'codec',
       'bitrate',
+      'streamFormat',
+      'liveOnly',
+      'playbackKind',
+      'sourceKind',
     ]) {
       if (frozenStation[key] !== currentStation[key]) return false;
     }

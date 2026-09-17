@@ -11,6 +11,11 @@ import {
 
 const MAX_DIRECTORY_BYTES = 8 * 1024 * 1024;
 const MAX_FRAME_BYTES = 8 * 1024 * 1024;
+// These countries have complete, location-optional catalogues on the server.
+export const RADIO_COUNTRY_DIRECTORIES = Object.freeze({
+  AU: 'Australia',
+  UA: 'Ukraine',
+});
 const text = (value, max = 200) =>
   typeof value === 'string'
     ? value
@@ -108,6 +113,9 @@ export function normalizeFeedDirectory(kind, payload) {
         lat: feedCoordinates(raw) ? raw.lat : null,
         lon: feedCoordinates(raw) ? raw.lon : null,
         streamUrl,
+        streamFormat: raw.streamFormat === 'hls' ? 'hls' : 'progressive',
+        liveOnly: raw.liveOnly === true,
+        playbackKind: raw.playbackKind === 'live' ? 'live' : 'unknown',
         homepage: publicRadioHttpsUrl(raw.homepage),
         sourcePage: publicRadioHttpsUrl(raw.sourcePage),
         sourceKind: text(raw.sourceKind, 80),
@@ -151,6 +159,7 @@ export function normalizeFeedDirectory(kind, payload) {
         countryCode: country.code,
         countryName: country.value === '__unknown__' ? '' : country.name,
         city: text(raw.city, 100),
+        state: text(raw.state, 80),
         provider: text(raw.provider, 100),
         license: text(raw.license, 500),
         credit: text(raw.credit, 500),
@@ -164,6 +173,10 @@ export function normalizeFeedDirectory(kind, payload) {
     throw new Error('The directory contained no usable entries.');
   return {
     items,
+    publisherSources:
+      kind === 'cctv'
+        ? normalizePublisherCameras(payload?.publisherSources)
+        : [],
     rejected: input.length - items.length,
     stale: payload?.stale === true,
     degraded: payload?.degraded === true,
@@ -173,6 +186,42 @@ export function normalizeFeedDirectory(kind, payload) {
         ? payload.updatedAt
         : null,
   };
+}
+
+/** Links remain separate from playable sources and their live camera counts. */
+export function normalizePublisherCameras(records) {
+  if (!Array.isArray(records)) return [];
+  const seen = new Set();
+  return records.slice(0, 100).flatMap((row) => {
+    const sourcePage = publicRadioHttpsUrl(row?.sourcePage);
+    if (
+      !row ||
+      row.access !== 'publisher-only' ||
+      !sourcePage ||
+      seen.has(sourcePage) ||
+      !text(row.id) ||
+      !text(row.name) ||
+      !text(row.city) ||
+      !/^[A-Z]{2}$/.test(row.country) ||
+      !Number.isFinite(Date.parse(row.verifiedAt))
+    )
+      return [];
+    seen.add(sourcePage);
+    return [
+      {
+        id: text(row.id),
+        name: text(row.name),
+        city: text(row.city),
+        state: text(row.state, 80),
+        country: row.country,
+        countryName: text(row.countryName, 80),
+        sourcePage,
+        verifiedAt: new Date(row.verifiedAt).toISOString(),
+        feedType: 'publisher',
+        access: 'publisher-only',
+      },
+    ];
+  });
 }
 
 export function filterFeedDirectory(
@@ -227,7 +276,10 @@ export async function readFeedDirectory(
   { signal, country = '', fetchImpl = globalThis.fetch } = {},
 ) {
   if (!['radio', 'cctv'].includes(kind)) throw new Error('Unknown directory.');
-  if (country && (kind !== 'radio' || country !== 'UA'))
+  if (
+    country &&
+    (kind !== 'radio' || !Object.hasOwn(RADIO_COUNTRY_DIRECTORIES, country))
+  )
     throw new Error('Unsupported country directory.');
   const requestSignal = AbortSignal.any([
     ...(signal ? [signal] : []),

@@ -71,7 +71,11 @@ export function publicRadioHttpsUrl(value) {
  */
 export function normalizeRadioBrowserStation(
   raw,
-  { normalizeUrl = publicRadioHttpsUrl, requireGeo = true } = {},
+  {
+    normalizeUrl = publicRadioHttpsUrl,
+    requireGeo = true,
+    allowHls = false,
+  } = {},
 ) {
   const id = cleanRadioText(raw?.stationuuid, 40).toLowerCase();
   const coordinate = (value) =>
@@ -89,10 +93,13 @@ export function normalizeRadioBrowserStation(
   const lon = hasGeo ? rawLon : null;
   const codec = cleanRadioText(raw?.codec, 16).toUpperCase();
   const streamUrl = normalizeUrl(raw?.url_resolved || raw?.url);
+  const streamPath = streamUrl ? new URL(streamUrl).pathname : '';
+  const isHls = Number(raw?.hls) === 1 || /\.m3u8?$/i.test(streamPath);
   if (
     !RADIO_UUID_RE.test(id) ||
     Number(raw?.lastcheckok) !== 1 ||
-    Number(raw?.hls) === 1 ||
+    (isHls && !allowHls) ||
+    /\.pls$/i.test(streamPath) ||
     (requireGeo && !hasGeo) ||
     (rawLat !== null && (!Number.isFinite(rawLat) || Math.abs(rawLat) > 90)) ||
     (rawLon !== null && (!Number.isFinite(rawLon) || Math.abs(rawLon) > 180)) ||

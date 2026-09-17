@@ -1,5 +1,6 @@
 import { createCctvCatalog } from './cctv/catalog.js';
 import { createCctvEmbedStatus } from './cctv/embedStatus.js';
+import { loadAustraliaPublisherCameras } from './cctv/australiaSources.js';
 import {
   normalizeFeedType,
   isVideoFeedType,
@@ -175,10 +176,15 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
 
         if (url.pathname === '/sources') {
           const body = {
+            publisherSources:
+              String(process.env.CCTV_AUSTRALIA_ENABLED || '1').trim() === '0'
+                ? []
+                : loadAustraliaPublisherCameras({ sourceRoot }),
             sources: sources.map((source) => ({
               id: source.id,
               name: source.name,
               city: source.city,
+              state: source.state,
               cityId: source.cityId,
               country: source.country,
               countryName: source.countryName,

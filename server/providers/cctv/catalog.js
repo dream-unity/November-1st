@@ -6,6 +6,7 @@ import { loadGroundHeights, joinGroundHeights } from './groundHeights.js';
 import { normalizeSourceItem } from './normalize.js';
 import { loadGlobalCctvSources } from './globalSources.js';
 import { loadUkraineCctvSources } from './ukraineSources.js';
+import { loadAustraliaCctvSources } from './australiaSources.js';
 import {
   loadAustinSourcesFromOpenData,
   loadCaltransSourcesFromOpenData,
@@ -32,6 +33,11 @@ const envEnabled = (name) => String(process.env[name] || '1').trim() !== '0';
  * kill switch.
  */
 const LIVE_PACKS = [
+  {
+    name: 'australia',
+    enabled: () => envEnabled('CCTV_AUSTRALIA_ENABLED'),
+    load: loadAustraliaCctvSources,
+  },
   {
     name: 'ukraine',
     enabled: () => envEnabled('CCTV_UKRAINE_ENABLED'),

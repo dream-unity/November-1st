@@ -110,7 +110,7 @@ export function _syncCctvVideo(activeCamera, enabled) {
         retry.textContent = ['unavailable', 'ended'].includes(status.status)
           ? 'Retry camera video'
           : 'Play camera video';
-        this._cctvVideoPause.hidden = !['playing', 'loading'].includes(
+        this._cctvVideoPause.hidden = !['playing', 'loading', 'ready'].includes(
           status.status,
         );
       }
