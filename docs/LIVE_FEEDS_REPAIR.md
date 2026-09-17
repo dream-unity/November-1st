@@ -1,5 +1,9 @@
 # Radio, cameras and traffic repair — 2026-09-17
 
+The subsequent [continuous CCTV video repair](CCTV_LIVE_VIDEO_REPAIR.md)
+corrects this release's snapshot-only default catalogue by integrating the
+official streaming URLs and separating live video from still cameras.
+
 The previous deployment checks proved that catalogues could load. They did not
 establish that a visitor could find a station, hear its stream, view an actual
 camera image, or read a traffic report. This repair addresses those complete

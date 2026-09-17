@@ -137,6 +137,15 @@ const click = (target, dispatch = target) => {
   dispatch.dispatchEvent(event);
 };
 const flush = () => new Promise((resolve) => setImmediate(resolve));
+function cameraFilter(doc, value) {
+  const select = find(
+    doc,
+    (node) => node.getAttribute('aria-label') === 'Camera media type',
+  );
+  select.value = value;
+  select.dispatchEvent(new Event('change'));
+  return select;
+}
 const station = {
   id: '12345678-1234-1234-1234-123456789012',
   name: 'Test radio',
@@ -164,7 +173,28 @@ function fixture(fetchImpl) {
     getComputedStyle: globalThis.getComputedStyle,
   };
   const doc = new EventTarget();
-  doc.createElement = (tag) => new Element(tag, doc);
+  const videos = [];
+  doc.createElement = (tag) => {
+    const node = new Element(tag, doc);
+    if (tag === 'video') {
+      Object.assign(node, {
+        paused: true,
+        canPlayType: () => 'maybe',
+        load() {},
+        pause() {
+          this.paused = true;
+          this.dispatchEvent(new Event('pause'));
+        },
+        play() {
+          this.paused = false;
+          this.dispatchEvent(new Event('playing'));
+          return Promise.resolve();
+        },
+      });
+      videos.push(node);
+    }
+    return node;
+  };
   doc.createTextNode = (value) => {
     const node = doc.createElement('#text');
     node.textContent = value;
@@ -211,6 +241,7 @@ function fixture(fetchImpl) {
   return {
     doc,
     audio,
+    videos,
     restore() {
       Object.assign(globalThis, previous);
     },
@@ -264,6 +295,7 @@ test('late catalogue responses cannot replace another tab and closing aborts pen
     pending[0].resolve(Response.json({ stations: [station] }));
     pending[1].resolve(Response.json({ sources: [camera] }));
     await flush();
+    cameraFilter(f.doc, 'snapshot');
     assert.match(f.doc.body.textContent, /Test camera/);
     assert.doesNotMatch(f.doc.body.textContent, /Test radio/);
     click(find(f.doc, (node) => node.textContent === 'Refresh directory'));
@@ -337,6 +369,7 @@ test('switching away from a camera cancels its strict frame request and ignores 
   try {
     feeds.open('cctv');
     await flush();
+    cameraFilter(f.doc, 'snapshot');
     click(
       find(f.doc, (node) => node.dataset.feedId === camera.id),
       find(f.doc, (node) => node.className === 'du-feeds-list'),
@@ -469,6 +502,104 @@ test('closing restores an available opener and falls back to the visible header 
     await flush();
     dialog.close();
     assert.equal(f.doc.activeElement, header);
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('CCTV starts with declared live video only, exposes snapshot counts, and plays, pauses and cleans up real video elements', async () => {
+  const live = {
+    ...camera,
+    id: 'live',
+    name: 'Live road',
+    feedType: 'hls',
+    playbackKind: 'live',
+  };
+  const clip = {
+    ...camera,
+    id: 'clip',
+    name: 'Traffic clip',
+    feedType: 'mp4',
+    playbackKind: 'clip',
+  };
+  const unknown = {
+    ...camera,
+    id: 'other',
+    name: 'Unconfirmed stream',
+    feedType: 'hls',
+  };
+  const f = fixture(async () =>
+    Response.json({ sources: [camera, clip, unknown, live] }),
+  );
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('cctv');
+    await flush();
+    const list = find(f.doc, (node) => node.className === 'du-feeds-list');
+    assert.equal(list.children.length, 1);
+    assert.equal(list.children[0].children[0].dataset.feedId, 'live');
+    assert.match(f.doc.body.textContent, /Live video \(1\)/);
+    assert.match(f.doc.body.textContent, /Snapshots \(1\)/);
+    assert.match(f.doc.body.textContent, /Clips \/ other videos \(2\)/);
+    click(list.children[0].children[0], list);
+    const video = f.videos[0];
+    assert.equal(video.src, '/api/cctv/media/live');
+    assert.equal(video.controls, true);
+    assert.equal(video.muted, true);
+    assert.equal(video.loop, false);
+    assert.doesNotMatch(f.doc.body.textContent, /Playing continuous camera/);
+    video.dispatchEvent(new Event('canplay'));
+    await flush();
+    assert.match(f.doc.body.textContent, /Playing continuous camera video/);
+    click(find(f.doc, (node) => node.textContent === 'Pause video'));
+    assert.equal(video.paused, true);
+    assert.match(f.doc.body.textContent, /Camera video is paused/);
+    video.dispatchEvent(new Event('canplay'));
+    assert.equal(
+      video.paused,
+      true,
+      'buffer completion cannot override user pause',
+    );
+    click(find(f.doc, (node) => node.textContent === 'Play video'));
+    await flush();
+    assert.equal(video.paused, false);
+    f.doc.hidden = true;
+    f.doc.dispatchEvent(new Event('visibilitychange'));
+    assert.equal(video.paused, true);
+    f.doc.hidden = false;
+    f.doc.dispatchEvent(new Event('visibilitychange'));
+    await flush();
+    assert.equal(video.paused, false);
+    feeds.open('radio');
+    assert.equal(video.paused, true);
+    assert.equal(video.src, '');
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('snapshot and other-video filters never silently pretend images or unknown HLS are live', async () => {
+  const f = fixture(async () =>
+    Response.json({
+      sources: [camera, { ...camera, id: 'clip', feedType: 'mp4' }],
+    }),
+  );
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('cctv');
+    await flush();
+    const list = find(f.doc, (node) => node.className === 'du-feeds-list');
+    assert.equal(list.children.length, 0);
+    assert.match(f.doc.body.textContent, /No cameras match this media type/);
+    cameraFilter(f.doc, 'snapshot');
+    assert.equal(list.children.length, 1);
+    cameraFilter(f.doc, 'video');
+    assert.equal(list.children.length, 1);
+    assert.match(list.textContent, /Video \(live status unknown\)/);
+    cameraFilter(f.doc, 'all');
+    assert.equal(list.children.length, 2);
   } finally {
     feeds.destroy();
     f.restore();

@@ -1,3 +1,4 @@
+import { hasCctvVideoFrame } from '../../sources/cctvTypes.js';
 import * as Cesium from 'cesium';
 import { createCctvVideoPlayback } from './videoPlayback.js';
 import {
@@ -218,13 +219,14 @@ export function createProjection({
     if (mode === 'video') {
       const video = document.createElement('video');
       video.muted = true;
-      video.loop = true;
+      video.loop = false;
       video.autoplay = true;
       video.playsInline = true;
       video.crossOrigin = 'anonymous';
       video.preload = 'auto';
       runtime.video = video;
       runtime.playback = createCctvVideoPlayback({
+        visibilityTarget: document,
         video,
         url: parts.frames.mediaUrlFor(record.camera),
         feedType,
@@ -232,13 +234,14 @@ export function createProjection({
           if (runtime.destroyed) return;
           runtime.mediaStatus = status;
           runtime.lastPlaceholderPaintAt = 0;
-          if (status.status !== 'ready') {
+          if (!hasCctvVideoFrame(status.status)) {
             parts.frames.paintProjectionPlaceholder(ctx, record.camera, status);
             runtime.canvasStamp++;
           }
           if (runtime.planeMaterial)
-            runtime.planeMaterial.image =
-              status.status === 'ready' ? video : canvas;
+            runtime.planeMaterial.image = hasCctvVideoFrame(status.status)
+              ? video
+              : canvas;
           if (runtime.overlayEntry) {
             runtime.overlayEntry.details = status.message
               ? [status.message]
@@ -283,7 +286,9 @@ export function createProjection({
     const positions =
       record.frustumPositions || parts.geometry.frustumCartesians(geometry);
     runtime.planeMaterial = new Cesium.ImageMaterialProperty({
-      image: runtime.mediaStatus?.status === 'ready' ? runtime.video : canvas,
+      image: hasCctvVideoFrame(runtime.mediaStatus?.status)
+        ? runtime.video
+        : canvas,
       transparent: true,
       color: Cesium.Color.WHITE.withAlpha(0.95),
     });

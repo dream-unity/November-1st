@@ -1,5 +1,8 @@
 # Reliability audit and repair record
 
+The [continuous CCTV video repair](CCTV_LIVE_VIDEO_REPAIR.md) records the later
+source-ingestion, playback and transport corrections required for moving video.
+
 The subsequent [radio, camera and traffic repair](LIVE_FEEDS_REPAIR.md) adds
 visible, usable feed directories, real-only camera previews, video/HLS transport
 and official regional traffic reports. Its verification goes beyond catalogue

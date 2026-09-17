@@ -173,6 +173,7 @@
       "server/providers/cctv/constants.js",
       "server/providers/cctv/media.js",
       "server/providers/cctv/normalize.js",
+      "server/providers/cctv/caltransStreaming.js",
       "server/providers/cctv/range.js",
       "server/providers/cctv/sources.js",
       "server/providers/common/http.js",
@@ -1057,7 +1058,8 @@
       "src/data/cctvFootprint.js",
       "src/data/inputOwnership.js",
       "src/layers/cctv/sourcePolicy.js",
-      "src/sources/cctvVideoPlayback.js"
+      "src/sources/cctvVideoPlayback.js",
+      "src/sources/cctvTypes.js"
     ],
     "external": ["cesium", "hls.js"]
   },
@@ -2238,7 +2240,8 @@
       "src/sources/featureSource.js",
       "src/sources/overpassRoads.js",
       "src/sources/cctvVideoPlayback.js",
-      "src/sources/radioBrowser.js"
+      "src/sources/radioBrowser.js",
+      "src/sources/cctvTypes.js"
     ],
     "external": [
       "cesium",

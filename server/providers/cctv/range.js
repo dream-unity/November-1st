@@ -79,3 +79,14 @@ export function sanitizeCctvRangeHeader(
   if (!Number.isSafeInteger(last) || last < first) return '';
   return `bytes=${first}-${Math.min(last, ceiling)}`;
 }
+
+/**
+ * HLS byte ranges describe complete fragments. Preserve their extent instead
+ * of clipping them to a video seek chunk; the bounded HLS reader enforces the
+ * response ceiling. Native players also use open and suffix probe requests.
+ */
+export function sanitizeCctvHlsRangeHeader(value) {
+  if (!sanitizeCctvRangeHeader(value)) return '';
+  const [, first, last] = /^bytes=(\d*)-(\d*)$/i.exec(value.trim());
+  return `bytes=${first ? Number(first) : ''}-${last ? Number(last) : ''}`;
+}

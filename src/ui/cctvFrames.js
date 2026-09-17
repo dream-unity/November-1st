@@ -1,5 +1,10 @@
 import { createCctvVideoPlayback } from '../sources/cctvVideoPlayback.js';
-import { isVideoFeedType } from '../sources/cctvTypes.js';
+import {
+  isVideoFeedType,
+  cameraMediaKind,
+  cameraMediaLabel,
+  hasCctvVideoFrame,
+} from '../sources/cctvTypes.js';
 
 /** Keep the panel's video playable without depending on a 3D monitor plane. */
 export function _syncCctvVideo(activeCamera, enabled) {
@@ -7,14 +12,21 @@ export function _syncCctvVideo(activeCamera, enabled) {
     this._clearCctvVideo();
     return false;
   }
-  if (this._cctvVideoCameraId === activeCamera.id) return true;
+  const panelVisible = () =>
+    !this._cctvPanel?.hidden &&
+    !this._cctvPanel?.classList?.contains('collapsed');
+  if (this._cctvVideoCameraId === activeCamera.id) {
+    this._cctvPlayback?.setActive(panelVisible());
+    return true;
+  }
   this._clearCctvFrame();
   this._clearCctvVideo();
   const video = document.createElement('video');
   video.className = 'cctv-video';
   video.controls = true;
   video.muted = true;
-  video.loop = activeCamera.feedType !== 'hls';
+  video.loop = false;
+  video.preload = 'auto';
   video.playsInline = true;
   video.setAttribute(
     'aria-label',
@@ -22,32 +34,61 @@ export function _syncCctvVideo(activeCamera, enabled) {
   );
   this._cctvVideoCameraId = activeCamera.id;
   this._cctvVideo = video;
+  const retry = document.createElement('button');
+  retry.type = 'button';
+  retry.textContent = 'Play / retry camera video';
+  retry.hidden = true;
+  retry.onclick = () => this._cctvPlayback?.play();
+  this._cctvVideoRetry = retry;
   this._cctvFrameWrap?.appendChild(video);
+  this._cctvFrameWrap?.appendChild(retry);
   this._cctvPlayback = createCctvVideoPlayback({
+    visibilityTarget: document,
+    initiallyActive: panelVisible(),
     video,
     url: activeCamera.mediaUrl,
     feedType: activeCamera.feedType,
-    autoPlay: false,
+    autoPlay: cameraMediaKind(activeCamera) === 'live',
     onStatus: (status) => {
       if (this.destroyed || this._cctvVideo !== video) return;
       this._cctvVideoStatus = status;
+      retry.hidden = ![
+        'blocked',
+        'unavailable',
+        'unsupported',
+        'ended',
+      ].includes(status.status);
       this._cctvFrameWrap?.classList.toggle(
         'loading',
         status.status === 'loading',
       );
       this._cctvFrameWrap?.classList.toggle(
         'has-frame',
-        status.status === 'ready',
+        hasCctvVideoFrame(status.status),
       );
       this._syncCctvSourceBadge(activeCamera, true);
     },
   });
+  if (this._cctvPanel && typeof MutationObserver !== 'undefined') {
+    this._cctvVideoObserver = new MutationObserver(() => {
+      if (!this.destroyed && this._cctvVideo === video)
+        this._cctvPlayback?.setActive(panelVisible());
+    });
+    this._cctvVideoObserver.observe(this._cctvPanel, {
+      attributes: true,
+      attributeFilter: ['class', 'hidden'],
+    });
+  }
   return true;
 }
 
 export function _clearCctvVideo() {
+  this._cctvVideoObserver?.disconnect();
+  this._cctvVideoObserver = null;
   this._cctvPlayback?.destroy();
   this._cctvPlayback = null;
+  this._cctvVideoRetry?.remove();
+  this._cctvVideoRetry = null;
   this._cctvVideo?.remove();
   this._cctvVideo = null;
   this._cctvVideoCameraId = null;
@@ -161,11 +202,16 @@ export function _syncCctvSourceBadge(activeCamera, enabled) {
   if (this._cctvVideoStatus) {
     const { status, message } = this._cctvVideoStatus;
     this._cctvSourceBadge.textContent =
-      status === 'ready'
-        ? 'CAMERA VIDEO · READY — USE PLAY CONTROLS'
-        : message || 'CAMERA VIDEO · UNAVAILABLE';
-    this._cctvSourceBadge.dataset.frameState =
-      status === 'ready' ? 'ready' : status === 'loading' ? 'loading' : 'error';
+      status === 'playing'
+        ? `${cameraMediaLabel(activeCamera).toUpperCase()} · PLAYING`
+        : status === 'ready'
+          ? `${cameraMediaLabel(activeCamera).toUpperCase()} · READY — USE PLAY CONTROLS`
+          : message || 'CAMERA VIDEO · UNAVAILABLE';
+    this._cctvSourceBadge.dataset.frameState = hasCctvVideoFrame(status)
+      ? 'ready'
+      : status === 'loading'
+        ? 'loading'
+        : 'error';
     return;
   }
   const hasDisplayedFrame =

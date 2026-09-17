@@ -249,6 +249,12 @@ test('the camera panel renders video controls, keeps an existing stream across r
   const videos = [];
   globalThis.document = {
     createElement(name) {
+      if (name === 'button')
+        return {
+          remove() {
+            this.removed = true;
+          },
+        };
       assert.equal(name, 'video');
       const video = new EventTarget();
       Object.assign(video, {

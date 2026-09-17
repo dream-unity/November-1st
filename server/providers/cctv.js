@@ -17,7 +17,10 @@ import {
   CCTV_FRAME_FETCH_TIMEOUT_MS,
   CCTV_MAX_SOURCES_CEILING,
 } from './cctv/constants.js';
-import { sanitizeCctvRangeHeader } from './cctv/range.js';
+import {
+  sanitizeCctvRangeHeader,
+  sanitizeCctvHlsRangeHeader,
+} from './cctv/range.js';
 import { fetchCctvHlsResource } from './cctv/hls.js';
 import { googleServerApiKey } from './places/google-key.js';
 export { CCTV_FRAME_FETCH_TIMEOUT_MS, fetchCctvImageFromUpstream };
@@ -70,6 +73,8 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
     return {
       id: cameraId,
       feedType,
+      playbackKind:
+        source?.playbackKind || (feedType === 'image' ? 'snapshot' : 'video'),
       mediaUrl: isVideoFeedType(feedType)
         ? `/api/cctv/media/${encodeURIComponent(cameraId)}`
         : null,
@@ -131,11 +136,31 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
   const installMiddleware = (server) => {
     server.middlewares.use('/api/cctv', async (req, res) => {
       try {
+        if (req.method && req.method !== 'GET' && req.method !== 'HEAD') {
+          res.writeHead(405, {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+            Allow: 'GET, HEAD',
+          });
+          res.end(JSON.stringify({ error: 'Method not allowed' }));
+          return;
+        }
+        const url = new URL(req.url || '/', 'http://localhost');
+        let decodedPath;
+        try {
+          decodedPath = decodeURIComponent(url.pathname);
+        } catch {
+          res.writeHead(400, {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+          });
+          res.end(JSON.stringify({ error: 'Invalid camera path' }));
+          return;
+        }
         const sources = await getCctvSources();
         const sourceById = new Map(
           sources.map((source) => [source.id, source]),
         );
-        const url = new URL(req.url || '/', 'http://localhost');
 
         if (url.pathname === '/sources') {
           const body = {
@@ -155,6 +180,11 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
               mountHeightM: source.mountHeightM,
               groundElevationM: source.groundElevationM,
               feedType: normalizeFeedType(source.feedType),
+              playbackKind:
+                source.playbackKind ||
+                (normalizeFeedType(source.feedType) === 'image'
+                  ? 'snapshot'
+                  : 'video'),
               sourceKind:
                 source.sourceKind || (source.url ? 'configured' : 'fallback'),
               poseSource: source.poseSource,
@@ -183,8 +213,7 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
 
         if (url.pathname.startsWith('/stream/')) {
           const cameraId =
-            decodeURIComponent(url.pathname.replace('/stream/', '').trim()) ||
-            'camera';
+            decodedPath.slice('/stream/'.length).trim() || 'camera';
           const source = sourceById.get(cameraId);
           if (!source) {
             res.writeHead(404, {
@@ -209,8 +238,7 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
 
         if (url.pathname.startsWith('/media/')) {
           const cameraId =
-            decodeURIComponent(url.pathname.replace('/media/', '').trim()) ||
-            'camera';
+            decodedPath.slice('/media/'.length).trim() || 'camera';
           const source = sourceById.get(cameraId);
           const mediaUrl = source?.url || '';
           const feedType = normalizeFeedType(source?.feedType || 'image');
@@ -244,10 +272,15 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
             };
             // Never forward the client's own string: a Range this proxy does
             // not accept is dropped and the request proceeds without one.
-            const requestRange = sanitizeCctvRangeHeader(
-              req.headers?.range,
-              process.env.VERCEL ? 4 * 1024 * 1024 : undefined,
-            );
+            // HLS fragments must remain whole, and native players also probe
+            // them using open/suffix ranges. Its bounded reader enforces size.
+            const requestRange =
+              feedType === 'hls'
+                ? sanitizeCctvHlsRangeHeader(req.headers?.range)
+                : sanitizeCctvRangeHeader(
+                    req.headers?.range,
+                    process.env.VERCEL ? 4 * 1024 * 1024 : undefined,
+                  );
             if (requestRange) upstreamHeaders.Range = requestRange;
             const upstream =
               feedType === 'hls'
@@ -315,19 +348,33 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
                 message: `Unexpected media type ${contentType || 'unknown'}`,
               });
             } else {
+              const live = source.playbackKind === 'live';
+              const clip = source.playbackKind === 'clip';
               setHealth(cameraId, {
                 status: 'ok',
-                sourceKind: isVideoFeedType(feedType) ? 'live' : 'snapshot',
+                sourceKind: isVideoFeedType(feedType)
+                  ? live
+                    ? 'live'
+                    : clip
+                      ? 'clip'
+                      : 'video'
+                  : 'snapshot',
                 label: source?.provider || 'Configured source',
                 message: isVideoFeedType(feedType)
-                  ? 'Live stream connected'
+                  ? live
+                    ? 'Live stream data received'
+                    : clip
+                      ? 'Video clip data received'
+                      : 'Video data received; live status unknown'
                   : 'Snapshot feed connected',
               });
             }
 
             await proxyMediaResponse(res, upstream, {
               sourceHeader: isVideoFeedType(feedType)
-                ? 'live-media'
+                ? source.playbackKind === 'live'
+                  ? 'live-media'
+                  : 'video-media'
                 : 'upstream-image',
             });
             return;
@@ -372,9 +419,7 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
           return;
         }
 
-        const cameraId =
-          decodeURIComponent(url.pathname.replace('/frame/', '').trim()) ||
-          'camera';
+        const cameraId = decodedPath.slice('/frame/'.length).trim() || 'camera';
         const source = sourceById.get(cameraId);
         if (url.searchParams.get('strict') === '1' && !source) {
           res.writeHead(404, {

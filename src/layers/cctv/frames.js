@@ -1,3 +1,4 @@
+import { hasCctvVideoFrame } from '../../sources/cctvTypes.js';
 import {
   FRAME_SIGNATURE_W,
   FRAME_SIGNATURE_H,
@@ -121,7 +122,8 @@ export function createFrames({ state: layerState, services, parts, source }) {
     const runtime = record?.projection;
     if (
       !runtime ||
-      (runtime.mode === 'video' && runtime.mediaStatus?.status === 'ready')
+      (runtime.mode === 'video' &&
+        hasCctvVideoFrame(runtime.mediaStatus?.status))
     )
       return;
     const now = Date.now();
@@ -292,7 +294,8 @@ export function createFrames({ state: layerState, services, parts, source }) {
       const video = runtime.video;
       if (
         video.readyState >= 2 &&
-        (!runtime.mediaStatus || runtime.mediaStatus.status === 'ready') &&
+        (!runtime.mediaStatus ||
+          hasCctvVideoFrame(runtime.mediaStatus.status)) &&
         video.videoWidth > 0 &&
         video.videoHeight > 0
       ) {

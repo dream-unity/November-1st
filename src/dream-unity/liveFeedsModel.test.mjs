@@ -240,3 +240,37 @@ test('camera preview surfaces bounded provider errors and cancels in-flight read
   await assert.rejects(pending, { name: 'AbortError' });
   assert.equal(cancelled, true);
 });
+
+test('media classification never infers live streaming from an HLS or MP4 container alone', () => {
+  const result = normalizeFeedDirectory('cctv', {
+    sources: [
+      { ...camera, id: 'image-fake-live', playbackKind: 'live' },
+      { ...camera, id: 'declared-live', feedType: 'hls', playbackKind: 'live' },
+      { ...camera, id: 'unknown-hls', feedType: 'hls' },
+      { ...camera, id: 'clip', feedType: 'mp4', playbackKind: 'clip' },
+      { ...camera, id: 'unknown-mp4', feedType: 'mp4' },
+    ],
+  });
+  assert.deepEqual(
+    result.items.map((item) => item.playbackKind),
+    ['snapshot', 'live', 'video', 'clip', 'video'],
+  );
+  assert.deepEqual(
+    filterFeedDirectory(result.items, '', '', 'live').map((item) => item.id),
+    ['declared-live'],
+  );
+  assert.deepEqual(
+    filterFeedDirectory(result.items, '', '', 'snapshot').map(
+      (item) => item.id,
+    ),
+    ['image-fake-live'],
+  );
+  assert.deepEqual(
+    filterFeedDirectory(result.items, '', '', 'video').map((item) => item.id),
+    ['unknown-hls', 'clip', 'unknown-mp4'],
+  );
+  assert.equal(
+    filterFeedDirectory(result.items, 'missing', '', 'live').length,
+    0,
+  );
+});

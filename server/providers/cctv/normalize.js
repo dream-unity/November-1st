@@ -480,6 +480,15 @@ export function prioritizeSources(cameras, maxCount, anchors) {
  * @returns {object} Normalized source with all expected fields populated.
  */
 export function normalizeSourceItem(item) {
+  const feedType = normalizeFeedType(item.feedType || item.type || '');
+  // A transport format does not establish that footage is continuous/live.
+  // Providers or configured entries must explicitly declare that property.
+  const playbackKind =
+    feedType === 'image'
+      ? 'snapshot'
+      : ['live', 'clip'].includes(item.playbackKind)
+        ? item.playbackKind
+        : 'video';
   return {
     id: String(item.id || '').trim(),
     name: String(item.name || item.id || '').trim(),
@@ -497,7 +506,8 @@ export function normalizeSourceItem(item) {
     rangeM: toFiniteNumber(item.rangeM),
     mountHeightM: toFiniteNumber(item.mountHeightM),
     groundElevationM: toFiniteNumber(item.groundElevationM),
-    feedType: normalizeFeedType(item.feedType || item.type || ''),
+    feedType,
+    playbackKind,
     url: typeof item.url === 'string' ? item.url : '',
     snapshotUrl: typeof item.snapshotUrl === 'string' ? item.snapshotUrl : '',
     license: String(item.license || item.licenseNote || ''),

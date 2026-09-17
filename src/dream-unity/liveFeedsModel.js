@@ -1,5 +1,5 @@
 import { publicRadioHttpsUrl, RADIO_UUID_RE } from '../sources/radioBrowser.js';
-import { normalizeFeedType } from '../sources/cctvTypes.js';
+import { normalizeFeedType, cameraMediaKind } from '../sources/cctvTypes.js';
 import {
   readResponseJsonCapped,
   readResponseTextCapped,
@@ -74,6 +74,7 @@ export function normalizeFeedDirectory(kind, payload) {
         id,
         name,
         feedType,
+        playbackKind: cameraMediaKind({ ...raw, feedType }),
         city: text(raw.city, 100),
         provider: text(raw.provider, 100),
         license: text(raw.license, 500),
@@ -98,9 +99,22 @@ export function normalizeFeedDirectory(kind, payload) {
   };
 }
 
-export function filterFeedDirectory(items, query = '', region = '') {
+export function filterFeedDirectory(
+  items,
+  query = '',
+  region = '',
+  mediaKind = 'all',
+) {
   const words = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
   return items.filter((item) => {
+    const kind = cameraMediaKind(item);
+    if (
+      mediaKind !== 'all' &&
+      (mediaKind === 'video'
+        ? !['video', 'clip'].includes(kind)
+        : kind !== mediaKind)
+    )
+      return false;
     if (region && (item.country || item.city || '') !== region) return false;
     const haystack = [
       item.name,

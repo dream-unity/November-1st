@@ -93,6 +93,17 @@
   align-items: end;
   margin: 18px 0;
 }
+.du-feeds-camera-filters {
+  grid-template-columns: minmax(160px, 1.4fr) minmax(130px, 1fr) auto;
+}
+.du-feeds-camera-filters label:last-child {
+  grid-column: 1 / -1;
+  max-width: 360px;
+}
+.du-feed-media-kind {
+  color: #8be1f2;
+  font-weight: 600;
+}
 .du-feeds label {
   display: grid;
   gap: 6px;

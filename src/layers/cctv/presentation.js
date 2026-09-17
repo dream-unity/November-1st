@@ -83,6 +83,7 @@ export function createPresentation({
       mountHeightM: camera.mountHeightM,
       active: isActive,
       feedType: camera.feedType,
+      playbackKind: camera.playbackKind,
       sourceKind:
         health?.sourceKind ||
         camera.sourceKind ||

@@ -1,5 +1,6 @@
 import { createRadioStreamPlayer } from '../layers/radio/playback.js';
 import { createCctvVideoPlayback } from '../sources/cctvVideoPlayback.js';
+import { cameraMediaKind, cameraMediaLabel } from '../sources/cctvTypes.js';
 import { mountTrafficReports } from '../ui/trafficReports.js';
 import {
   filterFeedDirectory,
@@ -192,7 +193,7 @@ export function installLiveFeeds({
       'p',
       kind === 'radio'
         ? 'Search radio stations, then choose Listen. Audio comes directly from the broadcaster; it stops when this panel closes or you change feed type.'
-        : 'Choose a public camera to view its latest available image or video. Snapshots are not continuous video; retrieval time is not the camera capture time.',
+        : 'Live video is selected by default. Choose a live camera to watch continuous video, starting muted. Snapshots and finite video clips are available separately; not every agency publishes live streams.',
       'du-feeds-intro',
     );
     const filters = element('div', '', 'du-feeds-filters');
@@ -228,6 +229,23 @@ export function installLiveFeeds({
     regionLabel.append(region);
     const refresh = button('Refresh directory');
     filters.append(searchLabel, regionLabel, refresh);
+    const mediaFilter = kind === 'cctv' ? element('select') : null;
+    const mediaOptions = [
+      ['live', 'Live video'],
+      ['snapshot', 'Snapshots'],
+      ['video', 'Clips / other videos'],
+      ['all', 'All cameras'],
+    ];
+    if (mediaFilter) {
+      const mediaLabel = element('label', 'Camera media');
+      mediaFilter.setAttribute('aria-label', 'Camera media type');
+      for (const [value, label] of mediaOptions)
+        mediaFilter.append(new Option(label, value));
+      mediaFilter.value = 'live';
+      mediaLabel.append(mediaFilter);
+      filters.append(mediaLabel);
+      filters.classList.add('du-feeds-camera-filters');
+    }
     const directoryStatus = element(
       'p',
       'Loading directory…',
@@ -386,27 +404,58 @@ export function installLiveFeeds({
           video.controls = true;
           video.muted = true;
           video.playsInline = true;
+          video.preload = 'auto';
+          video.loop = false;
           video.setAttribute('aria-label', `${item.name} camera video`);
-          detail.append(video);
+          detail.append(
+            element('p', cameraMediaLabel(item), 'du-feed-media-kind'),
+            video,
+          );
+          const playVideo = button('Play video');
+          const pauseVideo = button('Pause video');
+          const retry = button('Retry video');
           const playback = createCctvVideoPlayback({
+            visibilityTarget: document,
             video,
             url: `/api/cctv/media/${encodeURIComponent(item.id)}`,
             feedType: item.feedType,
-            autoPlay: false,
+            autoPlay: cameraMediaKind(item) === 'live',
             onStatus(value) {
-              if (!mediaSignal.aborted)
-                status.textContent =
-                  value.message ||
-                  (value.status === 'ready'
-                    ? 'Camera video is ready. Use the playback controls.'
-                    : value.status);
+              if (mediaSignal.aborted) return;
+              status.textContent =
+                value.status === 'playing'
+                  ? cameraMediaKind(item) === 'live'
+                    ? 'Playing continuous camera video. Network and broadcaster delay may apply.'
+                    : cameraMediaKind(item) === 'clip'
+                      ? 'Playing a finite camera clip; this is not a continuous live stream.'
+                      : 'Playing camera video. The source does not confirm continuous live coverage.'
+                  : value.message || value.status;
+              playVideo.disabled = value.status === 'playing';
+              pauseVideo.disabled = !['playing', 'loading', 'ready'].includes(
+                value.status,
+              );
+              retry.hidden = !['unavailable', 'unsupported', 'ended'].includes(
+                value.status,
+              );
             },
           });
-          const retry = button('Retry video');
+          playVideo.addEventListener('click', () => playback.play(), {
+            signal: mediaSignal,
+          });
+          pauseVideo.addEventListener('click', () => playback.pause(), {
+            signal: mediaSignal,
+          });
           retry.addEventListener('click', () => playback.retry(), {
             signal: mediaSignal,
           });
-          actions.append(retry);
+          actions.append(playVideo, pauseVideo, retry);
+          detail.append(
+            element(
+              'p',
+              'Video starts muted. Use the video controls for sound or fullscreen. Closing this panel or changing cameras stops the stream.',
+              'du-feeds-note',
+            ),
+          );
           disposeMedia = () => playback.destroy();
         } else {
           const image = element('img');
@@ -492,14 +541,21 @@ export function installLiveFeeds({
       renderList();
     }
     function renderList() {
-      const matches = filterFeedDirectory(items, search.value, region.value);
+      const matches = filterFeedDirectory(
+        items,
+        search.value,
+        region.value,
+        mediaFilter?.value || 'all',
+      );
       list.replaceChildren();
       const shown = matches.slice(0, visibleCount);
       const itemLabel = kind === 'radio' ? 'stations' : 'cameras';
       count.textContent = matches.length
         ? `Showing ${shown.length} of ${matches.length} matching ${itemLabel} (${items.length} in this directory).`
         : items.length
-          ? 'No matches. Try a different search or region.'
+          ? kind === 'cctv'
+            ? 'No cameras match this media type, search and region. Change the filters to view other available sources.'
+            : 'No matches. Try a different search or region.'
           : '';
       for (const item of shown) {
         const row = element('li');
@@ -514,13 +570,7 @@ export function installLiveFeeds({
             ? [item.country, item.tags.slice(0, 3).join(', ')]
                 .filter(Boolean)
                 .join(' · ')
-            : [
-                item.city,
-                item.provider,
-                ['mp4', 'webm', 'hls'].includes(item.feedType)
-                  ? 'Video'
-                  : 'Snapshot',
-              ]
+            : [item.city, item.provider, cameraMediaLabel(item)]
                 .filter(Boolean)
                 .join(' · '),
           'du-feed-subtitle',
@@ -550,6 +600,7 @@ export function installLiveFeeds({
     };
     search.addEventListener('input', resetFilter, { signal });
     region.addEventListener('change', resetFilter, { signal });
+    mediaFilter?.addEventListener('change', resetFilter, { signal });
     more.addEventListener(
       'click',
       () => {
@@ -569,6 +620,20 @@ export function installLiveFeeds({
         const data = await readFeedDirectory(kind, { signal: requestSignal });
         if (requestSignal.aborted || generation !== loadGeneration) return;
         items = data.items;
+        if (mediaFilter) {
+          for (const option of mediaFilter.options) {
+            const label = mediaOptions.find(
+              ([value]) => value === option.value,
+            )[1];
+            const matching = filterFeedDirectory(
+              items,
+              '',
+              '',
+              option.value,
+            ).length;
+            option.textContent = `${label} (${matching})`;
+          }
+        }
         const previousRegion = region.value;
         region.replaceChildren(
           new Option(

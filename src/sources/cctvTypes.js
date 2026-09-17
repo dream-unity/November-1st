@@ -26,3 +26,24 @@ export function normalizeFeedType(value) {
 export function isVideoFeedType(feedType) {
   return feedType === 'mp4' || feedType === 'webm' || feedType === 'hls';
 }
+
+/** Containers alone do not prove a source is live; only declared live sources do. */
+export function cameraMediaKind(camera) {
+  if (!isVideoFeedType(normalizeFeedType(camera?.feedType))) return 'snapshot';
+  return ['live', 'clip'].includes(camera?.playbackKind)
+    ? camera.playbackKind
+    : 'video';
+}
+
+export function cameraMediaLabel(camera) {
+  return {
+    live: 'Live video',
+    clip: 'Video clip',
+    video: 'Video (live status unknown)',
+    snapshot: 'Snapshot',
+  }[cameraMediaKind(camera)];
+}
+
+export function hasCctvVideoFrame(status) {
+  return ['ready', 'playing', 'paused', 'ended', 'suspended'].includes(status);
+}

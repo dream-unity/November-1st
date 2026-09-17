@@ -14,6 +14,23 @@ const SPAN_TEXT =
 /** A whole `textContent =` statement, across lines, so a multi-line ternary is read once. */
 const TEXT_ASSIGNMENT = /(?:textContent|innerText)\s*=\s*([^;]{0,400})/gs;
 const STRING_LITERAL = /['"`]([a-z0-9_]{2,})['"`]/g;
+const COMPARISON_BEFORE = /(?:===|!==|==|!=|<=|>=|<|>)\s*$/;
+const COMPARISON_AFTER = /^\s*(?:===|!==|==|!=|<=|>=|<|>)/;
+
+/** Ignore condition values at every ternary depth, while retaining output glyphs. */
+function assignedGlyphs(statement) {
+  const normalized = statement.replaceAll('?.', '.');
+  const assigned = normalized.includes('?')
+    ? normalized.slice(normalized.indexOf('?') + 1)
+    : normalized;
+  return [...assigned.matchAll(STRING_LITERAL)]
+    .filter((literal) => {
+      const before = assigned.slice(0, literal.index);
+      const after = assigned.slice(literal.index + literal[0].length);
+      return !COMPARISON_BEFORE.test(before) && !COMPARISON_AFTER.test(after);
+    })
+    .map((literal) => literal[1]);
+}
 
 /**
  * Files that SHIP markup. Tests assert on markup, they do not render it.
@@ -49,7 +66,9 @@ function sourceFiles(directory = SRC_ROOT) {
  *
  * A literal to the LEFT of a `?` is the condition being tested, not the text
  * being shown, so it is dropped: `status === 'loading' ? …` must not enrol
- * `loading`. Optional chaining is neutralised first — `payload?.newsStatus`
+ * `loading`. Nested branches may contain further conditions, so comparison
+ * operands on either side are excluded at every depth. Optional chaining is
+ * neutralised first — `payload?.newsStatus`
  * is not a ternary, and splitting on its `?` would keep the condition.
  * @returns {Map<string, string>} glyph -> the first file that names it.
  */
@@ -63,11 +82,7 @@ function referencedGlyphs() {
     };
     for (const match of source.matchAll(SPAN_TEXT)) add(match[1]);
     for (const match of source.matchAll(TEXT_ASSIGNMENT)) {
-      const statement = match[1].replaceAll('?.', '.');
-      const assigned = statement.includes('?')
-        ? statement.slice(statement.indexOf('?') + 1)
-        : statement;
-      for (const literal of assigned.matchAll(STRING_LITERAL)) add(literal[1]);
+      for (const glyph of assignedGlyphs(match[1])) add(glyph);
     }
   }
   return found;
@@ -107,5 +122,22 @@ test('the unused Material Icons Round family is not loaded', () => {
     html,
     /Material\+Icons\+Round/,
     'index.html loads an icon font nothing renders',
+  );
+});
+
+test('glyph discovery excludes nested condition values while retaining every rendered glyph branch', () => {
+  assert.deepEqual(
+    assignedGlyphs(`
+    kind === 'cctv'
+      ? state?.status === 'live' ? 'play_arrow' : 'clip' === state.status ? 'movie' : 'videocam'
+      : state.status === 'ready' ? 'pause' : 'stop'
+  `),
+    ['play_arrow', 'movie', 'videocam', 'pause', 'stop'],
+  );
+  assert.deepEqual(assignedGlyphs(`'play_arrow'`), ['play_arrow']);
+  assert.deepEqual(assignedGlyphs(`'ready' === status`), []);
+  assert.deepEqual(
+    assignedGlyphs(`status !== 'ready' ? 'play_arrow' : 'pause'`),
+    ['play_arrow', 'pause'],
   );
 });

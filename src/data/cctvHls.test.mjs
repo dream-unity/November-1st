@@ -77,3 +77,92 @@ test('serverless finite video rejects an ignored range that exceeds its response
   assert.equal(response.headers.get('content-range'), 'bytes 0-2/10');
   assert.equal(await response.text(), 'abc');
 });
+
+test('HLS byte-range fragments stay complete and oversized requests fail before contacting a camera', async () => {
+  let calls = 0;
+  await assert.rejects(fetchCctvHlsResource({
+    sourceUrl, resource: 'parts.mp4', cameraId: 'a', maxResourceBytes: 4,
+    headers: { Range: 'bytes=20-24' }, fetchImpl: async () => { calls++; },
+  }), { code: 'CCTV_HLS_RESOURCE_TOO_LARGE' });
+  assert.equal(calls, 0);
+  const response = await fetchCctvHlsResource({
+    sourceUrl, resource: 'parts.mp4', cameraId: 'a', maxResourceBytes: 10,
+    headers: { Range: 'bytes=3-6' }, fetchImpl: async () => new Response('0123456789', {
+      headers: { 'content-type': 'video/mp4' },
+    }),
+  });
+  assert.equal(response.status, 206);
+  assert.equal(response.headers.get('content-range'), 'bytes 3-6/10');
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.equal(await response.text(), '3456');
+});
+
+test('HLS rejects incorrect or truncated byte-range fragments rather than reporting successful media', async () => {
+  for (const [status, contentRange, body] of [
+    [206, 'bytes 0-3/10', '0123'],
+    [206, 'bytes 3-6/10', '345'],
+    [206, '', '3456'],
+    [200, '', '012'],
+  ]) {
+    await assert.rejects(fetchCctvHlsResource({
+      sourceUrl, resource: 'parts.mp4', cameraId: 'a', headers: { Range: 'bytes=3-6' },
+      fetchImpl: async () => new Response(body, { status, headers: {
+        'content-type': 'video/mp4', 'content-range': contentRange,
+      } }),
+    }), /requested byte range/);
+  }
+});
+
+test('native HLS open and suffix probes work without clipping complete resources', async () => {
+  for (const [range, expectedRange, expectedBody] of [
+    ['bytes=6-', 'bytes 6-9/10', '6789'],
+    ['bytes=-4', 'bytes 6-9/10', '6789'],
+    ['bytes=-20', 'bytes 0-9/10', '0123456789'],
+  ]) {
+    for (const status of [200, 206]) {
+      const response = await fetchCctvHlsResource({
+        sourceUrl, resource: 'part.ts', cameraId: 'a', headers: { Range: range },
+        maxResourceBytes: 10, fetchImpl: async (_url, init) => {
+          assert.equal(new Headers(init.headers).get('range'), range);
+          return new Response(status === 200 ? '0123456789' : expectedBody, {
+            status, headers: { 'content-type': 'video/mp2t', ...(status === 206 ? { 'content-range': expectedRange } : {}) },
+          });
+        },
+      });
+      assert.equal(response.status, 206);
+      assert.equal(response.headers.get('content-range'), expectedRange);
+      assert.equal(await response.text(), expectedBody);
+    }
+  }
+  await assert.rejects(fetchCctvHlsResource({
+    sourceUrl, resource: 'part.ts', cameraId: 'a', headers: { Range: 'bytes=0-' },
+    maxResourceBytes: 4, fetchImpl: async () => new Response('0123456789', { headers: { 'content-type': 'video/mp2t' } }),
+  }), { code: 'CCTV_HLS_RESOURCE_TOO_LARGE' });
+});
+
+test('HLS relay preserves expired-segment and throttling status and releases rejected bodies', async () => {
+  for (const status of [404, 429, 503]) {
+    let cancelled = false;
+    const response = await fetchCctvHlsResource({
+      sourceUrl, resource: 'expired.ts', cameraId: 'a', fetchImpl: async () => new Response(
+        new ReadableStream({ cancel() { cancelled = true; } }), { status },
+      ),
+    });
+    assert.equal(response.status, status);
+    assert.equal(cancelled, true);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+  }
+});
+
+test('live HLS manifest reloads preserve sequence advancement instead of replaying cached playlist bytes', async () => {
+  let sequence = 4;
+  const fetchImpl = async () => new Response(`#EXTM3U\n#EXT-X-TARGETDURATION:6\n#EXT-X-MEDIA-SEQUENCE:${sequence}\n#EXTINF:6,\npart-${sequence++}.ts\n`, {
+    headers: { 'content-type': 'application/vnd.apple.mpegurl', 'cache-control': 'public, max-age=3600' },
+  });
+  const first = await fetchCctvHlsResource({ sourceUrl, cameraId: 'a', fetchImpl });
+  const second = await fetchCctvHlsResource({ sourceUrl, cameraId: 'a', fetchImpl });
+  assert.match(await first.text(), /MEDIA-SEQUENCE:4/);
+  assert.match(await second.text(), /MEDIA-SEQUENCE:5/);
+  assert.equal(first.headers.get('cache-control'), 'no-store');
+  assert.equal(second.headers.get('cache-control'), 'no-store');
+});

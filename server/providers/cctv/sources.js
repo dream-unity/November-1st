@@ -79,6 +79,11 @@ import {
 } from './normalize.js';
 import { directionToHeading } from '../../../src/data/directionText.js';
 import { readResponseJsonCapped } from '../common/http.js';
+import {
+  caltransSourceId,
+  normalizeCaltransSnapshotUrl,
+  normalizeCaltransStreamUrl,
+} from './caltransStreaming.js';
 /**
  * Fetch and parse Austin traffic camera records from the city Open Data portal.
  *
@@ -92,15 +97,21 @@ import { readResponseJsonCapped } from '../common/http.js';
 export async function loadAustinSourcesFromOpenData() {
   const endpoint = process.env.CCTV_AUSTIN_ROWS_URL || DEFAULT_AUSTIN_ROWS_URL;
   try {
+    const signal = AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS);
     const resp = await fetch(endpoint, {
       headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS),
+      signal,
     });
     if (!resp.ok) {
+      await resp.body?.cancel().catch(() => {});
       console.warn('[CCTV] Austin source download failed:', resp.status);
       return [];
     }
-    const payload = await resp.json();
+    const payload = await readResponseJsonCapped(
+      resp,
+      16 * 1024 * 1024,
+      signal,
+    );
     const columns = Array.isArray(payload?.meta?.view?.columns)
       ? payload.meta.view.columns
       : [];
@@ -186,9 +197,10 @@ export async function loadAustinSourcesFromOpenData() {
  * Fetch Caltrans CCTV cameras for the configured districts (CCTV_CALTRANS_DISTRICTS,
  * comma-separated 1..12; empty string disables the pack). One official JSON feed per
  * district, identical schema statewide; keyless. Only inService cameras with finite
- * coords and a cwwp2.dot.ca.gov https image URL are kept (the image-URL origin check
- * is defense-in-depth: the proxy only ever fetches catalog URLs, and this pins the
- * catalog to the official host). Districts fetch in parallel and fail independently
+ * coords and an official HTTPS image or HLS URL are kept. A declared HLS stream
+ * takes precedence over its still preview; image-only cameras stay snapshots.
+ * Exact media origin/path checks pin the relay to official resources. Districts
+ * fetch in parallel and fail independently
  * (Promise.allSettled) — one district outage never darkens the others.
  *
  * @returns {Promise<Array<object>>} Normalized camera source objects.
@@ -196,20 +208,32 @@ export async function loadAustinSourcesFromOpenData() {
 export async function loadCaltransSourcesFromOpenData() {
   const districtsRaw =
     process.env.CCTV_CALTRANS_DISTRICTS ?? DEFAULT_CALTRANS_DISTRICTS;
-  const districts = String(districtsRaw)
-    .split(',')
-    .map((token) => Number(token.trim()))
-    .filter((n) => Number.isInteger(n) && n >= 1 && n <= 12);
+  const districts = [
+    ...new Set(
+      String(districtsRaw)
+        .split(',')
+        .map((token) => Number(token.trim()))
+        .filter((n) => Number.isInteger(n) && n >= 1 && n <= 12),
+    ),
+  ];
   if (!districts.length) return [];
 
   const settled = await Promise.allSettled(
     districts.map(async (district) => {
+      const signal = AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS);
       const resp = await fetch(CALTRANS_CCTV_URL(district), {
         headers: { Accept: 'application/json' },
-        signal: AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS),
+        signal,
       });
-      if (!resp.ok) throw new Error(`D${district} HTTP ${resp.status}`);
-      const payload = await resp.json();
+      if (!resp.ok) {
+        await resp.body?.cancel().catch(() => {});
+        throw new Error(`D${district} HTTP ${resp.status}`);
+      }
+      const payload = await readResponseJsonCapped(
+        resp,
+        8 * 1024 * 1024,
+        signal,
+      );
       const rows = Array.isArray(payload?.data) ? payload.data : [];
       return { district, rows };
     }),
@@ -225,32 +249,54 @@ export async function loadCaltransSourcesFromOpenData() {
       continue;
     }
     const { district, rows } = result.value;
+    const codeCounts = new Map();
+    for (const row of rows) {
+      const code = /^([A-Za-z0-9_-]+)\s*--/
+        .exec(String(row?.cctv?.location?.locationName || '').trim())?.[1]
+        ?.toLowerCase();
+      if (code) codeCounts.set(code, (codeCounts.get(code) || 0) + 1);
+    }
     for (const row of rows) {
       const cctv = row?.cctv;
       if (!cctv || String(cctv.inService).toLowerCase() !== 'true') continue;
       const loc = cctv.location || {};
       const lat = toFiniteNumber(loc.latitude);
       const lon = toFiniteNumber(loc.longitude);
-      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+      if (
+        !isPlausibleLatLon(lat, lon) ||
+        lat < 32 ||
+        lat > 42.1 ||
+        lon < -125 ||
+        lon > -114
+      )
+        continue;
 
-      const imageUrl = String(cctv.imageData?.static?.currentImageURL || '');
-      // Official-host pin (see JSDoc). Also drops records with no still image.
-      if (!imageUrl.startsWith('https://cwwp2.dot.ca.gov/')) continue;
+      const imageUrl = normalizeCaltransSnapshotUrl(
+        cctv.imageData?.static?.currentImageURL,
+        district,
+      );
+      const streamUrl = normalizeCaltransStreamUrl(
+        cctv.imageData?.streamingVideoURL,
+        district,
+      );
+      if (!imageUrl && !streamUrl) continue;
 
       const locationName = String(loc.locationName || '').trim();
       // Leading token of locationName is the stable camera code ("TV102 -- I-580 : …").
       const codeMatch = /^([A-Za-z0-9_-]+)\s*--/.exec(locationName);
-      const code = (
-        codeMatch ? codeMatch[1] : `x${cameras.length}`
-      ).toLowerCase();
-      const cameraId = `ca-d${district}-${code}`;
+      const code = codeMatch?.[1]?.toLowerCase() || '';
+      const cameraId = caltransSourceId(
+        district,
+        imageUrl || streamUrl,
+        codeCounts.get(code) === 1 ? code : '',
+      );
 
       // loc.direction is a dedicated field ("West", "South") → allow bare words.
       const heading = directionToHeading(loc.direction, true);
       const hasHeading = Number.isFinite(heading);
       const label =
         locationName.replace(/^([A-Za-z0-9_-]+)\s*--\s*/, '') ||
-        `Caltrans D${district} ${code}`;
+        `Caltrans D${district} camera`;
       cameras.push({
         id: cameraId,
         name: loc.nearbyPlace ? `${label} (${loc.nearbyPlace})` : label,
@@ -281,11 +327,12 @@ export async function loadCaltransSourcesFromOpenData() {
             ? Math.max(-100, Math.min(4000, ft * 0.3048))
             : 150;
         })(),
-        feedType: 'image',
-        url: imageUrl,
+        feedType: streamUrl ? 'hls' : 'image',
+        playbackKind: streamUrl ? 'live' : 'snapshot',
+        url: streamUrl || imageUrl,
         snapshotUrl: imageUrl,
         sourceKind: 'caltrans-open-data',
-        license: 'Public Caltrans highway camera frame',
+        license: 'Public Caltrans highway camera — Caltrans Conditions of Use',
       });
     }
   }
@@ -296,9 +343,29 @@ export async function loadCaltransSourcesFromOpenData() {
   const maxCount = Number.isFinite(maxRaw)
     ? Math.max(8, Math.min(600, Math.floor(maxRaw)))
     : DEFAULT_CALTRANS_MAX_SOURCES;
-  const prioritized = prioritizeSources(cameras, maxCount, CALTRANS_ANCHORS);
+  // The old distance-only cap could discard usable video in favour of nearby
+  // stills. Keep declared continuous streams first, nearest metro first within
+  // each kind, then use any remaining capacity for still-only cameras.
+  const unique = Array.from(
+    new Map(cameras.map((camera) => [camera.id, camera])).values(),
+  );
+  const streams = prioritizeSources(
+    unique.filter((camera) => camera.playbackKind === 'live'),
+    maxCount,
+    CALTRANS_ANCHORS,
+  );
+  const prioritized = [
+    ...streams,
+    ...(streams.length < maxCount
+      ? prioritizeSources(
+          unique.filter((camera) => camera.playbackKind !== 'live'),
+          maxCount - streams.length,
+          CALTRANS_ANCHORS,
+        )
+      : []),
+  ];
   console.log(
-    `[CCTV] Loaded Caltrans camera sources: ${cameras.length} inService (using nearest ${prioritized.length})`,
+    `[CCTV] Loaded Caltrans camera sources: ${cameras.length} inService (using ${streams.length} live video, ${prioritized.length - streams.length} snapshots)`,
   );
   return prioritized;
 }
@@ -319,15 +386,17 @@ export async function loadTflSourcesFromOpenData() {
     const url = appKey
       ? `${TFL_JAMCAM_URL}?app_key=${encodeURIComponent(appKey)}`
       : TFL_JAMCAM_URL;
+    const signal = AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS);
     const resp = await fetch(url, {
       headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS),
+      signal,
     });
     if (!resp.ok) {
+      await resp.body?.cancel().catch(() => {});
       console.warn('[CCTV] TfL JamCam download failed:', resp.status);
       return [];
     }
-    const places = await resp.json();
+    const places = await readResponseJsonCapped(resp, 16 * 1024 * 1024, signal);
     if (!Array.isArray(places)) return [];
 
     const cameras = [];
@@ -463,15 +532,17 @@ function pickOntarioCctvView(views) {
  */
 export async function loadOntarioSourcesFromOpenData() {
   try {
+    const signal = AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS);
     const resp = await fetch(ONTARIO_511_CAMERAS_URL, {
       headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS),
+      signal,
     });
     if (!resp.ok) {
+      await resp.body?.cancel().catch(() => {});
       console.warn('[CCTV] Ontario 511 camera download failed:', resp.status);
       return [];
     }
-    const rows = await resp.json();
+    const rows = await readResponseJsonCapped(resp, 16 * 1024 * 1024, signal);
     if (!Array.isArray(rows)) return [];
 
     const cameras = [];
@@ -579,6 +650,7 @@ export async function loadOntarioSourcesFromOpenData() {
  */
 export async function loadFintrafficSourcesFromOpenData() {
   try {
+    const signal = AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS);
     const resp = await fetch(FINTRAFFIC_STATIONS_URL, {
       headers: {
         Accept: 'application/json',
@@ -586,19 +658,25 @@ export async function loadFintrafficSourcesFromOpenData() {
         'Digitraffic-User': DIGITRAFFIC_USER,
       },
       redirect: 'manual',
-      signal: AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS),
+      signal,
     });
     if (resp.status >= 300 && resp.status < 400) {
+      await resp.body?.cancel().catch(() => {});
       console.warn(
         '[CCTV] Fintraffic station list redirected; redirects are not followed',
       );
       return [];
     }
     if (!resp.ok) {
+      await resp.body?.cancel().catch(() => {});
       console.warn('[CCTV] Fintraffic station download failed:', resp.status);
       return [];
     }
-    const payload = await resp.json();
+    const payload = await readResponseJsonCapped(
+      resp,
+      16 * 1024 * 1024,
+      signal,
+    );
     const features = Array.isArray(payload?.features) ? payload.features : [];
     if (!features.length) return [];
 
@@ -731,15 +809,17 @@ const DRIVEBC_ORIENTATION_HEADINGS = Object.freeze({
  */
 export async function loadDriveBcSourcesFromOpenData() {
   try {
+    const signal = AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS);
     const resp = await fetch(DRIVEBC_WEBCAMS_URL, {
       headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS),
+      signal,
     });
     if (!resp.ok) {
+      await resp.body?.cancel().catch(() => {});
       console.warn('[CCTV] DriveBC camera download failed:', resp.status);
       return [];
     }
-    const rows = await resp.json();
+    const rows = await readResponseJsonCapped(resp, 16 * 1024 * 1024, signal);
     if (!Array.isArray(rows)) return [];
 
     const cameras = [];
@@ -927,15 +1007,22 @@ export async function loadTxdotSourcesFromOpenData() {
 
   const settled = await Promise.allSettled(
     districts.map(async (district) => {
+      const signal = AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS);
       const resp = await fetch(TXDOT_CCTV_STATUS_URL(district), {
         headers: {
           Accept: 'application/json',
           'User-Agent': 'gods-eye-view-cctv-proxy/1.0',
         },
-        signal: AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS),
+        signal,
       });
-      if (!resp.ok) throw new Error(`${district} HTTP ${resp.status}`);
-      return { district, payload: await resp.json() };
+      if (!resp.ok) {
+        await resp.body?.cancel().catch(() => {});
+        throw new Error(`${district} HTTP ${resp.status}`);
+      }
+      return {
+        district,
+        payload: await readResponseJsonCapped(resp, 16 * 1024 * 1024, signal),
+      };
     }),
   );
 
@@ -1366,18 +1453,20 @@ export function nswCameraToSource(feature) {
  */
 export async function loadNswSourcesFromOpenData() {
   try {
+    const signal = AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS);
     const resp = await fetch(NSW_CAMERAS_URL, {
       headers: {
         Accept: 'application/json',
         'User-Agent': 'gods-eye-view-cctv-proxy/1.0',
       },
-      signal: AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS),
+      signal,
     });
     if (!resp.ok) {
+      await resp.body?.cancel().catch(() => {});
       console.warn('[CCTV] NSW camera download failed:', resp.status);
       return [];
     }
-    const body = await resp.json();
+    const body = await readResponseJsonCapped(resp, 16 * 1024 * 1024, signal);
     const features = Array.isArray(body?.features) ? body.features : [];
     const cameras = features.map(nswCameraToSource).filter(Boolean);
     const maxRaw = Number(
@@ -1538,10 +1627,11 @@ export async function loadCalgarySourcesFromOpenData() {
   try {
     const endpoint =
       process.env.CCTV_CALGARY_ROWS_URL || DEFAULT_CALGARY_ROWS_URL;
+    const signal = AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS);
     const resp = await fetch(endpoint, {
       headers: { Accept: 'application/json' },
       redirect: 'manual',
-      signal: AbortSignal.timeout(CCTV_SOURCE_FETCH_TIMEOUT_MS),
+      signal,
     });
     // A response this loader will not read still owns its transport until the
     // body is released, so every rejection path cancels before returning.
@@ -1563,7 +1653,11 @@ export async function loadCalgarySourcesFromOpenData() {
       console.warn('[CCTV] Calgary camera download failed:', resp.status);
       return discard();
     }
-    const rows = await readResponseJsonCapped(resp, CALGARY_MAX_CATALOG_BYTES);
+    const rows = await readResponseJsonCapped(
+      resp,
+      CALGARY_MAX_CATALOG_BYTES,
+      signal,
+    );
     if (!Array.isArray(rows)) return [];
     const cameras = [];
     const seen = new Set();

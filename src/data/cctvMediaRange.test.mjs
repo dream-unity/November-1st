@@ -10,7 +10,10 @@ import http from 'node:http';
 import net from 'node:net';
 import { Readable } from 'node:stream';
 import { cctvProxy } from '../../server/providers/cctv.js';
-import { sanitizeCctvRangeHeader } from '../../server/providers/cctv/range.js';
+import {
+  sanitizeCctvRangeHeader,
+  sanitizeCctvHlsRangeHeader,
+} from '../../server/providers/cctv/range.js';
 import { CCTV_MEDIA_MAX_BODY_BYTES as CAP } from '../../server/providers/cctv/constants.js';
 
 test('single well-formed byte ranges pass through canonicalized', () => {
@@ -19,6 +22,25 @@ test('single well-formed byte ranges pass through canonicalized', () => {
   assert.equal(sanitizeCctvRangeHeader('bytes=7-7'), 'bytes=7-7');
   // The unit is case-insensitive (RFC 7233 §2.1); surrounding space is legal.
   assert.equal(sanitizeCctvRangeHeader('  BYTES=0-99  '), 'bytes=0-99');
+});
+
+test('HLS preserves native open/suffix probes and complete fragment bounds while rejecting malformed ranges', () => {
+  assert.equal(sanitizeCctvHlsRangeHeader('bytes=0-'), 'bytes=0-');
+  assert.equal(sanitizeCctvHlsRangeHeader(' BYTES=-00032 '), 'bytes=-32');
+  assert.equal(sanitizeCctvHlsRangeHeader('bytes=32-'), 'bytes=32-');
+  assert.equal(
+    sanitizeCctvHlsRangeHeader(`bytes=0-${CAP + 100}`),
+    `bytes=0-${CAP + 100}`,
+  );
+  for (const value of [
+    'bytes=0-10\r\nX-Bad: x',
+    'bytes=0-1,4-5',
+    'bytes=-0',
+    'bytes=3-2',
+    'bytes=-',
+    undefined,
+  ])
+    assert.equal(sanitizeCctvHlsRangeHeader(value), '');
 });
 
 test('multi-range is dropped so the upstream never answers multipart/byteranges', () => {
@@ -244,6 +266,10 @@ test('a canonical range reaches the upstream and its 206 is passed through', asy
   assert.equal(res.headers['Content-Range'], 'bytes 0-1023/4096');
   assert.equal(res.headers['Accept-Ranges'], 'bytes');
   assert.equal(res.body, 'partial');
+  assert.equal(res.headers['X-CCTV-Source'], 'video-media');
+  const entry = await app.health();
+  assert.equal(entry.sourceKind, 'video');
+  assert.match(entry.message, /live status unknown/);
 });
 
 test('strict camera snapshots cannot return a synthetic success or incur a Street View fallback', async (t) => {
@@ -260,6 +286,24 @@ test('strict camera snapshots cannot return a synthetic success or incur a Stree
   assert.equal(app.requests.length, 0);
   const stream = await app.call('/stream/missing-camera');
   assert.equal(stream.statusCode, 404);
+});
+
+test('CCTV rejects unsupported methods and malformed paths before contacting providers', async (t) => {
+  const app = mount(t, () => {
+    throw new Error('must not contact a camera');
+  });
+  for (const [url, method, status] of [
+    [`/media/${CAMERA.id}`, 'POST', 405],
+    ['/media/%zz', 'GET', 400],
+  ]) {
+    const { res, done } = recordingResponse();
+    await app.handler({ url, method, headers: {} }, res);
+    await done;
+    assert.equal(res.statusCode, status);
+    assert.equal(res.headers['Cache-Control'], 'no-store');
+    if (status === 405) assert.equal(res.headers.Allow, 'GET, HEAD');
+  }
+  assert.equal(app.requests.length, 0);
 });
 
 test('an unbounded seek is bounded before it is forwarded', async (t) => {
