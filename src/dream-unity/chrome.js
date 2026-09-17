@@ -209,6 +209,7 @@ export function showStartupFailure(error) {
   ]) {
     const button = element('button', label);
     button.type = 'button';
+    button.dataset.feedKind = kind;
     button.setAttribute('aria-haspopup', 'dialog');
     button.addEventListener('click', () => {
       button.focus();
@@ -228,5 +229,12 @@ export function showStartupFailure(error) {
     detail,
   );
   loadingScreen.replaceChildren(container);
+  // Cesium's startup error panel sits above the loading screen and intercepts
+  // its recovery controls. Remove only the failed globe's duplicate overlay,
+  // after our replacement (including the original error details) is ready.
+  document
+    .getElementById('cesiumContainer')
+    ?.querySelectorAll('.cesium-widget-errorPanel')
+    .forEach((panel) => panel.remove());
   title.focus();
 }

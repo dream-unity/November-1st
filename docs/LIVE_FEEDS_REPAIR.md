@@ -11,6 +11,7 @@ paths while retaining the full upstream globe, layers and interaction system.
 | --- | --- | --- |
 | Discovery | Radio was nested inside collapsed Context controls; layers defaulted off; enabling CCTV did not necessarily select a camera | Visible Live radio, CCTV cameras and Traffic reports buttons open searchable directories with explicit selection and playback |
 | Graphics failure | Feed access depended on successful WebGL startup | The same provider feeds remain usable in a normal accessible dialog when the globe fails; recovery offers direct feed buttons |
+| Recovery interaction | Cesium's duplicate startup-error overlay intercepted clicks after closing a feed dialog | Once the complete recovery diagnostic is shown, the duplicate overlay is removed; closing a direct-link dialog restores focus to a visible feed control |
 | Radio transport | Unresolved playback, stalled streams and late events could leave misleading states; terminal failures could leave tuner hiss | Finite connection/stall deadlines, cancellation, retry, specific error messages and complete media cleanup |
 | Audio ownership | A separate directory player could overlap the globe tuner or lose browser click activation | A direct user click synchronously stops the globe tuner before starting the shared radio transport; closing/changing tabs releases audio |
 | Camera display | The camera panel treated video sources as still images | Configured video sources receive a real video element; native HLS or lazily loaded hls.js handles compatible streams |
@@ -71,6 +72,13 @@ Those checks also caught the hosted traffic-query failure above; local provider
 tests alone had not exercised Vercel's rewrite behavior. The routing regression
 now tests that boundary while preserving strict query validation. Vercel
 documents forwarding unused captures in its [rewrite documentation](https://vercel.com/docs/routing/rewrites).
+
+The corrected `7270431` deployment subsequently returned both official traffic
+feeds and displayed them through the public GitHub Pages entry. Austin search,
+Finland region selection and the 12-incident filter were exercised in the
+browser. Its older Finnish publication time remained explicitly stale. Closing
+the feed dialog then exposed the separate recovery-overlay problem in the table;
+direct links alone would not have caught interception of the normal buttons.
 
 The controlled browser cannot initialize WebGL, so it cannot certify a hardware
 cockpit walkthrough. It can exercise the new feed interface, actual audio/video

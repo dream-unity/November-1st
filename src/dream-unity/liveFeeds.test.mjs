@@ -10,6 +10,7 @@ const hooks = registerHooks({
   },
 });
 const { installLiveFeeds } = await import('./liveFeeds.js');
+const { showStartupFailure } = await import('./chrome.js');
 hooks.deregister();
 
 class Element extends EventTarget {
@@ -56,6 +57,43 @@ class Element extends EventTarget {
   }
   get options() {
     return this.children;
+  }
+  get classList() {
+    return {
+      contains: (name) => this.className.split(/\s+/).includes(name),
+      add: (name) => {
+        if (!this.classList.contains(name)) this.className += ` ${name}`;
+      },
+      remove: (name) => {
+        this.className = this.className
+          .split(/\s+/)
+          .filter((value) => value !== name)
+          .join(' ');
+      },
+    };
+  }
+  contains(node) {
+    return node === this || this.children.some((child) => child.contains(node));
+  }
+  querySelectorAll(selector) {
+    const feedKind = /^\[data-feed-kind="([^"]+)"\]$/.exec(selector)?.[1];
+    return this.children
+      .flatMap(all)
+      .filter((node) =>
+        feedKind
+          ? node.dataset.feedKind === feedKind
+          : selector.startsWith('.') &&
+            node.classList.contains(selector.slice(1)),
+      );
+  }
+  querySelector(selector) {
+    return this.querySelectorAll(selector)[0] || null;
+  }
+  getClientRects() {
+    for (let node = this; node; node = node.parentElement)
+      if (!node.isConnected || node.hidden || node.classList.contains('hidden'))
+        return [];
+    return [{}];
   }
   focus() {
     this.ownerDocument.activeElement = this;
@@ -123,6 +161,7 @@ function fixture(fetchImpl) {
     Option: globalThis.Option,
     Audio: globalThis.Audio,
     fetch: globalThis.fetch,
+    getComputedStyle: globalThis.getComputedStyle,
   };
   const doc = new EventTarget();
   doc.createElement = (tag) => new Element(tag, doc);
@@ -132,6 +171,7 @@ function fixture(fetchImpl) {
     return node;
   };
   doc.body = doc.createElement('body');
+  doc.getElementById = (id) => find(doc, (node) => node.id === id) || null;
   doc.activeElement = doc.body;
   doc.hidden = false;
   const audio = [];
@@ -158,6 +198,9 @@ function fixture(fetchImpl) {
   globalThis.document = doc;
   globalThis.Audio = Audio;
   globalThis.fetch = fetchImpl;
+  globalThis.getComputedStyle = (node) => ({
+    visibility: node.visibility || 'visible',
+  });
   globalThis.Option = class extends Element {
     constructor(label, value) {
       super('option', doc);
@@ -316,6 +359,116 @@ test('switching away from a camera cancels its strict frame request and ignores 
       /Snapshot retrieved|Test camera/,
     );
     assert.equal(f.audio.length, 0);
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('startup recovery replaces only the failed globe error panels after preserving diagnostics', () => {
+  const f = fixture(async () => Response.json({}));
+  try {
+    const globe = f.doc.createElement('div');
+    globe.id = 'cesiumContainer';
+    const nested = f.doc.createElement('div');
+    const duplicate = f.doc.createElement('div');
+    duplicate.className = 'cesium-widget-errorPanel';
+    nested.append(duplicate);
+    globe.append(nested);
+    const unrelated = f.doc.createElement('div');
+    unrelated.className = 'cesium-widget-errorPanel';
+    f.doc.body.append(globe, unrelated);
+    showStartupFailure(new Error('No recovery target'));
+    assert.equal(
+      duplicate.isConnected,
+      true,
+      'no replacement means no removal',
+    );
+
+    const loading = f.doc.createElement('div');
+    loading.id = 'loading-screen';
+    loading.className = 'hidden';
+    f.doc.body.append(loading);
+    const remove = duplicate.remove.bind(duplicate);
+    duplicate.remove = () => {
+      assert.match(loading.textContent, /Error details/);
+      assert.match(loading.textContent, /WebGL failed/);
+      assert.match(loading.textContent, /Graphics context creation rejected/);
+      remove();
+    };
+    showStartupFailure({
+      message: 'WebGL failed',
+      errors: [new Error('Graphics context creation rejected')],
+    });
+    assert.equal(duplicate.isConnected, false);
+    assert.equal(unrelated.isConnected, true, 'other widgets are untouched');
+    assert.equal(globe.isConnected, true, 'the globe host remains intact');
+    assert.equal(loading.classList.contains('hidden'), false);
+    assert.equal(loading.classList.contains('du-startup-failed'), true);
+    assert.equal(f.doc.activeElement.id, 'du-recovery-title');
+    assert.deepEqual(
+      all(loading)
+        .filter((node) => node.dataset.feedKind)
+        .map((node) => node.dataset.feedKind),
+      ['radio', 'cctv', 'traffic'],
+    );
+  } finally {
+    f.restore();
+  }
+});
+
+test('a direct feed link returns focus to the matching recovery control after globe startup fails', async () => {
+  const f = fixture(async () => Response.json({ sources: [camera] }));
+  const loading = f.doc.createElement('div');
+  loading.id = 'loading-screen';
+  f.doc.body.append(loading);
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('cctv');
+    await flush();
+    showStartupFailure(new Error('WebGL context creation failed'));
+    const recovery = loading.querySelector('[data-feed-kind="cctv"]');
+    assert.ok(recovery);
+    find(f.doc, (node) => node.tagName === 'DIALOG').close();
+    assert.equal(f.doc.activeElement, recovery);
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('closing restores an available opener and falls back to the visible header for hidden or missing openers', async () => {
+  const f = fixture(async () => Response.json({ stations: [station] }));
+  const opener = f.doc.createElement('button');
+  const header = f.doc.createElement('button');
+  header.id = 'du-open-radio';
+  f.doc.body.append(opener, header);
+  const feeds = installLiveFeeds();
+  try {
+    const dialog = find(f.doc, (node) => node.tagName === 'DIALOG');
+    feeds.open('radio', opener);
+    await flush();
+    dialog.close();
+    assert.equal(f.doc.activeElement, opener);
+
+    opener.hidden = true;
+    feeds.open('radio', opener);
+    await flush();
+    dialog.close();
+    assert.equal(f.doc.activeElement, header);
+
+    f.doc.body.focus();
+    feeds.open('radio');
+    await flush();
+    dialog.close();
+    assert.equal(f.doc.activeElement, header);
+
+    opener.hidden = false;
+    opener.visibility = 'hidden';
+    feeds.open('radio', opener);
+    await flush();
+    dialog.close();
+    assert.equal(f.doc.activeElement, header);
   } finally {
     feeds.destroy();
     f.restore();

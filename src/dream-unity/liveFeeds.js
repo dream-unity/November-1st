@@ -100,6 +100,26 @@ export function installLiveFeeds({
     disposePanel = () => {};
     activeKind = null;
   }
+  function focusAfterClose(kind) {
+    const visible = (node) =>
+      node?.isConnected &&
+      node !== document.body &&
+      !dialog.contains(node) &&
+      !node.disabled &&
+      !node.hidden &&
+      node.getClientRects().length > 0 &&
+      globalThis.getComputedStyle(node).visibility !== 'hidden';
+    const loading = document.getElementById('loading-screen');
+    const recovery = loading?.classList.contains('du-startup-failed')
+      ? loading.querySelector(`[data-feed-kind="${kind}"]`)
+      : null;
+    const target = [
+      recovery,
+      returnFocus,
+      document.getElementById(`du-open-${kind}`),
+    ].find(visible);
+    target?.focus();
+  }
   function globeAction(kind, item, status, signal) {
     if (typeof openOnGlobe !== 'function') return null;
     const show = button('Show on globe');
@@ -593,8 +613,9 @@ export function installLiveFeeds({
   dialog.addEventListener(
     'close',
     () => {
+      const kind = activeKind;
       cleanup();
-      if (!destroyed && returnFocus?.isConnected) returnFocus.focus();
+      if (!destroyed) focusAfterClose(kind);
     },
     { signal: lifetime.signal },
   );

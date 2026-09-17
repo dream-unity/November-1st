@@ -6,9 +6,11 @@ See [the complete feature-path repair record](LIVE_FEEDS_REPAIR.md). The full
 upstream application is retained; visible feed directories also work without a
 WebGL context.
 
-- `npm test`: **339 test files completed; 4,275 tests, 4,274 passed, zero failed
+- `npm test`: **339 test files completed; 4,278 tests, 4,277 passed, zero failed
   or cancelled, one Windows-only native-DACL test skipped**. Both isolated
-  allocation probes completed. The ordinary suite contains 4,261 tests.
+  allocation probes completed. The ordinary suite contains 4,264 tests. This
+  includes three additional recovery-overlay/focus regressions from the final
+  public browser walkthrough.
 - `npm run test:host`: **55 passed**, including full provider mounting, native
   Vercel dispatch, the new traffic routes and strict-camera admission with an
   optional Google credential configured. Three additional regressions cover
@@ -54,7 +56,26 @@ All three CI jobs (Node 24.14, Node 26 and Windows) passed. In the actual browse
 - Traffic exposed a deployment-only HTTP 400: Vercel injected its unused rewrite
   capture into the query. The native entry now removes only the exact redundant
   value, with three regression tests and a fresh passing production build.
-  Austin and Finland must be checked again on the corrected published revision.
+  Revision `72704313fb9a610fae13172175ad1828c655c3ce` was subsequently deployed
+  and verified through both frontend build information and backend health.
+- On that corrected revision, the public GitHub Pages traffic link opened five
+  Austin reports. Search reduced the list to the matching Menchaca Road incident.
+  Selecting Finland displayed 642 reports; the Incidents filter displayed 12.
+  The source's older update time was explicitly marked **STALE SNAPSHOT**, not
+  replaced by the current retrieval time. Both production report endpoints
+  returned HTTP 200 with the full bounded responses.
+- A report's globe button in this WebGL-disabled browser retained its details
+  and explained why camera movement was unavailable, without closing the panel.
+- Production strict snapshot requests returned an actual TfL JPEG, rejected the
+  known Austin outage card with HTTP 503, and rejected an unknown camera with
+  HTTP 404. Voice preflight returned `VOICE_NOT_CONFIGURED` with configuration
+  guidance rather than blaming microphone permissions.
+- All three CI jobs and GitHub Pages deployment passed for `7270431`. No warning
+  or error runtime logs were returned for that deployment during these checks.
+- Closing the dialog exposed one further graphics-recovery issue: Cesium's
+  duplicate error panel intercepted the recovery buttons. Recovery now removes
+  that duplicate after showing its own full diagnostic and restores focus to a
+  visible feed control, including when the dialog opened from a direct URL.
 
 The controlled browser cannot initialize WebGL. These checks therefore establish
 the independent feed paths, not a hardware-rendered globe/cockpit walkthrough.
