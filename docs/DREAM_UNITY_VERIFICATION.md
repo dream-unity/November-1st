@@ -1,5 +1,41 @@
 # Verification record
 
+## Usable radio, cameras and traffic — 2026-09-17 UTC
+
+See [the complete feature-path repair record](LIVE_FEEDS_REPAIR.md). The full
+upstream application is retained; visible feed directories also work without a
+WebGL context.
+
+- `npm test`: **339 test files completed; 4,275 tests, 4,274 passed, zero failed
+  or cancelled, one Windows-only native-DACL test skipped**. Both isolated
+  allocation probes completed. The ordinary suite contains 4,261 tests.
+- `npm run test:host`: **52 passed**, including full provider mounting, native
+  Vercel dispatch, the new traffic routes and strict-camera admission with an
+  optional Google credential configured.
+- Production build, package/import ownership checks, adopted formatting, setup
+  doctor and whitespace checks passed. HLS support is loaded in a separate chunk.
+- The production dependency audit found zero known vulnerabilities at validation.
+- Bounded source probes confirmed actual MP3/AAC frames from four broadcasters,
+  visually inspected road scenes from eight camera providers, and current
+  official Austin and Finland report responses. Transport success was not used
+  as a substitute for checking media content: an Austin outage JPEG is rejected,
+  and the older Ontario image is documented as a provider freshness limitation.
+- Real traffic middleware checks returned six active Austin reports and 642
+  Finnish reports (630 roadworks and 12 announcements). Counts change over time;
+  each response retains provider publication times independently of retrieval.
+
+The source audit found no previous incident-report service: Street Traffic was
+an animated road simulation with optional TomTom speeds. The new official report
+service is regional and explicitly separate. Stale TomTom cached bytes are no
+longer re-stamped as newly observed live flow.
+
+The production host now mounts **21 request provider plugins** in serverless
+mode. Capabilities lists **18 groups**, including keyless regional traffic
+reports. Configuration-only availability remains separate from actual feed
+status. Release identity is available through `/build-info.json` and
+`/api/health`; this project still requires an explicit Vercel deployment after a
+source commit. Public browser verification must use the published revision.
+
 ## Reliability repair verification — 2026-09-16 UTC
 
 This section supersedes the earlier baseline for the reliability repair.

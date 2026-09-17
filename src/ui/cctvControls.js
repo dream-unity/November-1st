@@ -3,6 +3,8 @@ import {
   _queueCctvFrame,
   _settleCctvFrame,
   _syncCctvSourceBadge,
+  _syncCctvVideo,
+  _clearCctvVideo,
 } from './cctvFrames.js';
 import {
   _activeCctvCameraId,
@@ -60,6 +62,12 @@ export class CctvControls {
   _clearCctvFrame(...args) {
     return _clearCctvFrame.call(this, ...args);
   }
+  _syncCctvVideo(...args) {
+    return _syncCctvVideo.call(this, ...args);
+  }
+  _clearCctvVideo(...args) {
+    return _clearCctvVideo.call(this, ...args);
+  }
   _queueCctvFrame(...args) {
     return _queueCctvFrame.call(this, ...args);
   }
@@ -105,6 +113,7 @@ export class CctvControls {
     this._cctvUnsubscribe = null;
     this._calibrationEdit?.(false);
     this._clearCctvFrame();
+    this._clearCctvVideo();
     clearInterval(this._cctvSummaryTypingTimer);
     clearTimeout(this._cctvChipHideTimer);
     this._cctvSummaryTypingTimer = null;

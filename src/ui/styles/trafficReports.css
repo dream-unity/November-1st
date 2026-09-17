@@ -1,0 +1,90 @@
+.traffic-reports {
+  color: #e6f5f7;
+  font:
+    14px/1.55 system-ui,
+    sans-serif;
+  overflow-wrap: anywhere;
+}
+.traffic-reports p {
+  margin: 0.6rem 0;
+  white-space: pre-line;
+}
+.traffic-reports-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.65rem;
+  margin: 0.8rem 0;
+}
+.traffic-reports-toolbar label {
+  display: flex;
+  flex: 1 1 230px;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.traffic-reports button,
+.traffic-reports select,
+.traffic-reports input {
+  box-sizing: border-box;
+  min-height: 44px;
+  max-width: 100%;
+  border: 1px solid #527b86;
+  border-radius: 6px;
+  background: #12242c;
+  color: #ecfcff;
+  padding: 0.6rem 0.8rem;
+  font: inherit;
+}
+.traffic-reports input {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.traffic-reports button {
+  cursor: pointer;
+}
+.traffic-reports button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.traffic-reports :focus-visible {
+  outline: 2px solid #72ecff;
+  outline-offset: 3px;
+}
+.traffic-reports a {
+  color: #88e9ff;
+}
+.traffic-reports-help {
+  color: #b6cbd0;
+  font-size: 0.9rem;
+}
+.traffic-reports-status {
+  border-left: 3px solid #38c9c2;
+  padding: 0.5rem 0.8rem;
+  background: #11282b;
+}
+.traffic-reports-status[data-state='stale'] {
+  border-color: #ffc879;
+  background: #30261d;
+}
+.traffic-reports-item {
+  margin: 0.75rem 0;
+  padding: 1rem;
+  border: 1px solid #33535e;
+  border-radius: 8px;
+  background: #0e1c23;
+}
+.traffic-reports-item h3 {
+  font:
+    600 1rem/1.45 system-ui,
+    sans-serif;
+  margin: 0;
+  color: #f5ffff;
+}
+.traffic-reports-item small {
+  display: block;
+  color: #b6cbd0;
+  margin-top: 0.4rem;
+}
+.traffic-reports [hidden] {
+  display: none;
+}

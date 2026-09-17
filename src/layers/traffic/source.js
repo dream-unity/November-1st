@@ -68,10 +68,15 @@ export function createTrafficSource({
     },
     async getStatus({ signal } = {}) {
       signal?.throwIfAborted();
-      const response = await fetchImpl('/api/tomtom/status', { signal });
+      const statusSignal = signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(12_000)])
+        : AbortSignal.timeout(12_000);
+      const response = await fetchImpl('/api/tomtom/status', {
+        signal: statusSignal,
+      });
       if (!response.ok) throw new Error('HTTP ' + response.status);
       const status = await response.json();
-      signal?.throwIfAborted();
+      statusSignal.throwIfAborted();
       if (typeof status?.hasKey !== 'boolean')
         throw new Error('Malformed traffic status');
       return status;

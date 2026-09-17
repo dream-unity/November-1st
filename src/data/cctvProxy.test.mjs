@@ -1,10 +1,23 @@
 import { CCTV_FRAME_FETCH_TIMEOUT_MS, CCTV_FRAME_MAX_BODY_BYTES, CCTV_MEDIA_FETCH_TIMEOUT_MS, CCTV_MEDIA_MAX_BODY_BYTES } from '../../server/providers/cctv/constants.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import {
   fetchCctvImageFromUpstream,
   fetchCctvMediaUpstream,
 } from '../../server/providers/cctv/media.js';
+
+test('a provider HTTP 200 outage JPEG is unavailable, not a successfully acquired live camera', async () => {
+  // City of Austin's public static outage card, downloaded from the registered
+  // camera 354 on 2026-09-17 and visually verified to say "Image Unavailable".
+  const body = Buffer.from(await readFile(new URL('./fixtures/cctv-austin-unavailable.base64', import.meta.url), 'utf8'), 'base64');
+  const result = await fetchCctvImageFromUpstream('https://example.com/frame.jpg', { fetchImpl: async () => new Response(body, { headers: { 'content-type': 'image/jpeg' } }) });
+  assert.equal(result, null);
+  const differentImage = Buffer.from(body);
+  differentImage[differentImage.length - 1] ^= 1;
+  const retained = await fetchCctvImageFromUpstream('https://example.com/frame.jpg', { fetchImpl: async () => new Response(differentImage, { headers: { 'content-type': 'image/jpeg' } }) });
+  assert.ok(retained?.ok, 'byte length alone must never reject an unrelated image');
+});
 
 /** A body that arrives in chunks and never declares a Content-Length. */
 function chunkedImageResponse(chunkBytes, chunkCount, { onChunk = () => {}, onCancel = () => {} } = {}) {

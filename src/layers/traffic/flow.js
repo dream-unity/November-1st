@@ -21,6 +21,8 @@ export function createFlow({ state: layerState, services, parts, source }) {
 
   function deriveTrafficFlowError(error) {
     if (!error || error.name === 'AbortError') return null;
+    if (error.code === 'TRAFFIC_FLOW_STALE')
+      return 'TomTom flow snapshot is stale';
     const message = String(error.message || error);
     const status = Number(message.match(/HTTP (\d{3})/)?.[1]);
     if (status === 503) return 'TomTom key unavailable';

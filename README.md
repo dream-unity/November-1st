@@ -14,6 +14,8 @@ Use Node 24.14+ within the Node 24 release line, or Node 26. The default host li
 
 Vercel serves the complete frontend and request-based provider APIs. Continuous AIS vessel ingestion requires the persistent Node host plus an AISStream key; optional paid/account-based providers require their respective credentials. “Source included” does not mean every upstream feed is reachable or every account-backed feature is activated. The in-app **Data sources** dialog reports configuration separately from live availability.
 
+The visible **Live radio**, **CCTV cameras**, and **Traffic reports** buttons open searchable feeds with playback, source details and retry controls. They also work when WebGL is unavailable. Direct links: [radio](https://dream-unity.github.io/November-1st/?feed=radio), [cameras](https://dream-unity.github.io/November-1st/?feed=cctv), [traffic reports](https://dream-unity.github.io/November-1st/?feed=traffic). Radio is broadcaster audio; cameras may publish periodic images rather than continuous video. Official traffic reports currently cover Austin and Finland, with source timestamps and explicit stale/partial states. They are separate from the upstream simulated Street Traffic vehicles and optional TomTom speeds. **Show on globe** connects a selected feed to the full application when its globe is ready.
+
 ## Original upstream documentation
 
 <div align="center">

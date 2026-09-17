@@ -127,11 +127,18 @@ export function hostSecurity(config, env = process.env) {
       String(env.GOOGLE_MAPS_SERVER_API_KEY || '').trim() ||
       String(env.GOOGLE_MAPS_API_KEY || '').trim(),
     );
+    // Strict snapshots return a real registered camera image or an error.
+    // Their provider path exits before the optional paid Street View fallback.
+    const strictCameraFrame =
+      under('/api/cctv/frame') &&
+      new URL(req.url, 'https://localhost').searchParams.get('strict') === '1';
     const paid =
       (hasOpenAi &&
         !voiceStatus &&
         (under('/api/realtime') || under('/api/openai'))) ||
-      (hasGoogle && (under('/api/google') || under('/api/cctv/frame')));
+      (hasGoogle &&
+        (under('/api/google') ||
+          (under('/api/cctv/frame') && !strictCameraFrame)));
     if (paid) {
       // Browsers can attach cached Basic credentials to cross-site GETs that
       // have no Origin (for example image requests). Such a request must not

@@ -117,7 +117,12 @@
   "traffic-provider": {
     "runtime": "node",
     "exports": ["./server/providers/traffic"],
-    "modules": ["server/providers/traffic.js", "src/data/tomtomTiles.js"],
+    "modules": [
+      "server/providers/traffic.js",
+      "src/data/tomtomTiles.js",
+      "server/providers/common/http.js",
+      "src/sources/httpBody.js"
+    ],
     "external": []
   },
   "traffic-source": {
@@ -177,7 +182,8 @@
       "scripts/google-server-key.mjs",
       "src/data/cctvFootprint.js",
       "src/sources/cctvTypes.js",
-      "src/sources/httpBody.js"
+      "src/sources/httpBody.js",
+      "server/providers/cctv/hls.js"
     ],
     "external": []
   },
@@ -425,9 +431,11 @@
       "src/ui/cctvCalibration.js",
       "src/ui/cctvControls.js",
       "src/ui/cctvFrames.js",
-      "src/ui/cctvPresentation.js"
+      "src/ui/cctvPresentation.js",
+      "src/sources/cctvVideoPlayback.js",
+      "src/sources/cctvTypes.js"
     ],
-    "external": []
+    "external": ["hls.js"]
   },
   "context-controls": {
     "exports": ["./ui/context", "./ui/context/policy"],
@@ -592,9 +600,11 @@
       "src/ui/aircraftDisplay.js",
       "src/ui/layerBindings.js",
       "src/ui/displayBindings.js",
-      "src/ui/shellFacade.js"
+      "src/ui/shellFacade.js",
+      "src/sources/cctvVideoPlayback.js",
+      "src/sources/cctvTypes.js"
     ],
-    "external": ["cesium"]
+    "external": ["cesium", "hls.js"]
   },
   "ui-styles": {
     "exports": ["./ui/styles"],
@@ -1046,9 +1056,10 @@
       "src/overlays/worldOverlayTokens.js",
       "src/data/cctvFootprint.js",
       "src/data/inputOwnership.js",
-      "src/layers/cctv/sourcePolicy.js"
+      "src/layers/cctv/sourcePolicy.js",
+      "src/sources/cctvVideoPlayback.js"
     ],
-    "external": ["cesium"]
+    "external": ["cesium", "hls.js"]
   },
   "alpr-cameras": {
     "exports": ["./layers/alpr"],
@@ -1094,7 +1105,8 @@
       "src/layers/radio/tuningNoise.js",
       "src/layers/radio/volume.js",
       "src/ui/radioTunerModel.js",
-      "src/data/inputOwnership.js"
+      "src/data/inputOwnership.js",
+      "src/sources/radioBrowser.js"
     ],
     "external": ["cesium"]
   },
@@ -1825,7 +1837,10 @@
       "src/director/sharing/lifetime.js",
       "src/director/authoring.js",
       "src/scenes/sharing.js",
-      "src/ui/sceneSharing.js"
+      "src/ui/sceneSharing.js",
+      "src/sources/cctvVideoPlayback.js",
+      "src/sources/radioBrowser.js",
+      "src/sources/cctvTypes.js"
     ],
     "external": [
       "@mapbox/vector-tile",
@@ -1833,7 +1848,8 @@
       "egm96-universal",
       "mgrs",
       "pbf",
-      "satellite.js"
+      "satellite.js",
+      "hls.js"
     ]
   },
   "application-catalog": {
@@ -2220,7 +2236,9 @@
       "src/sources/overpassFeaturesRecords.js",
       "src/sources/overpassFeatures.js",
       "src/sources/featureSource.js",
-      "src/sources/overpassRoads.js"
+      "src/sources/overpassRoads.js",
+      "src/sources/cctvVideoPlayback.js",
+      "src/sources/radioBrowser.js"
     ],
     "external": [
       "cesium",
@@ -2228,7 +2246,8 @@
       "satellite.js",
       "@mapbox/vector-tile",
       "pbf",
-      "mgrs"
+      "mgrs",
+      "hls.js"
     ]
   },
   "application-operations": {

@@ -1,4 +1,5 @@
 import { Readable } from 'node:stream';
+import { createHash } from 'node:crypto';
 import { hashSeed, escapeXml } from './normalize.js';
 import {
   CCTV_FRAME_FETCH_TIMEOUT_MS,
@@ -8,6 +9,18 @@ import {
   NSW_IMAGE_ORIGIN,
   NSW_IMAGE_USER_AGENT,
 } from './constants.js';
+
+/** Austin serves this static "Image Unavailable" JPEG with HTTP 200 (2026-09-17).
+ * Exact bytes avoid mistaking a small, dark or motionless real camera for an outage. */
+const AUSTIN_UNAVAILABLE_IMAGE_SHA256 =
+  'db8d3ffca668cac202fd73df14bcc10e703b22f166903e8ff9937998d963e08e';
+export function isKnownUnavailableCameraImage(body) {
+  return (
+    body?.byteLength === 12805 &&
+    createHash('sha256').update(body).digest('hex') ===
+      AUSTIN_UNAVAILABLE_IMAGE_SHA256
+  );
+}
 /**
  * Generate a synthetic SVG billboard image for a CCTV camera placeholder.
  *
@@ -216,7 +229,7 @@ export function watchDownstreamClose(res) {
 }
 
 /** Read a snapshot incrementally, retaining at most maxBytes of owned chunks. */
-async function readCappedResponseBytes(upstream, maxBytes) {
+export async function readCappedResponseBytes(upstream, maxBytes) {
   const declared = Number(upstream.headers.get('content-length'));
   if (Number.isFinite(declared) && declared > maxBytes) {
     try {
@@ -300,6 +313,52 @@ export async function fetchCctvMediaUpstream(
   } finally {
     clearTimeout(timeoutId);
     downstream?.removeEventListener?.('abort', onDownstreamAbort);
+  }
+}
+
+/** Finite video responses must fit a serverless response, including chunked upstreams. */
+export async function fetchBoundedCctvVideoUpstream(
+  url,
+  {
+    headers = {},
+    signal,
+    fetchImpl = fetch,
+    timeoutMs = CCTV_MEDIA_FETCH_TIMEOUT_MS,
+    maxBytes = 4 * 1024 * 1024,
+  } = {},
+) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const abort = () => controller.abort();
+  if (signal?.aborted) abort();
+  else signal?.addEventListener('abort', abort, { once: true });
+  try {
+    const upstream = await fetchWithinHost(
+      url,
+      { headers, signal: controller.signal },
+      fetchImpl,
+    );
+    if (!upstream) throw new Error('Camera video redirect failed');
+    if (!upstream.ok) return upstream;
+    const body = await readCappedResponseBytes(upstream, maxBytes);
+    if (!body)
+      throw Object.assign(
+        new Error(
+          'Camera video exceeds the host response limit and its source must support byte ranges or use a persistent media host',
+        ),
+        { code: 'CCTV_VIDEO_RESOURCE_TOO_LARGE' },
+      );
+    const responseHeaders = new Headers(upstream.headers);
+    responseHeaders.delete('content-encoding');
+    responseHeaders.set('content-length', String(body.length));
+    return new Response(body, {
+      status: upstream.status,
+      headers: responseHeaders,
+    });
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', abort);
+    controller.abort();
   }
 }
 
@@ -505,7 +564,7 @@ export async function fetchCctvImageFromUpstream(
       return null;
     }
     const body = await readCappedResponseBytes(upstream, maxBytes);
-    if (!body) return null;
+    if (!body || isKnownUnavailableCameraImage(body)) return null;
     return { ok: true, body, contentType };
   } catch {
     return null;

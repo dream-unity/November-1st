@@ -24,7 +24,7 @@ function homeLink() {
 }
 
 /** Add navigation and honest provider configuration without changing the globe. */
-export function installDreamUnityChrome() {
+export function installDreamUnityChrome({ onOpenFeed } = {}) {
   const lifetime = new AbortController();
   const nav = element('nav', '', 'du-navigation');
   nav.setAttribute('aria-label', 'Dream Unity navigation');
@@ -35,6 +35,24 @@ export function installDreamUnityChrome() {
   statusButton.setAttribute('aria-haspopup', 'dialog');
   statusButton.setAttribute('aria-controls', 'du-source-status');
   nav.append(homeLink(), statusButton);
+  const feeds = element('div', '', 'du-feed-shortcuts');
+  feeds.setAttribute('role', 'group');
+  feeds.setAttribute('aria-label', 'Live feeds');
+  for (const [kind, label] of [
+    ['radio', 'Live radio'],
+    ['cctv', 'CCTV cameras'],
+    ['traffic', 'Traffic reports'],
+  ]) {
+    const button = element('button', label);
+    button.id = `du-open-${kind}`;
+    button.type = 'button';
+    button.setAttribute('aria-haspopup', 'dialog');
+    button.addEventListener('click', () => onOpenFeed?.(kind, button), {
+      signal: lifetime.signal,
+    });
+    feeds.append(button);
+  }
+  nav.append(feeds);
   document.getElementById('title-bar')?.append(nav);
 
   const dialog = element('dialog', '', 'du-dialog');
@@ -183,7 +201,32 @@ export function showStartupFailure(error) {
     document.getElementById('du-open-source-status')?.click();
   });
   actions.append(reload, sources, homeLink());
-  container.append(title, element('p', copy.guidance), actions, detail);
+  const feedActions = element('div', '', 'du-recovery-actions');
+  for (const [kind, label] of [
+    ['radio', 'Live radio'],
+    ['cctv', 'CCTV cameras'],
+    ['traffic', 'Traffic reports'],
+  ]) {
+    const button = element('button', label);
+    button.type = 'button';
+    button.setAttribute('aria-haspopup', 'dialog');
+    button.addEventListener('click', () => {
+      button.focus();
+      document.getElementById(`du-open-${kind}`)?.click();
+    });
+    feedActions.append(button);
+  }
+  container.append(
+    title,
+    element('p', copy.guidance),
+    actions,
+    element(
+      'p',
+      'Radio, cameras and traffic reports are also available without the 3D globe.',
+    ),
+    feedActions,
+    detail,
+  );
   loadingScreen.replaceChildren(container);
   title.focus();
 }

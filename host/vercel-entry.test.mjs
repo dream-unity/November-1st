@@ -33,5 +33,5 @@ test('native Vercel entry dispatches original nested API paths to upstream provi
   assert.equal(radio.status, 404);
   assert.match(radio.headers.get('content-type'), /json/);
   const health = await fetch(`${origin}/api/health`);
-  assert.equal((await health.json()).providersMounted.length, 20);
+  assert.equal((await health.json()).providersMounted.length, 21);
 });

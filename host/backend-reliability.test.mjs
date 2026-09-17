@@ -103,6 +103,33 @@ test('credential presence rejects templates and embedded whitespace without gues
   assert.equal(configuredCredential(' fixture-real-format '), true);
 });
 
+test('real-only camera snapshots stay public when optional paid Street View is configured', async (t) => {
+  let calls = 0;
+  const { get } = await hostFixture(t, {
+    env: { GOOGLE_MAPS_SERVER_API_KEY: 'fixture-google-key' },
+    providerPlugins: [
+      {
+        name: 'camera-snapshot-fixture',
+        configurePreviewServer(server) {
+          server.middlewares.use('/api/cctv/frame', (_req, res) => {
+            calls++;
+            res.writeHead(204);
+            res.end();
+          });
+        },
+      },
+    ],
+  });
+  assert.equal((await get('/api/cctv/frame/camera?strict=1')).status, 204);
+  for (const query of ['', '?strict=0', '?strict=0&strict=1'])
+    assert.equal((await get(`/api/cctv/frame/camera${query}`)).status, 403);
+  assert.equal(
+    calls,
+    1,
+    'only requests that cannot call the paid fallback reach the provider',
+  );
+});
+
 test('voice status and capability access reflect the caller and do not consume paid quota', async (t) => {
   const env = {
     OPENAI_API_KEY: 'fixture-private-key',

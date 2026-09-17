@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { promises as fsp } from 'node:fs';
+import { readResponseBytesCapped } from './common/http.js';
 
 import {
   isValidTileCoord as isValidTomTomTile,
@@ -133,13 +134,15 @@ export function tomtomProxy() {
   async function fetchUpstream(z, x, y) {
     const url =
       'https://api.tomtom.com/traffic/map/4/tile/flow/relative/' +
-      `${z}/${x}/${y}.pbf?key=${encodeURIComponent(process.env.TOMTOM_API_KEY)}`;
+      `${z}/${x}/${y}.pbf?key=${encodeURIComponent(process.env.TOMTOM_API_KEY.trim())}`;
     recordUpstreamFetch(); // attempts count — upstream bills the request either way
     const res = await fetch(url, {
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const buf = Buffer.from(await res.arrayBuffer());
+    const buf = Buffer.from(
+      await readResponseBytesCapped(res, 2 * 1024 * 1024),
+    );
     if (buf.length === 0) throw new Error('empty tile body');
     return buf;
   }
@@ -155,24 +158,33 @@ export function tomtomProxy() {
           'Cache-Control': 'no-store',
           ...extraHeaders,
         });
-        res.end(JSON.stringify(obj));
+        res.end(req.method === 'HEAD' ? undefined : JSON.stringify(obj));
       };
-      const sendTile = (buf, cacheStatus) => {
+      const sendTile = (entry, cacheStatus) => {
         if (res.headersSent) return;
         res.writeHead(200, {
           'Content-Type': 'application/x-protobuf',
           'Cache-Control': 'no-store',
           'x-tomtom-cache': cacheStatus,
+          'x-tomtom-updated-at': new Date(entry.at).toISOString(),
         });
-        res.end(buf);
+        res.end(req.method === 'HEAD' ? undefined : entry.buf);
       };
 
       try {
+        if (!['GET', 'HEAD'].includes(req.method)) {
+          sendJson(
+            405,
+            { error: 'method_not_allowed' },
+            { Allow: 'GET, HEAD' },
+          );
+          return;
+        }
         await loadBudgetOnce();
         const urlPath = String(req.url || '').split('?')[0];
 
         if (urlPath === '/status') {
-          const hasKey = Boolean(process.env.TOMTOM_API_KEY);
+          const hasKey = Boolean(process.env.TOMTOM_API_KEY?.trim());
           const b = currentBudget();
           sendJson(200, {
             hasKey,
@@ -195,7 +207,7 @@ export function tomtomProxy() {
           sendJson(400, { error: 'invalid_tile' });
           return;
         }
-        if (!process.env.TOMTOM_API_KEY) {
+        if (!process.env.TOMTOM_API_KEY?.trim()) {
           sendJson(503, { error: 'no_key' });
           return;
         }
@@ -210,14 +222,14 @@ export function tomtomProxy() {
         }
         // Fresh cache hit — never counts against the budget.
         if (entry && now - entry.at < TILE_TTL_MS) {
-          sendTile(entry.buf, 'HIT');
+          sendTile(entry, 'HIT');
           return;
         }
 
         // Budget governor: over the soft cap, last-good data beats a dead layer.
         if (isTomTomOverBudget(currentBudget(), dailyBudgetLimit())) {
           if (entry) {
-            sendTile(entry.buf, 'STALE-BUDGET');
+            sendTile(entry, 'STALE-BUDGET');
           } else {
             sendJson(429, { error: 'budget' });
           }
@@ -246,9 +258,9 @@ export function tomtomProxy() {
         }
         const fresh = await inflight.get(key);
         if (fresh) {
-          sendTile(fresh.buf, 'MISS');
+          sendTile(fresh, 'MISS');
         } else if (entry) {
-          sendTile(entry.buf, 'STALE-ERROR'); // upstream down — stale beats empty
+          sendTile(entry, 'STALE-ERROR'); // downstream can label a retained snapshot honestly
         } else {
           sendJson(502, { error: 'upstream' });
         }

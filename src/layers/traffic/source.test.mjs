@@ -35,6 +35,27 @@ test('flow caches and diagnostics belong to their constructed source', async () 
   await b.fetchFlowForBounds(bounds);
   assert.equal(requestsB, 1);
 });
+test('successful stale flow responses never become fresh live colors or enter the decoded cache', async () => {
+  for (const headers of [
+    { 'x-tomtom-cache': 'STALE-ERROR' },
+    { 'x-tomtom-cache': 'STALE-BUDGET' },
+    { 'x-tomtom-updated-at': new Date(Date.now() - 300_000).toISOString() },
+    { 'x-tomtom-updated-at': 'invalid' },
+  ]) {
+    let calls = 0;
+    const source = createTrafficSource({
+      fetchImpl: async () => {
+        calls++;
+        return new Response(fixture, { headers: calls === 1 ? headers : {} });
+      },
+    });
+    await assert.rejects(source.fetchFlowForBounds(bounds), {
+      code: 'TRAFFIC_FLOW_STALE',
+    });
+    assert.ok((await source.fetchFlowForBounds(bounds)).length > 0);
+    assert.equal(calls, 2);
+  }
+});
 test('a cancelled flow body cannot refill its source cache', async () => {
   const controller = new AbortController();
   let calls = 0;

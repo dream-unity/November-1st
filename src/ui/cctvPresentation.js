@@ -164,8 +164,17 @@ export function _renderCctvState(state) {
     }
   }
 
+  const videoMode = this._syncCctvVideo(activeCamera, enabled);
   if (this._cctvFrame) {
-    const nextSrc = enabled ? activeCamera?.frameUrl : null;
+    this._cctvFrame.hidden = videoMode;
+  }
+  if (this._cctvFrame && !videoMode) {
+    const frameUrl = enabled ? activeCamera?.frameUrl : null;
+    // A provider fallback is a labelled placeholder on the globe, but the
+    // camera monitor must never present it as a successfully loaded feed.
+    const nextSrc = frameUrl
+      ? `${frameUrl}${frameUrl.includes('?') ? '&' : '?'}strict=1`
+      : null;
     const nextCameraId = enabled ? activeCamera?.id || '' : '';
     const cameraChanged = this._cctvFrame.dataset.cameraId !== nextCameraId;
     const frameLoading = this._cctvFrame.dataset.loading === 'true';

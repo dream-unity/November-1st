@@ -246,6 +246,22 @@ test('a canonical range reaches the upstream and its 206 is passed through', asy
   assert.equal(res.body, 'partial');
 });
 
+test('strict camera snapshots cannot return a synthetic success or incur a Street View fallback', async (t) => {
+  const app = mount(t, () => {
+    throw new Error('no upstream image exists for this video fixture');
+  });
+  const response = await app.call(`/frame/${CAMERA.id}?strict=1`);
+  assert.equal(response.statusCode, 503);
+  assert.equal(response.headers['X-CCTV-Source'], 'unavailable');
+  assert.equal(JSON.parse(response.body).code, 'CCTV_SNAPSHOT_UNAVAILABLE');
+  assert.equal(app.requests.length, 0);
+  const missing = await app.call('/frame/missing-camera?strict=1');
+  assert.equal(missing.statusCode, 404);
+  assert.equal(app.requests.length, 0);
+  const stream = await app.call('/stream/missing-camera');
+  assert.equal(stream.statusCode, 404);
+});
+
 test('an unbounded seek is bounded before it is forwarded', async (t) => {
   const app = mount(t, () =>
     upstreamResponse({

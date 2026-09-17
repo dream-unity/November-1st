@@ -116,6 +116,11 @@ export function capabilityReport(
       ],
       ['radio', 'World radio', 'Radio Browser catalogue and station streams.'],
       [
+        'traffic-reports',
+        'Traffic reports',
+        'Official incident and roadwork reports for Austin and Finland. Coverage and publication times are shown in Traffic reports; these are separate from the simulated vehicle animation.',
+      ],
+      [
         'launches',
         'Rocket launches',
         'Launch Library public feed; public quota applies.',

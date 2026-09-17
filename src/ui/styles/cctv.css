@@ -302,6 +302,18 @@
   opacity: 1;
 }
 
+#cctv-frame[hidden] {
+  display: none;
+}
+
+.cctv-video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: #020509;
+}
+
 #cctv-meta {
   font-family: var(--font-mono);
   font-size: 9px;

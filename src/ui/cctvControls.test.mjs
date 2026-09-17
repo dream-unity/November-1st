@@ -34,6 +34,12 @@ function fixture(t) {
     constructor() {
       requests.push(this);
     }
+    removeAttribute(name) {
+      if (name === 'src') {
+        this.src = '';
+        this.cancelled = true;
+      }
+    }
   };
   t.after(() => {
     globalThis.Image = prior;
@@ -53,6 +59,7 @@ test('a late image completion cannot replace a newer camera preview', (t) => {
   const stale = requests[0].onload;
   controls._queueCctvFrame('second.jpg', 'b', true);
   assert.equal(requests[0].onload, null);
+  assert.equal(requests[0].cancelled, true);
   requests[1].onload();
   stale();
   assert.equal(controls._cctvFrame.src, 'second.jpg');
@@ -90,6 +97,7 @@ test('destroy invalidates image callbacks and releases each subscription once', 
   assert.equal(unsubscribed, 2);
   assert.equal(requests[0].onload, null);
   assert.equal(requests[0].onerror, null);
+  assert.equal(requests[0].cancelled, true);
   assert.equal(controls._cctvFrame.src, '');
   controls._queueCctvFrame('late.jpg', 'b', true);
   assert.equal(requests.length, 1);
@@ -217,4 +225,85 @@ test('disposing during camera enable prevents the delayed focus and future click
   button.dispatchEvent(new Event('click'));
   assert.equal(enables, 1);
   assert.equal(focuses, 0);
+});
+
+test('a stalled snapshot ends loading, rejects late pixels and honestly labels a failed refresh', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { controls, requests } = fixture(t);
+  controls._cctvSourceBadge = element();
+  controls._cctvState = { enabled: true, activeCamera: { id: 'a' } };
+  controls._queueCctvFrame('first.jpg', 'a', true);
+  requests[0].onload();
+  controls._queueCctvFrame('refresh.jpg', 'a', false);
+  const late = requests[1].onload;
+  t.mock.timers.tick(20_000);
+  assert.equal(controls._cctvFrame.dataset.loading, '');
+  assert.match(controls._cctvSourceBadge.textContent, /PREVIOUS FRAME/);
+  late();
+  assert.equal(controls._cctvFrame.src, 'first.jpg');
+});
+
+test('the camera panel renders video controls, keeps an existing stream across refreshes and releases it on disable', async (t) => {
+  const { controls } = fixture(t);
+  const before = globalThis.document;
+  const videos = [];
+  globalThis.document = {
+    createElement(name) {
+      assert.equal(name, 'video');
+      const video = new EventTarget();
+      Object.assign(video, {
+        paused: true,
+        setAttribute() {},
+        removeAttribute(name) {
+          if (name === 'src') this.src = '';
+        },
+        load() {},
+        pause() {
+          this.paused = true;
+        },
+        play() {
+          this.paused = false;
+          return Promise.resolve();
+        },
+        remove() {
+          this.removed = true;
+        },
+      });
+      videos.push(video);
+      return video;
+    },
+  };
+  t.after(() => {
+    globalThis.document = before;
+  });
+  controls.actions.setPanelCollapsed = () => {};
+  controls._cctvFrameWrap.appendChild = () => {};
+  controls._cctvSourceBadge = element();
+  const state = {
+    enabled: true,
+    activeCameraId: 'v',
+    activeCamera: {
+      id: 'v',
+      name: 'Live camera',
+      feedType: 'mp4',
+      mediaUrl: '/api/cctv/media/v?ts=1',
+      frameUrl: '/api/cctv/frame/v',
+    },
+  };
+  controls._renderCctvState(state);
+  assert.equal(videos.length, 1);
+  assert.equal(videos[0].src, '/api/cctv/media/v?ts=1');
+  assert.equal(videos[0].controls, true);
+  assert.equal(controls._cctvFrame.hidden, true);
+  videos[0].dispatchEvent(new Event('canplay'));
+  assert.match(controls._cctvSourceBadge.textContent, /READY/);
+  controls._renderCctvState({
+    ...state,
+    activeCamera: { ...state.activeCamera, mediaUrl: '/api/cctv/media/v?ts=2' },
+  });
+  assert.equal(videos.length, 1);
+  controls._renderCctvState({ ...state, enabled: false });
+  assert.equal(videos[0].src, '');
+  assert.equal(videos[0].removed, true);
+  assert.equal(controls._cctvFrame.hidden, false);
 });

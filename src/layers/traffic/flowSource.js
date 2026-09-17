@@ -62,9 +62,25 @@ export function createFlowTileSource({
           signal,
         });
         if (!res.ok) throw new Error(`flow tile ${key}: HTTP ${res.status}`);
+        // A proxy can return HTTP 200 with yesterday's cached bytes after an
+        // outage or exhausted quota. Never re-stamp those as fresh live flow.
+        const cacheStatus = res.headers?.get('x-tomtom-cache') || '';
+        const updatedAt = res.headers?.get('x-tomtom-updated-at');
+        const upstreamTime = updatedAt ? Date.parse(updatedAt) : Date.now();
+        if (
+          cacheStatus.startsWith('STALE') ||
+          !Number.isFinite(upstreamTime) ||
+          Date.now() - upstreamTime >= DECODE_CACHE_TTL_MS ||
+          upstreamTime > Date.now() + 60_000
+        ) {
+          void res.body?.cancel().catch(() => {});
+          throw Object.assign(new Error('TomTom flow snapshot is stale'), {
+            code: 'TRAFFIC_FLOW_STALE',
+          });
+        }
         const segments = decodeFlowTile(await res.arrayBuffer(), z, x, y);
         signal?.throwIfAborted();
-        cacheSet(key, { at: Date.now(), segments });
+        cacheSet(key, { at: upstreamTime, segments });
         return segments;
       }),
     );

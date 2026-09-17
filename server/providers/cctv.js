@@ -10,6 +10,7 @@ import {
   fetchCctvImageFromUpstream,
   fetchTxdotSnapshot,
   fetchCctvMediaUpstream,
+  fetchBoundedCctvVideoUpstream,
   watchDownstreamClose,
 } from './cctv/media.js';
 import {
@@ -17,6 +18,7 @@ import {
   CCTV_MAX_SOURCES_CEILING,
 } from './cctv/constants.js';
 import { sanitizeCctvRangeHeader } from './cctv/range.js';
+import { fetchCctvHlsResource } from './cctv/hls.js';
 import { googleServerApiKey } from './places/google-key.js';
 export { CCTV_FRAME_FETCH_TIMEOUT_MS, fetchCctvImageFromUpstream };
 /**
@@ -184,6 +186,18 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
             decodeURIComponent(url.pathname.replace('/stream/', '').trim()) ||
             'camera';
           const source = sourceById.get(cameraId);
+          if (!source) {
+            res.writeHead(404, {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-store',
+            });
+            res.end(
+              JSON.stringify({
+                error: 'Camera is not in the current catalogue',
+              }),
+            );
+            return;
+          }
           const payload = buildStreamPayload(source, cameraId);
           res.writeHead(200, {
             'Content-Type': 'application/json',
@@ -230,12 +244,28 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
             };
             // Never forward the client's own string: a Range this proxy does
             // not accept is dropped and the request proceeds without one.
-            const requestRange = sanitizeCctvRangeHeader(req.headers?.range);
+            const requestRange = sanitizeCctvRangeHeader(
+              req.headers?.range,
+              process.env.VERCEL ? 4 * 1024 * 1024 : undefined,
+            );
             if (requestRange) upstreamHeaders.Range = requestRange;
-            const upstream = await fetchCctvMediaUpstream(mediaUrl, {
-              headers: upstreamHeaders,
-              signal: downstream.signal,
-            });
+            const upstream =
+              feedType === 'hls'
+                ? await fetchCctvHlsResource({
+                    sourceUrl: mediaUrl,
+                    resource: url.searchParams.get('resource'),
+                    cameraId,
+                    headers: upstreamHeaders,
+                    signal: downstream.signal,
+                  })
+                : await (
+                    process.env.VERCEL && isVideoFeedType(feedType)
+                      ? fetchBoundedCctvVideoUpstream
+                      : fetchCctvMediaUpstream
+                  )(mediaUrl, {
+                    headers: upstreamHeaders,
+                    signal: downstream.signal,
+                  });
             if (downstream.closed) {
               // The headers arrived for a viewer who is no longer there.
               try {
@@ -272,6 +302,7 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
 
             if (
               isVideoFeedType(feedType) &&
+              feedType !== 'hls' &&
               !(
                 contentType.startsWith('video/') ||
                 contentType.includes('mpegurl')
@@ -314,15 +345,21 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
               label: source?.provider || 'Configured source',
               message: error?.message || 'Media fetch failed',
             });
-            res.writeHead(timedOut ? 504 : 502, {
+            const tooLarge =
+              error?.code === 'CCTV_HLS_RESOURCE_TOO_LARGE' ||
+              error?.code === 'CCTV_VIDEO_RESOURCE_TOO_LARGE';
+            res.writeHead(tooLarge ? 503 : timedOut ? 504 : 502, {
               'Content-Type': 'application/json',
               'Cache-Control': 'no-store',
             });
             res.end(
               JSON.stringify({
-                error: timedOut
-                  ? 'Upstream media timeout'
-                  : 'Media proxy failed',
+                ...(tooLarge ? { code: error.code } : {}),
+                error: tooLarge
+                  ? error.message
+                  : timedOut
+                    ? 'Upstream media timeout'
+                    : 'Media proxy failed',
               }),
             );
             return;
@@ -339,6 +376,16 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
           decodeURIComponent(url.pathname.replace('/frame/', '').trim()) ||
           'camera';
         const source = sourceById.get(cameraId);
+        if (url.searchParams.get('strict') === '1' && !source) {
+          res.writeHead(404, {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+          });
+          res.end(
+            JSON.stringify({ error: 'Camera is not in the current catalogue' }),
+          );
+          return;
+        }
         const label = url.searchParams.get('label') || source?.name || cameraId;
         const city = url.searchParams.get('city') || source?.city || '';
         const lat = Number(url.searchParams.get('lat') || source?.lat);
@@ -374,6 +421,31 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
             'X-CCTV-Source': 'upstream-image',
           });
           res.end(upstreamImage.body);
+          return;
+        }
+
+        // Feed monitors opt out of all non-live substitutes. A successful SVG
+        // decode or a Street View photograph is not proof of a working camera.
+        if (url.searchParams.get('strict') === '1') {
+          setHealth(cameraId, {
+            status: 'degraded',
+            sourceKind: 'unavailable',
+            label: source?.provider || 'Camera source',
+            message: 'Camera snapshot is currently unavailable',
+          });
+          res.writeHead(503, {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+            'X-CCTV-Source': 'unavailable',
+            'Retry-After': '30',
+          });
+          res.end(
+            JSON.stringify({
+              code: 'CCTV_SNAPSHOT_UNAVAILABLE',
+              error:
+                'Camera snapshot is currently unavailable. Retry or choose another camera.',
+            }),
+          );
           return;
         }
 

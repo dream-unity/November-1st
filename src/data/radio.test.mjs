@@ -921,7 +921,7 @@ test('failed exact tuner release cannot consume a stale playback fallback', asyn
     assert.deepEqual(playUrls, [stationRows[0].streamUrl]);
     assert.equal(state.selected?.id, stationRows[0].id);
     assert.equal(state.audioState, 'error');
-    assert.equal(state.tuningStatic, true);
+    assert.equal(state.tuningStatic, false, 'failed streams must not leave tuner hiss audible');
     assert.equal(state.tuningAwaitingStationId, stationRows[0].id);
   } finally {
     globalThis.fetch = originalFetch;

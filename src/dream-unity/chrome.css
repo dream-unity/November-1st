@@ -1,11 +1,24 @@
 .du-navigation {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin-top: 10px;
   pointer-events: auto;
   font: 11px var(--font-sans);
   letter-spacing: 0;
+  max-width: min(620px, calc(100vw - 32px));
+}
+
+.du-feed-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.du-feed-shortcuts button {
+  border-color: #2d7890;
+  color: #b8f1ff;
 }
 
 .du-navigation a,
@@ -27,7 +40,7 @@
   cursor: pointer;
 }
 
-.du-navigation button::before {
+.du-navigation button[data-connection]::before {
   content: '';
   display: block;
   width: 6px;
@@ -173,6 +186,7 @@
     position: fixed;
     top: 76px;
     left: 16px;
+    right: 16px;
     margin: 0;
     gap: 6px;
   }

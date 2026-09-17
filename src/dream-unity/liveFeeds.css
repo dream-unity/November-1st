@@ -1,0 +1,237 @@
+.du-feeds {
+  width: min(1100px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  box-sizing: border-box;
+  margin: auto;
+  padding: 24px;
+  border: 1px solid #426174;
+  border-radius: 18px;
+  background: #0d1820;
+  color: #e8eef2;
+  font: 14px/1.5 var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  overflow: auto;
+  overscroll-behavior: contain;
+  box-shadow: 0 18px 80px #000b;
+}
+.du-feeds::backdrop {
+  background: #000b;
+}
+.du-feeds [hidden] {
+  display: none !important;
+}
+.du-feeds-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.du-feeds h2 {
+  font: 600 25px/1.2 var(--font-sans, system-ui, sans-serif);
+  margin: 0;
+}
+.du-feeds h3 {
+  font: 600 19px/1.3 var(--font-sans, system-ui, sans-serif);
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+}
+.du-feeds p {
+  margin: 10px 0;
+}
+.du-feeds button,
+.du-feeds input,
+.du-feeds select {
+  font: inherit;
+  color: inherit;
+}
+.du-feeds button,
+.du-feeds select,
+.du-feeds input[type='search'] {
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid #426174;
+  border-radius: 8px;
+  background: #112532;
+  box-sizing: border-box;
+}
+.du-feeds button {
+  cursor: pointer;
+}
+.du-feeds button:hover {
+  border-color: #91dced;
+  background: #173648;
+}
+.du-feeds button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.du-feeds :focus-visible {
+  outline: 3px solid #87e6ef;
+  outline-offset: 3px;
+}
+.du-feeds-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0 12px;
+}
+.du-feeds-tabs [aria-selected='true'] {
+  border-color: #4ad7ed;
+  background: #124453;
+}
+.du-feeds-intro,
+.du-feeds-note {
+  color: #b5c8d4;
+}
+.du-feeds-note {
+  font-size: 12px;
+}
+.du-feeds-filters {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(150px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin: 18px 0;
+}
+.du-feeds label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+.du-feeds select,
+.du-feeds input[type='search'] {
+  width: 100%;
+  max-width: 100%;
+}
+.du-feeds-status {
+  min-height: 1.5em;
+  color: #d3eff5;
+  overflow-wrap: anywhere;
+}
+.du-feeds-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(300px, 1.25fr);
+  gap: 22px;
+  align-items: start;
+}
+.du-feeds-results {
+  min-width: 0;
+}
+.du-feeds-count {
+  color: #b5c8d4;
+  font-size: 12px;
+}
+.du-feeds-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+  max-height: 48dvh;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.du-feeds-list li {
+  margin: 0 0 7px;
+}
+.du-feeds-list button {
+  width: 100%;
+  display: grid;
+  gap: 3px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.du-feeds-list button[aria-pressed='true'] {
+  border-color: #4ad7ed;
+  background: #124453;
+}
+.du-feed-name {
+  font-weight: 600;
+}
+.du-feed-subtitle {
+  font-size: 12px;
+  color: #b5c8d4;
+}
+.du-feed-detail {
+  min-width: 0;
+  border: 1px solid #304d5e;
+  border-radius: 12px;
+  padding: 18px;
+  background: #0a131b;
+}
+.du-feed-detail img,
+.du-feed-detail video {
+  display: block;
+  width: 100%;
+  max-height: 48dvh;
+  object-fit: contain;
+  background: #000;
+  border-radius: 6px;
+  margin: 14px 0;
+}
+.du-feed-detail a,
+.du-feeds a {
+  color: #a8e4f2;
+  text-underline-offset: 3px;
+}
+.du-feed-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+.du-feed-detail input[type='range'] {
+  width: 100%;
+  max-width: 260px;
+  min-height: 36px;
+}
+.du-feed-auto {
+  display: flex !important;
+  align-items: center;
+  gap: 8px !important;
+  margin: 14px 0;
+}
+.du-feed-auto input {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+.du-feed-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  width: min(560px, calc(100vw - 32px));
+  padding: 16px;
+  box-sizing: border-box;
+  border: 1px solid #4ad7ed;
+  border-radius: 10px;
+  background: #0d1820;
+  color: #e8eef2;
+  font:
+    14px/1.5 system-ui,
+    sans-serif;
+  box-shadow: 0 6px 30px #0009;
+}
+@media (max-width: 720px) {
+  .du-feeds {
+    padding: 16px;
+  }
+  .du-feeds-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+  .du-feeds-filters label:first-child {
+    grid-column: 1 / -1;
+  }
+  .du-feeds-layout {
+    grid-template-columns: 1fr;
+  }
+  .du-feed-detail {
+    grid-row: 1;
+  }
+  .du-feeds-list {
+    max-height: 42dvh;
+  }
+  .du-feeds h2 {
+    font-size: 22px;
+  }
+}

@@ -18,6 +18,9 @@ import {
   RADIO_DIRECTORY_STALE_MS,
   RADIO_MIRROR_CACHE_MS,
   RADIO_FETCH_TIMEOUT_MS,
+  RADIO_CATALOG_TIMEOUT_MS,
+  RADIO_DISCOVERY_TIMEOUT_MS,
+  RADIO_CLICK_TIMEOUT_MS,
   RADIO_RESPONSE_MAX_BYTES,
   RADIO_DIRECTORY_LIMIT,
   RADIO_CATALOG_MIN_SUCCESSFUL_QUERIES,
@@ -43,11 +46,29 @@ export async function mapRadioConcurrent(values, concurrency, mapper) {
   return results;
 }
 
+/** Race every phase, including DNS or a non-cooperative upstream body, against cancellation. */
+async function untilAborted(operation, signal) {
+  signal.throwIfAborted();
+  let abort;
+  const cancellation = new Promise((_resolve, reject) => {
+    abort = () => reject(signal.reason);
+    signal.addEventListener('abort', abort, { once: true });
+  });
+  try {
+    return await Promise.race([operation, cancellation]);
+  } finally {
+    signal.removeEventListener('abort', abort);
+  }
+}
+
 /** Create the testable Connect middleware backing `/api/radio`. */
 export function createRadioProxyMiddleware({
   fetchImpl = null,
   lookupImpl = lookupDns,
   now = Date.now,
+  catalogTimeoutMs = RADIO_CATALOG_TIMEOUT_MS,
+  fetchTimeoutMs = RADIO_FETCH_TIMEOUT_MS,
+  discoveryTimeoutMs = RADIO_DISCOVERY_TIMEOUT_MS,
 } = {}) {
   let mirrorCache = { origins: [...RADIO_FALLBACK_MIRRORS], cachedAt: 0 };
   let mirrorPromise = null;
@@ -61,39 +82,66 @@ export function createRadioProxyMiddleware({
   let servedStationIds = new Set();
   let refreshPromise = null;
 
-  async function fetchJson(url, maxBytes = RADIO_RESPONSE_MAX_BYTES) {
+  async function fetchJson(
+    url,
+    maxBytes = RADIO_RESPONSE_MAX_BYTES,
+    { signal, timeoutMs = fetchTimeoutMs } = {},
+  ) {
+    signal?.throwIfAborted();
     const destination = radioProxyDestination(url);
     if (!destination)
       throw new Error('Radio Browser destination is not permitted');
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), RADIO_FETCH_TIMEOUT_MS);
+    const abort = () => controller.abort(signal.reason);
+    signal?.addEventListener('abort', abort, { once: true });
+    const timer = setTimeout(
+      () =>
+        controller.abort(
+          new DOMException('Radio Browser request timed out', 'TimeoutError'),
+        ),
+      timeoutMs,
+    );
     try {
-      const addresses = await resolveRadioProxyAddresses(
-        destination.hostname,
-        lookupImpl,
+      const addresses = await untilAborted(
+        resolveRadioProxyAddresses(destination.hostname, lookupImpl),
+        controller.signal,
       );
+      controller.signal.throwIfAborted();
       const options = {
         headers: { Accept: 'application/json', 'User-Agent': RADIO_USER_AGENT },
         signal: controller.signal,
         redirect: 'manual',
       };
-      const response = fetchImpl
-        ? await fetchImpl(destination.href, options)
-        : await fetchPinnedRadioResponse(destination, options, addresses);
-      if (response.status >= 300 && response.status < 400) {
-        try {
-          await response.body?.cancel?.();
-        } catch {
-          /* no-op */
-        }
-        throw new Error('Radio Browser redirects are refused');
-      }
-      if (!response.ok)
+      const fetching = Promise.resolve(
+        fetchImpl
+          ? fetchImpl(destination.href, options)
+          : fetchPinnedRadioResponse(destination, options, addresses),
+      );
+      // Some custom transports settle after cancellation. Release any late body
+      // without admitting it to a newer catalogue or leaving its socket open.
+      void fetching.then(
+        (response) => {
+          if (controller.signal.aborted)
+            void response.body?.cancel?.().catch(() => {});
+        },
+        () => {},
+      );
+      const response = await untilAborted(fetching, controller.signal);
+      if (!response.ok) {
+        void response.body?.cancel?.().catch(() => {});
+        if (response.status >= 300 && response.status < 400)
+          throw new Error('Radio Browser redirects are refused');
         throw new Error(`Radio Browser returned ${response.status}`);
-      const text = await readResponseTextCapped(response, maxBytes);
+      }
+      const text = await untilAborted(
+        readResponseTextCapped(response, maxBytes, controller.signal),
+        controller.signal,
+      );
+      controller.signal.throwIfAborted();
       return JSON.parse(text);
     } finally {
       clearTimeout(timer);
+      signal?.removeEventListener('abort', abort);
     }
   }
 
@@ -106,6 +154,7 @@ export function createRadioProxyMiddleware({
           const rows = await fetchJson(
             'https://all.api.radio-browser.info/json/servers',
             256 * 1024,
+            { timeoutMs: discoveryTimeoutMs },
           );
           const discovered = [
             ...new Set(
@@ -124,6 +173,8 @@ export function createRadioProxyMiddleware({
               ],
               cachedAt: now(),
             };
+          } else {
+            mirrorCache = { ...mirrorCache, cachedAt: now() };
           }
         } catch {
           mirrorCache = { ...mirrorCache, cachedAt: now() };
@@ -136,11 +187,24 @@ export function createRadioProxyMiddleware({
     return mirrorPromise;
   }
 
-  async function fetchPath(pathname) {
+  async function fetchPath(pathname, signal) {
+    signal.throwIfAborted();
     let lastError = null;
-    for (const origin of await mirrors()) {
+    for (const origin of await untilAborted(mirrors(), signal)) {
+      signal.throwIfAborted();
       try {
-        return await fetchJson(`${origin}${pathname}`);
+        const result = await fetchJson(
+          `${origin}${pathname}`,
+          RADIO_RESPONSE_MAX_BYTES,
+          { signal },
+        );
+        // Later specialist queries should begin with the mirror that just worked.
+        // This avoids repeatedly spending the budget on an earlier dead mirror.
+        mirrorCache.origins = [
+          origin,
+          ...mirrorCache.origins.filter((value) => value !== origin),
+        ];
+        return result;
       } catch (error) {
         lastError = error;
       }
@@ -148,7 +212,7 @@ export function createRadioProxyMiddleware({
     throw lastError || new Error('No Radio Browser mirror is available');
   }
 
-  async function refreshCatalog() {
+  async function collectCatalog(signal) {
     const queries = [
       null,
       'news',
@@ -174,7 +238,10 @@ export function createRadioProxyMiddleware({
         });
         if (tag) params.set('tag', tag);
         try {
-          const rows = await fetchPath(`/json/stations/search?${params}`);
+          const rows = await fetchPath(
+            `/json/stations/search?${params}`,
+            signal,
+          );
           if (!Array.isArray(rows))
             throw new Error('Radio Browser catalog payload was not an array');
           if (
@@ -302,6 +369,25 @@ export function createRadioProxyMiddleware({
     return catalogCache;
   }
 
+  async function refreshCatalog() {
+    const controller = new AbortController();
+    const timer = setTimeout(
+      () =>
+        controller.abort(
+          new DOMException('Radio catalogue refresh timed out', 'TimeoutError'),
+        ),
+      catalogTimeoutMs,
+    );
+    try {
+      // Each failed/timed-out query becomes an explicit unsuccessful outcome.
+      // Completed queries still pass the same healthy/partial/stale admission.
+      return await collectCatalog(controller.signal);
+    } finally {
+      clearTimeout(timer);
+      controller.abort();
+    }
+  }
+
   async function getCatalog() {
     if (
       catalogCache &&
@@ -385,7 +471,10 @@ export function createRadioProxyMiddleware({
       }
       res.writeHead(204, { 'Cache-Control': 'no-store' });
       res.end();
-      void fetchPath(`/json/url/${id}`).catch(() => {});
+      void fetchPath(
+        `/json/url/${id}`,
+        AbortSignal.timeout(RADIO_CLICK_TIMEOUT_MS),
+      ).catch(() => {});
       return;
     }
 

@@ -33,24 +33,89 @@ function fixture(t, options = {}) {
   return { video, playback, statuses, status: () => statuses.at(-1) };
 }
 
-test('unsupported HLS is identified before any media request and never times out as a network fault', (t) => {
-  const f = fixture(t, { feedType: 'hls' });
+test('unsupported HLS is identified after the browser adapter check and does not become a network fault', async (t) => {
+  const f = fixture(t, { feedType: 'hls', loadHls: async () => ({ isSupported: () => false }) });
+  await flush();
   assert.equal(f.video.source, null);
   assert.equal(f.status().status, 'unsupported');
   assert.match(f.status().message, /browser.*HLS/);
   t.mock.timers.tick(1000);
-  assert.equal(f.statuses.length, 1);
+  assert.equal(f.statuses.length, 2);
 });
 
-test('native HLS is attempted, and stream failures explain the required playlist relay', (t) => {
+test('native HLS is attempted and stream failures give an actionable retry message', (t) => {
   const video = new Video();
   video.canPlayType = () => 'maybe';
   const f = fixture(t, { video, feedType: 'hls' });
   assert.equal(video.source, '/camera');
   video.emit('error');
   assert.equal(f.status().status, 'unavailable');
-  assert.match(f.status().message, /playlist segment relay/);
+  assert.match(f.status().message, /retry or choose another camera/);
   assert.equal(video.source, null);
+});
+
+test('HLS adapter loads browsers without native HLS, then tears down a failed session', async (t) => {
+  const instances = [];
+  class Hls {
+    static isSupported = () => true;
+    static Events = { ERROR: 'error' };
+    constructor() { instances.push(this); }
+    on(_name, callback) { this.onError = callback; }
+    loadSource(url) { this.source = url; }
+    attachMedia(video) { this.video = video; }
+    stopLoad() { this.stopped = true; }
+    startLoad() { this.stopped = false; }
+    destroy() { this.destroyed = true; }
+  }
+  const f = fixture(t, { feedType: 'hls', loadHls: async () => Hls });
+  await flush();
+  assert.equal(instances[0].source, '/camera');
+  assert.equal(instances[0].video, f.video);
+  f.video.emit('canplay');
+  await flush();
+  assert.equal(f.status().status, 'ready');
+  f.playback.setActive(false);
+  assert.equal(instances[0].stopped, true);
+  f.playback.setActive(true);
+  assert.equal(instances[0].stopped, false);
+  instances[0].onError('error', { fatal: false });
+  assert.equal(f.status().status, 'ready');
+  instances[0].onError('error', { fatal: true });
+  assert.equal(f.status().status, 'unavailable');
+  assert.equal(instances[0].destroyed, true);
+  assert.equal(f.playback.retry(), true);
+  await flush();
+  assert.equal(instances.length, 2);
+  f.playback.destroy();
+  assert.equal(instances[1].destroyed, true);
+});
+
+test('a lazy HLS adapter finishing after disposal cannot create a media session', async (t) => {
+  let resolve;
+  let created = 0;
+  class Hls { static isSupported = () => true; constructor() { created++; } }
+  const f = fixture(t, { feedType: 'hls', loadHls: () => new Promise(done => { resolve = done; }) });
+  f.playback.destroy();
+  resolve(Hls);
+  await flush();
+  assert.equal(created, 0);
+});
+
+test('a panel with native controls never resumes playback on canplay unless explicitly requested', async (t) => {
+  const f = fixture(t, { autoPlay: false });
+  f.video.emit('loadedmetadata');
+  t.mock.timers.tick(200);
+  assert.equal(f.status().status, 'ready', 'metadata-only preload may wait for native Play without timing out');
+  f.video.emit('canplay');
+  await flush();
+  assert.equal(f.video.playCount, 0);
+  f.playback.resume();
+  await flush();
+  assert.equal(f.video.playCount, 1);
+  f.video.pause();
+  f.video.emit('canplay');
+  await flush();
+  assert.equal(f.video.playCount, 1);
 });
 
 test('initial loading and later stalls have finite deadlines, with an explicit retry that can recover', async (t) => {
@@ -90,6 +155,23 @@ test('play requests coalesce and permission rejection is never retried by animat
   for (let i = 0; i < 100; i++) f.playback.resume();
   await flush();
   assert.equal(video.playCount, 1);
+});
+
+test('a hung play promise has a deadline and cannot prevent a new retry from playing', async (t) => {
+  const video = new Video();
+  video.play = () => { video.playCount++; return new Promise(() => {}); };
+  const f = fixture(t, { video });
+  video.emit('canplay');
+  await flush();
+  t.mock.timers.tick(100);
+  assert.equal(f.status().status, 'unavailable');
+  assert.match(f.status().message, /did not start/);
+  video.play = () => { video.playCount++; video.paused = false; return Promise.resolve(); };
+  assert.equal(f.playback.retry(), true);
+  video.emit('canplay');
+  await flush();
+  assert.equal(video.playCount, 2);
+  assert.equal(f.status().status, 'ready');
 });
 
 test('destroy detaches listeners, cancels deadlines and prevents late autoplay completion from restarting media', async (t) => {

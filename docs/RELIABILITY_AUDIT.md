@@ -1,5 +1,10 @@
 # Reliability audit and repair record
 
+The subsequent [radio, camera and traffic repair](LIVE_FEEDS_REPAIR.md) adds
+visible, usable feed directories, real-only camera previews, video/HLS transport
+and official regional traffic reports. Its verification goes beyond catalogue
+availability and supersedes the earlier camera/playback coverage limits below.
+
 This audit follows the reported voice error on the full November-1st application.
 The screenshot showed a functioning globe and a failed voice start saying
 `OPENAI_API_KEY is not set`, followed by misleading microphone/network advice.

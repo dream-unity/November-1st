@@ -24,7 +24,8 @@ test('radio source confines directory and click requests to their existing route
     ['/api/radio/stations', `/api/radio/click/${id}`],
   );
   assert.equal(calls[1].options.method, 'POST');
-  assert.ok(calls.every((call) => call.options.signal === controller.signal));
+  assert.ok(calls.every((call) => call.options.signal instanceof AbortSignal));
+  assert.ok(calls.every((call) => !call.options.signal.aborted));
   for (const invalid of [
     '../stations',
     'https://example.com',
@@ -105,4 +106,31 @@ test('radio factories keep settings and subscriptions independent without fetchi
   first.destroy();
   assert.equal(second.getRadioParams().volume, 0.8);
   second.destroy();
+});
+
+test('radio directory and click requests have finite deadlines and preserve caller cancellation', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const source = createRadioSource({
+    fetchImpl: (_path, { signal }) =>
+      new Promise((_resolve, reject) => {
+        signal.addEventListener('abort', () => reject(signal.reason), {
+          once: true,
+        });
+      }),
+  });
+  const directory = source.getDirectory();
+  const directoryRejected = assert.rejects(directory, { name: 'TimeoutError' });
+  t.mock.timers.tick(60_000);
+  await directoryRejected;
+  const click = source.recordClick(id);
+  const clickRejected = assert.rejects(click, { name: 'TimeoutError' });
+  t.mock.timers.tick(10_000);
+  await clickRejected;
+  const controller = new AbortController();
+  const cancelled = assert.rejects(
+    source.getDirectory({ signal: controller.signal }),
+    { name: 'AbortError' },
+  );
+  controller.abort();
+  await cancelled;
 });
