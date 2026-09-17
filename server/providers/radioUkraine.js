@@ -145,7 +145,10 @@ function stationNameKeys(station) {
   const components = station.name.split(/\s+[–—]\s+/);
   const bilingual =
     components.some((name) => /\p{Script=Cyrillic}/u.test(name)) &&
-    components.some((name) => /\p{Script=Latin}/u.test(name) && !/\p{Script=Cyrillic}/u.test(name));
+    components.some(
+      (name) =>
+        /\p{Script=Latin}/u.test(name) && !/\p{Script=Cyrillic}/u.test(name),
+    );
   const names =
     station.sourceKind === 'curated-ukraine' && bilingual
       ? [station.name, ...components]
