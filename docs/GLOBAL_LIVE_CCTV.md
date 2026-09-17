@@ -91,3 +91,15 @@ Preview revision: `01161d3b3509cc2568a819487cba8fff85d88e81`. Deployed catalogue
 The official players for Finland, Japan and Kenya reached their real API ready/buffering states, with the expected source IDs, correct referrer policy and visible 525×295-pixel frames. They did **not** decode moving video in this test browser before the bounded timeout. The same Japanese stream also stalled on its original YouTube watch page, reporting currentTime 0, readyState 0 and video dimensions 0×0 while the page identified the broadcaster and current viewers. This comparison shows a media-delivery limitation in the test environment; it does not certify international video decoding on the deployed application. No still images were substituted and no buffering state was reported as playing.
 
 The test browser also cannot initialize WebGL; the independent directory remains usable through the existing recovery interface. Thus this release does not claim a complete hardware-accelerated globe walkthrough or permanent availability of every external camera. Preview runtime error/warning scan showed no server entries at the time checked.
+
+
+### Public production verification
+
+Deployed runtime revision: `9c8c2b50f29f0adea0cb413772d5712722523ca3`, deployment `dpl_2nqF8cXdXf65uBVAkpaXgHCm4cwk`, READY on 2026-09-17 UTC at [the public application](https://november-1st-sable.vercel.app/?feed=cctv). The [GitHub Pages entry](https://dream-unity.github.io/November-1st/?feed=cctv) redirected correctly and opened the international directory. The later documentation-only commit does not change this deployed runtime.
+
+- `/api/health`: HTTP 200, correct runtime commit and all 21 original/provider middleware groups mounted.
+- `/api/cctv/sources`: HTTP 200, 3,750 cameras, 389 listed live, 89 official international embeds and 56 live country/territory codes.
+- Selected Finland/Japan live-status endpoints: HTTP 200 with honest `unknown` results when the hosting server could not confirm the public YouTube page. This does not prevent unconfirmed official-player playback. The Finnish player still buffered and timed out in the test browser on the public deployment; moving international video is therefore **not certified by this release's browser tests**.
+- Caltrans C014 public HLS endpoint: HTTP 200 with a valid HLS master. Browser playback used MSE, decoded 640×480 video and advanced from 21 to 80 seconds; Pause stopped playback correctly. This public result also distinguishes the preview's protected-media failure from a direct-video regression.
+- Production runtime error/warning scan returned no entries during the checked window. This is a bounded observation, not a permanent uptime guarantee.
+- [CI run 35189824318](https://github.com/dream-unity/November-1st/actions/runs/35189824318): Node 24.14, Node 26 and Windows onboarding all succeeded. [Pages run 35189823410](https://github.com/dream-unity/November-1st/actions/runs/35189823410) succeeded.
