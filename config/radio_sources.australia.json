@@ -3862,15 +3862,35 @@
       "liveOnly": true
     }
   ],
-  "excludedStationIds": ["36adafc9-18f9-40af-a3ad-e608e313786c"],
+  "excludedStationIds": [
+    "36adafc9-18f9-40af-a3ad-e608e313786c",
+    "c24e76e8-68a5-48f0-83e8-33f6fc45abb4",
+    "2a581de9-1eed-4d54-9108-a7486953e3be"
+  ],
   "excludedStreamUrls": [
-    "https://dn721903.ca.archive.org/0/items/australian-forest-sounds/08%20Calm%20creek%20flowing%2C%20frogs%20and%20birds%20_Dereel%20VIC.mp3"
+    "https://dn721903.ca.archive.org/0/items/australian-forest-sounds/08%20Calm%20creek%20flowing%2C%20frogs%20and%20birds%20_Dereel%20VIC.mp3",
+    "https://28853.live.streamtheworld.com/3KNDAAC.aac",
+    "https://playerservices.streamtheworld.com/api/livestream-redirect/3AW.mp3"
   ],
   "exclusionNotes": [
     {
       "stationId": "36adafc9-18f9-40af-a3ad-e608e313786c",
       "reason": "Finite three-hour archive recording, not a running live radio stream.",
       "sourcePage": "https://archive.org/details/australian-forest-sounds"
+    },
+    {
+      "stationId": "c24e76e8-68a5-48f0-83e8-33f6fc45abb4",
+      "streamUrl": "https://28853.live.streamtheworld.com/3KNDAAC.aac",
+      "reason": "Duplicate of curated 3KND Kool N Deadly: same 3KNDAAC.aac programme mount on a fixed StreamTheWorld edge host; curated entry uses the broadcaster redirect URL.",
+      "sourcePage": "https://www.3knd.org.au/",
+      "checkedAt": "2026-09-17"
+    },
+    {
+      "stationId": "2a581de9-1eed-4d54-9108-a7486953e3be",
+      "streamUrl": "https://playerservices.streamtheworld.com/api/livestream-redirect/3AW.mp3",
+      "reason": "3AW official player enables SSO and presents login-completion instructions before LISTEN can start its live stream. Exclude the same programme URL from community discovery rather than indirectly restoring the login-restricted service.",
+      "sourcePage": "https://www.3aw.com.au/",
+      "checkedAt": "2026-09-17"
     }
   ]
 }

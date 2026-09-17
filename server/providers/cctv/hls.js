@@ -3,6 +3,47 @@ import { readCappedResponseBytes } from './media.js';
 const PLAYLIST_MAX_BYTES = 512 * 1024;
 const RESOURCE_MAX_BYTES = 16 * 1024 * 1024;
 
+/** Apache can mistake .ts video for Qt translation text; inspect the container. */
+function isMpegTransportStream(bytes, upstream) {
+  const packetSize = 188;
+  let start = 0;
+  if (upstream.status === 206) {
+    const range = /^bytes (\d+)-(\d+)\/(\d+|\*)$/.exec(
+      upstream.headers.get('content-range') || '',
+    );
+    if (!range) return false;
+    start = Number(range[1]);
+    const end = Number(range[2]);
+    const total = range[3] === '*' ? null : Number(range[3]);
+    if (
+      !Number.isSafeInteger(start) ||
+      !Number.isSafeInteger(end) ||
+      end < start ||
+      end - start + 1 !== bytes.length ||
+      (total !== null &&
+        (!Number.isSafeInteger(total) || end >= total || total % packetSize))
+    )
+      return false;
+  } else if (upstream.status !== 200 || bytes.length % packetSize) {
+    return false;
+  }
+  const firstPacket = (packetSize - (start % packetSize)) % packetSize;
+  const packets = Math.floor((bytes.length - firstPacket) / packetSize);
+  if (packets < 3) return false;
+  for (let index = 0; index < packets; index++) {
+    const offset = firstPacket + index * packetSize;
+    const adaptation = (bytes[offset + 3] >> 4) & 3;
+    if (
+      bytes[offset] !== 0x47 ||
+      adaptation === 0 ||
+      (adaptation === 2 && bytes[offset + 4] !== 183) ||
+      (adaptation === 3 && bytes[offset + 4] > 182)
+    )
+      return false;
+  }
+  return true;
+}
+
 function resourceTooLarge() {
   return Object.assign(
     new Error(
@@ -188,8 +229,13 @@ export async function fetchCctvHlsResource({
     ).toLowerCase();
     const playlist =
       contentType.includes('mpegurl') || /\.m3u8$/i.test(target.pathname);
+    const mislabeledTransportStream =
+      !playlist &&
+      /\.ts$/i.test(target.pathname) &&
+      contentType.split(';', 1)[0].trim() === 'text/vnd.trolltech.linguist';
     if (
       !playlist &&
+      !mislabeledTransportStream &&
       !/^(?:video\/|audio\/|application\/(?:octet-stream|mp4|binary))/.test(
         contentType,
       )
@@ -202,6 +248,8 @@ export async function fetchCctvHlsResource({
       playlist ? PLAYLIST_MAX_BYTES : maxResourceBytes,
     );
     if (!bytes) throw resourceTooLarge();
+    if (mislabeledTransportStream && !isMpegTransportStream(bytes, upstream))
+      throw new Error('Camera returned an unsupported HLS resource');
     let status = upstream.status;
     let contentRange = upstream.headers.get('content-range');
     if (!playlist && range) {
@@ -248,7 +296,11 @@ export async function fetchCctvHlsResource({
         })
       : bytes;
     const responseHeaders = {
-      'Content-Type': playlist ? 'application/vnd.apple.mpegurl' : contentType,
+      'Content-Type': playlist
+        ? 'application/vnd.apple.mpegurl'
+        : mislabeledTransportStream
+          ? 'video/mp2t'
+          : contentType,
       // Live providers may reuse key or segment URLs. An old response must
       // never freeze the playlist or decrypt new fragments with an old key.
       'Cache-Control': 'no-store',

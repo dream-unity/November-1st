@@ -414,7 +414,7 @@ export function installLiveFeeds({
             ].join(', ')
           : [
               item.locality,
-              item.city,
+              item.city === item.locality ? '' : item.city,
               item.state,
               cameraCountry(item).name,
               item.provider,
@@ -862,7 +862,7 @@ export function installLiveFeeds({
                 .join(' · ')
             : [
                 item.city,
-                item.locality,
+                item.locality === item.city ? '' : item.locality,
                 item.state,
                 cameraCountry(item).name,
                 item.provider,
@@ -1039,6 +1039,8 @@ export function installLiveFeeds({
               ),
             );
           }
+        } else if (kind === 'radio') {
+          detail.replaceChildren(element('p', 'Choose a station to listen.'));
         }
         if (countryFilter) {
           const previousCountry = countryFilter.value;

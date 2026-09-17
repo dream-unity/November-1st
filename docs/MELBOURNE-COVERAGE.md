@@ -100,4 +100,18 @@ Radio Browser country query returned 1,758 discovery rows, including duplicate b
 
 ## Release verification
 
-Local validation passed on Node 24.19: **4,552 unit/allocation tests passed**, one Windows-only test skipped on Linux; **59 host tests passed**; 736-module import checks, package boundaries, 939-file formatting check and the production build passed. The final Elwood registry addition also passed all 9 camera admission tests. Production/browser results will be recorded after deployment.
+Local validation passed on Node 24.19: **4,552 unit/allocation tests passed**, one Windows-only test skipped on Linux; **59 host tests passed**; 736-module import checks, package boundaries, 939-file formatting check and the production build passed. The final Elwood registry addition also passed all 9 camera admission tests. The initial implementation commit `17f395870d5262e78f8a90518304eefa67119d58` passed GitHub CI (Node 24, Node 26 and Windows onboarding) and GitHub Pages deployment. Production `/api/health` and `/build-info.json` confirmed that exact commit and the complete upstream application.
+
+Both GitHub Pages deep links preserved `feed`, `country=AU` and `city=melbourne`. The camera directory displayed all 8 Melbourne entries, zero Melbourne snapshots and the 2 separately counted publisher links. The Australia catalogue contained 238 cameras: 22 listed live sources and 216 snapshots; global catalogue counts may change as upstream directories refresh.
+
+The first radio response had 28 Melbourne entries, including 25 curated. Production review identified an alternate-host 3KND duplicate and a login-restricted 3AW entry returning via Radio Browser; exact ID/URL exclusions remove both without removing any curated Melbourne service. The resulting projection has 26 entries for that directory snapshot (25 curated plus one explicitly labelled community match).
+
+Inside the deployed app, **3CR 855 AM** reached the media-driven playing state, paused, resumed and stopped. **GOLD104.3 Melbourne** also reached playing through its HLS transport. Switching to the nationwide Australia directory cleared the old list and stopped the selected Melbourne station; switching back restored the metropolitan list. Audio is not attached to the DOM: these observations verify actual media event/state flow, not audible programme identity or an independently measured audio clock.
+
+All seven Melbourne YouTube status requests returned HTTP 200 with **unknown current-live status** on the hosting network. The Sunshine browser check consequently withheld the iframe and offered retry/source controls. This is a current deployment limitation, not an offline finding and not successful in-app playback. The broadcasts had current-live metadata from the research network. A server-side `YOUTUBE_API_KEY` remains unconfigured; it is the existing optional official verification fallback.
+
+The first deployed Spotswood HLS test exposed a real compatibility defect: playlists arrived, but video fragments returned HTTP 502 because the publisher labelled MPEG-TS bytes as `text/vnd.trolltech.linguist`. The correction accepts only that specific `.ts` MIME mismatch after bounded MPEG-TS packet validation, then serves `video/mp2t`. HTML/text errors, malformed packets, origin escapes, oversized resources and archived playlists remain rejected. Final playback verification is recorded below.
+
+The cloud browser could not initialize WebGL. Recovery kept the radio and camera directories usable, but the globe itself was not visually verified in this environment.
+
+The fragment MIME repair and final directory cleanup passed **96 focused regressions**, all **59 host tests**, formatting and production rebuild. A freshly fetched real camera segment sample also passed the actual relay function, preserving all bytes and range while returning `video/mp2t`.
