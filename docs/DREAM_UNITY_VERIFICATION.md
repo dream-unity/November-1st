@@ -5,9 +5,9 @@
 See [the continuous-video repair record](CCTV_LIVE_VIDEO_REPAIR.md) for the
 confirmed causes, correction matrix, provider evidence and coverage limits.
 
-- `npm test`: **340 test files completed; 4,306 tests, 4,305 passed, zero failed
+- `npm test`: **340 test files completed; 4,315 tests, 4,314 passed, zero failed
   or cancelled, one Windows-only native-DACL test skipped**. Both isolated
-  allocation probes completed; the ordinary suite contains 4,292 tests.
+  allocation probes completed; the ordinary suite contains 4,301 tests.
 - `npm run test:host`: **56 passed**, including a complete native HTTP HLS
   catalogue/master/variant/segment/refresh path with Vercel rewrite parameters.
 - Production build, all package/import ownership checks, formatting of 930
@@ -15,7 +15,7 @@ confirmed causes, correction matrix, provider evidence and coverage limits.
 - The transport/native suite passed all 50 focused checks, including exact
   fragment integrity, native open/suffix ranges, upstream error status retention,
   nested playlist rewriting, and registered-directory restrictions.
-- The frontend/CCTV and glyph-subset suite passed all 52 focused checks. The
+- The frontend/CCTV and glyph-subset suite passed all 61 focused checks. The
   full run exposed and corrected a pre-existing scanner false positive for
   nested ternary conditions, without adding nonexistent font glyphs.
 - Replaying the four captured Caltrans catalogues selected 300 unique declared
@@ -38,6 +38,15 @@ That longer browser check also caught a transient native-player failure after
 an expired segment returned HTTP 404. The final player adds the bounded live
 reconnection documented in the repair record; the initial picture was not
 accepted as sufficient continuity verification.
+
+The final-code preview at `0172f3b` used the hls.js Media Source path (rather
+than native HLS), decoded the same 640 × 480 camera, and advanced continuously
+from 24.365826 to 97.156032 seconds across live-window refreshes. Pause held
+at 97.156032 across observations and Play resumed the stream. Runtime logs
+recorded 18 HTTP 200 responses during the initial verification window. The displayed road
+scene was visually inspected, in addition to reading the video element's media
+clock and dimensions. Final source code, full-suite totals above and preview
+runtime behavior therefore refer to the same player implementation.
 
 ## Usable radio, cameras and traffic — 2026-09-17 UTC
 
