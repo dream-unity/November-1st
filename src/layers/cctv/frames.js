@@ -159,7 +159,8 @@ export function createFrames({ state: layerState, services, parts, source }) {
    */
 
   function frameUrlFor(...args) {
-    if (args[0]?.feedType === 'embed') return null;
+    if (args[0]?.feedType === 'embed' || args[0]?.liveOnly === true)
+      return null;
     return source.getFrameUrl(...args);
   }
 
@@ -242,6 +243,7 @@ export function createFrames({ state: layerState, services, parts, source }) {
     runtime.lastImageRefreshAt = now;
 
     const frameUrl = frameUrlFor(record.camera, refreshMs);
+    if (!frameUrl) return;
     const sep = frameUrl.includes('?') ? '&' : '?';
     runtime.imageLoading = true;
     runtime.imageReady = false;

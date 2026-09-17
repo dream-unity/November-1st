@@ -117,6 +117,7 @@ export function createCctvEmbedPlayback({
   onStatus = () => {},
   timeoutMs = 20_000,
   statusUrl,
+  requireLiveStatus = false,
   fetchImpl = globalThis.fetch,
   statusTimeoutMs = 8_000,
   loadApi,
@@ -223,6 +224,7 @@ export function createCctvEmbedPlayback({
         const response = await fetchImpl(url.href, {
           signal: controller.signal,
           redirect: 'error',
+          cache: 'no-store',
           headers: { accept: 'application/json' },
         });
         if (!response.ok || controller.signal.aborted) {
@@ -326,6 +328,18 @@ export function createCctvEmbedPlayback({
             );
             return null;
           }
+          if (
+            requireLiveStatus &&
+            !['ended', 'unavailable'].includes(checked.status) &&
+            !(checked.status === 'live' && Number.isFinite(checked.checkedAt))
+          ) {
+            liveStatus = 'unknown';
+            fail(
+              'Live-only camera playback is paused because the publisher’s current live status could not be confirmed. Retry later or open the source page.',
+              'live-status-unconfirmed',
+            );
+            return null;
+          }
           if (Number.isFinite(checked.checkedAt))
             lastStatusCheckedAt = checked.checkedAt;
           if (observedEnded) {
@@ -354,6 +368,12 @@ export function createCctvEmbedPlayback({
             'ended',
             'This broadcast ended. Open the source page to check the publisher’s current broadcast.',
             'broadcast-ended-awaiting-fresh-status',
+          );
+          return null;
+        } else if (requireLiveStatus) {
+          fail(
+            'Live-only camera playback requires a current live-status check. This camera has no available verification endpoint.',
+            'live-status-unconfirmed',
           );
           return null;
         }

@@ -81,7 +81,7 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
         ? `/api/cctv/media/${encodeURIComponent(cameraId)}`
         : null,
       frameUrl:
-        feedType === 'embed'
+        feedType === 'embed' || source?.liveOnly === true
           ? null
           : `/api/cctv/frame/${encodeURIComponent(cameraId)}`,
       embedUrl: source?.embedUrl || '',
@@ -89,6 +89,7 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
       country: source?.country || '',
       countryName: source?.countryName || '',
       verifiedAt: source?.verifiedAt || '',
+      liveOnly: source?.liveOnly === true,
       provider: source?.provider || '',
       sourceKind:
         source?.sourceKind || (source?.url ? 'configured' : 'fallback'),
@@ -184,6 +185,7 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
               embedUrl: source.embedUrl,
               sourcePage: source.sourcePage,
               verifiedAt: source.verifiedAt,
+              liveOnly: source.liveOnly === true,
               locationAccuracy: source.locationAccuracy,
               provider: source.provider,
               lat: source.lat,
@@ -343,6 +345,7 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
                     sourceUrl: mediaUrl,
                     resource: url.searchParams.get('resource'),
                     cameraId,
+                    requireLive: source.liveOnly === true,
                     headers: upstreamHeaders,
                     signal: downstream.signal,
                   })
@@ -450,18 +453,20 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
             const tooLarge =
               error?.code === 'CCTV_HLS_RESOURCE_TOO_LARGE' ||
               error?.code === 'CCTV_VIDEO_RESOURCE_TOO_LARGE';
-            res.writeHead(tooLarge ? 503 : timedOut ? 504 : 502, {
+            const ended = error?.code === 'CCTV_BROADCAST_ENDED';
+            res.writeHead(ended ? 410 : tooLarge ? 503 : timedOut ? 504 : 502, {
               'Content-Type': 'application/json',
               'Cache-Control': 'no-store',
             });
             res.end(
               JSON.stringify({
-                ...(tooLarge ? { code: error.code } : {}),
-                error: tooLarge
-                  ? error.message
-                  : timedOut
-                    ? 'Upstream media timeout'
-                    : 'Media proxy failed',
+                ...(tooLarge || ended ? { code: error.code } : {}),
+                error:
+                  tooLarge || ended
+                    ? error.message
+                    : timedOut
+                      ? 'Upstream media timeout'
+                      : 'Media proxy failed',
               }),
             );
             return;
@@ -497,6 +502,20 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
               error:
                 'Watch this camera through its official embedded player; no snapshot substitute is provided',
               embedUrl: source.embedUrl,
+            }),
+          );
+          return;
+        }
+        if (source?.liveOnly === true) {
+          res.writeHead(409, {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+          });
+          res.end(
+            JSON.stringify({
+              code: 'CCTV_LIVE_VIDEO_REQUIRED',
+              error:
+                'This camera is live video only; no snapshot or synthetic substitute is provided',
             }),
           );
           return;

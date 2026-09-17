@@ -186,6 +186,7 @@
       "src/sources/httpBody.js",
       "server/providers/cctv/hls.js",
       "server/providers/cctv/globalSources.js",
+      "server/providers/cctv/ukraineSources.js",
       "server/providers/cctv/embedStatus.js"
     ],
     "external": []
@@ -195,6 +196,8 @@
     "exports": ["./server/providers/radio"],
     "modules": [
       "server/providers/radio.js",
+      "server/providers/radioUkraine.js",
+      "server/providers/common/source-root.js",
       "server/providers/radio/catalog.js",
       "server/providers/radio/constants.js",
       "server/providers/radio/stations.js",

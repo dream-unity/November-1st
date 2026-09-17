@@ -130,6 +130,7 @@ export function _syncCctvVideo(activeCamera, enabled) {
         ...playbackOptions,
         container: video,
         embedUrl: activeCamera.embedUrl,
+        requireLiveStatus: activeCamera.liveOnly === true,
         statusUrl: `/api/cctv/embed-status/${encodeURIComponent(activeCamera.id)}`,
         title: `${activeCamera.name || 'CCTV'} live camera`,
       })

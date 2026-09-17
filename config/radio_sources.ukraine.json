@@ -1,0 +1,703 @@
+{
+  "stations": [
+    {
+      "id": "ua-a76d0a74832525531f41",
+      "name": "DJFM",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://cast.fex.net/djfm_x",
+      "codec": "MP3",
+      "bitrate": 256,
+      "homepage": "https://djfm.ua/",
+      "sourcePage": "https://djfm.ua/",
+      "city": "",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "Ukrainian"
+      ],
+      "tags": [
+        "dance",
+        "music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917766+00:00",
+      "credit": "DJFM / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-39822f8b153ecee1df34",
+      "name": "KISS FM Deep",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://online.kissfm.ua/KissFM_Deep",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://play.tavr.media/kissfm/deep/",
+      "sourcePage": "https://play.tavr.media/kissfm/deep/",
+      "city": "Kyiv",
+      "state": "Kyiv",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [
+        "dance",
+        "house",
+        "music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917792+00:00",
+      "credit": "KISS FM Deep / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-cfb54c7a9fc398377b8b",
+      "name": "KISS FM Digital",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://online.kissfm.ua/KissFM_Digital",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://play.tavr.media/kissfm/digital/",
+      "sourcePage": "https://play.tavr.media/kissfm/digital/",
+      "city": "Kyiv",
+      "state": "Kyiv",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English",
+        "Ukrainian"
+      ],
+      "tags": [
+        "dance",
+        "electronic",
+        "music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917801+00:00",
+      "credit": "KISS FM Digital / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-faa1def1fa7320789c26",
+      "name": "KISS FM Ukrainian",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://online.kissfm.ua/KissFM_Ukr",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://play.tavr.media/kissfm/ukr/",
+      "sourcePage": "https://play.tavr.media/kissfm/ukr/",
+      "city": "Kyiv",
+      "state": "Kyiv",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "Ukrainian"
+      ],
+      "tags": [
+        "dance",
+        "ukrainian music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917808+00:00",
+      "credit": "KISS FM Ukrainian / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-04394bd2ef3f818b19c6",
+      "name": "Київ FM — Kyiv FM",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://cdn.vsnw.net:8943/kyiv_fm_128k",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://radio.kyiv24.news/",
+      "sourcePage": "https://radio.kyiv24.news/",
+      "city": "Kyiv",
+      "state": "Kyiv",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [
+        "news",
+        "talk",
+        "local",
+        "music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917814+00:00",
+      "credit": "Київ FM — Kyiv FM / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-9755b3f2b3233933e495",
+      "name": "Magic Radio",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://cast.brg.ua/business_main_public_mp3_hq",
+      "codec": "MP3",
+      "bitrate": 256,
+      "homepage": "https://brg.ua/magic-radio/",
+      "sourcePage": "https://brg.ua/magic-radio/",
+      "city": "",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "Ukrainian"
+      ],
+      "tags": [
+        "pop",
+        "rock",
+        "music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917822+00:00",
+      "credit": "Magic Radio / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-542466476015e2c57752",
+      "name": "NRJ Ukraine",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://cast.mediaonline.net.ua/nrj320",
+      "codec": "MP3",
+      "bitrate": 320,
+      "homepage": "https://nrjradio.ua/",
+      "sourcePage": "https://nrjradio.ua/",
+      "city": "",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [
+        "pop",
+        "dance",
+        "music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917829+00:00",
+      "credit": "NRJ Ukraine / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-7b4800ad68ed332c28dc",
+      "name": "Радіопіхота — Radio Pihota",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://online.pihota.fm/listen/radio/128",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://pihota.fm/",
+      "sourcePage": "https://pihota.fm/",
+      "city": "",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [
+        "music",
+        "talk"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917836+00:00",
+      "credit": "Радіопіхота — Radio Pihota / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-ae6656af78208a2e1d0b",
+      "name": "Power FM",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://cast.brg.ua/powerfm_main_public_mp3_hq",
+      "codec": "MP3",
+      "bitrate": 256,
+      "homepage": "https://powerfm.ua/",
+      "sourcePage": "https://powerfm.ua/",
+      "city": "",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "Ukrainian"
+      ],
+      "tags": [
+        "electronic",
+        "house",
+        "music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917843+00:00",
+      "credit": "Power FM / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-63c78dea9d0c5c23afd1",
+      "name": "Радіо Байрактар — Radio Bayraktar",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://online.radiobayraktar.ua/RadioBayraktar",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://www.radiobayraktar.ua/",
+      "sourcePage": "https://www.radiobayraktar.ua/",
+      "city": "Kyiv",
+      "state": "Kyiv",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [
+        "ukrainian music",
+        "music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917850+00:00",
+      "credit": "Радіо Байрактар — Radio Bayraktar / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-e9848166a103c7ce6b3d",
+      "name": "Radio Gold Ukraine",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://online.radioplayer.ua/RadioGold",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://www.radiogold.com.ua/",
+      "sourcePage": "https://www.radiogold.com.ua/",
+      "city": "Kyiv",
+      "state": "Kyiv",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [
+        "oldies",
+        "music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917857+00:00",
+      "credit": "Radio Gold Ukraine / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-b1fe30871298f3efaf24",
+      "name": "Радіо NV — Radio NV",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://online-radio.nv.ua/radionv.mp3",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://radio.nv.ua/",
+      "sourcePage": "https://radio.nv.ua/",
+      "city": "Kyiv",
+      "state": "Kyiv",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "Russian",
+        "Ukrainian"
+      ],
+      "tags": [
+        "news",
+        "talk"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917865+00:00",
+      "credit": "Радіо NV — Radio NV / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-9caed00a656437b99063",
+      "name": "Radio Relax",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://online.radiorelax.ua/RadioRelax",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://www.radiorelax.ua/",
+      "sourcePage": "https://www.radiorelax.ua/",
+      "city": "Kyiv",
+      "state": "Kyiv",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "Ukrainian"
+      ],
+      "tags": [
+        "easy listening",
+        "music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917873+00:00",
+      "credit": "Radio Relax / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-f5d3549da8134deaa2d7",
+      "name": "Radio Relax Christmas",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://online.radiorelax.ua/RadioRelax_Christmas_HD",
+      "codec": "MP3",
+      "bitrate": 320,
+      "homepage": "https://play.tavr.media/radiorelax/christmas/",
+      "sourcePage": "https://play.tavr.media/radiorelax/christmas/",
+      "city": "Kyiv",
+      "state": "Kyiv",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [
+        "christmas",
+        "music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917881+00:00",
+      "credit": "Radio Relax Christmas / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-941084c945a45026bf08",
+      "name": "Radio ROKS Classic Rock",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://online.radioroks.ua/RadioROKS_ClassicRock_HD",
+      "codec": "MP3",
+      "bitrate": 320,
+      "homepage": "https://www.radioroks.ua/",
+      "sourcePage": "https://www.radioroks.ua/",
+      "city": "Kyiv",
+      "state": "Kyiv",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [
+        "classic rock",
+        "rock",
+        "music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917889+00:00",
+      "credit": "Radio ROKS Classic Rock / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-6dd6ad737edba8c8f394",
+      "name": "Радіо Шансон — Radio Shanson",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://cast.brg.ua/newshanson_main_public_mp3_hq",
+      "codec": "MP3",
+      "bitrate": 256,
+      "homepage": "https://brg.ua/radio-shanson/",
+      "sourcePage": "https://brg.ua/radio-shanson/",
+      "city": "",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "Ukrainian"
+      ],
+      "tags": [
+        "chanson",
+        "music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917899+00:00",
+      "credit": "Радіо Шансон — Radio Shanson / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-086a728518aa892f9683",
+      "name": "Радіо Social.Net.Ua",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://radio.social.net.ua/live.mp3",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://radio.social.net.ua/",
+      "sourcePage": "https://radio.social.net.ua/",
+      "city": "",
+      "state": "",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "English",
+        "Ukrainian"
+      ],
+      "tags": [
+        "music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917907+00:00",
+      "credit": "Радіо Social.Net.Ua / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-9b9cb4bd3c9ffe3d723c",
+      "name": "Радіо ТРЕК — Radio TREK",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://cast.radiotrek.rv.ua:8433/MP3_320",
+      "codec": "MP3",
+      "bitrate": 320,
+      "homepage": "https://radiotrek.rv.ua/",
+      "sourcePage": "https://radiotrek.rv.ua/",
+      "city": "Rivne",
+      "state": "Rivne",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [
+        "local",
+        "news",
+        "music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917915+00:00",
+      "credit": "Радіо ТРЕК — Radio TREK / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-6befe7b6e617ca285442",
+      "name": "Radio Relax Instrumental",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://online.radiorelax.ua/RadioRelax_Instrumental_HD",
+      "codec": "MP3",
+      "bitrate": 320,
+      "homepage": "https://play.tavr.media/radiorelax/instrumental/",
+      "sourcePage": "https://play.tavr.media/radiorelax/instrumental/",
+      "city": "Kyiv",
+      "state": "Kyiv",
+      "lat": null,
+      "lon": null,
+      "languages": [],
+      "tags": [
+        "instrumental",
+        "music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917924+00:00",
+      "credit": "Radio Relax Instrumental / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    },
+    {
+      "id": "ua-e28d66b482cde0a47b15",
+      "name": "Radio Relax International",
+      "countryCode": "UA",
+      "country": "Ukraine",
+      "streamUrl": "https://online.radiorelax.ua/RadioRelax_Int",
+      "codec": "MP3",
+      "bitrate": 128,
+      "homepage": "https://play.tavr.media/radiorelax/int/",
+      "sourcePage": "https://play.tavr.media/radiorelax/int/",
+      "city": "Kyiv",
+      "state": "Kyiv",
+      "lat": null,
+      "lon": null,
+      "languages": [
+        "Engilsh"
+      ],
+      "tags": [
+        "easy listening",
+        "music"
+      ],
+      "playbackKind": "live",
+      "verifiedAt": "2026-09-17T07:25:17.917932+00:00",
+      "credit": "Radio Relax International / publicly available station stream",
+      "verification": {
+        "method": "Bounded HTTP GET of public continuous audio stream; broadcaster-owned homepage reviewed; Radio Browser used for discovery only.",
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "bytesSampled": 4096,
+        "contentLength": null,
+        "audiblePlaybackVerified": false,
+        "notes": "A working audio transport sample does not guarantee continued availability or verify audible programme identity. No coordinates inferred."
+      }
+    }
+  ],
+  "excludedStationIds": [
+    "b36f37aa-f573-445b-8686-b1a9ecbcb032",
+    "ab0fc687-7a04-4fa8-8af9-9b71607dd7ae"
+  ],
+  "excludedStreamUrls": [
+    "https://www.myinstants.com/media/sounds/live-dy-chat-sound.mp3",
+    "http://s1.voscast.com:8580/;"
+  ],
+  "exclusionReasons": [
+    {
+      "stationuuid": "b36f37aa-f573-445b-8686-b1a9ecbcb032",
+      "name": "Live.dy Chat Sound",
+      "reason": "Finite sound-effect file, not a continuous radio station."
+    },
+    {
+      "stationuuid": "ab0fc687-7a04-4fa8-8af9-9b71607dd7ae",
+      "name": "103.7 Da Beat",
+      "reason": "United States broadcaster for Midwest area codes 815 and 608, incorrectly tagged UA.",
+      "sourcePage": "https://play.google.com/store/apps/details?hl=en&id=com.bvmobileapps.dabeat1037"
+    }
+  ],
+  "researchNotes": [
+    "Radio Browser returned 348 UA-tagged records; country tagging alone is not verification.",
+    "23 audio stream endpoints returned HTTP 200 audio/mpeg with 4096 sampled bytes and no Content-Length; 20 programmes retained after bitrate deduplication and owner-page review.",
+    "Missing coordinates are intentional; the directory must not fabricate map locations.",
+    "Suspline channels not included in this verified fallback: official HTTPS endpoints returned 502 from this environment; availability not established.",
+    "Some provider probes could not complete because of network policy or timeout; this does not prove those providers are globally unavailable."
+  ]
+}

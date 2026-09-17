@@ -93,7 +93,8 @@ export function normalizeFeedDirectory(kind, payload) {
   const seen = new Set();
   const items = [];
   for (const raw of input) {
-    if (!raw || typeof raw !== 'object' || !feedCoordinates(raw)) continue;
+    if (!raw || typeof raw !== 'object') continue;
+    if (kind === 'cctv' && !feedCoordinates(raw)) continue;
     const id = text(raw.id, 200);
     const name = text(raw.name);
     if (!id || !name || seen.has(id)) continue;
@@ -104,8 +105,15 @@ export function normalizeFeedDirectory(kind, payload) {
         ...raw,
         id,
         name,
+        lat: feedCoordinates(raw) ? raw.lat : null,
+        lon: feedCoordinates(raw) ? raw.lon : null,
         streamUrl,
         homepage: publicRadioHttpsUrl(raw.homepage),
+        sourcePage: publicRadioHttpsUrl(raw.sourcePage),
+        sourceKind: text(raw.sourceKind, 80),
+        locationPrecision: feedCoordinates(raw)
+          ? text(raw.locationPrecision, 40) || 'directory'
+          : 'unknown',
         country: text(raw.country, 80),
         countryCode: text(raw.countryCode, 2),
         state: text(raw.state, 80),
@@ -137,6 +145,7 @@ export function normalizeFeedDirectory(kind, payload) {
         name,
         feedType,
         embedUrl,
+        liveOnly: raw.liveOnly === true,
         playbackKind: cameraMediaKind({ ...raw, feedType }),
         country: country.code,
         countryCode: country.code,
@@ -173,7 +182,14 @@ export function filterFeedDirectory(
   mediaKind = 'all',
   country = '',
 ) {
-  const words = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+  // Ukrainian names can contain decomposed letters and several apostrophe
+  // forms. Match equivalent text without removing meaningful Cyrillic letters.
+  const searchable = (value) =>
+    value
+      .normalize('NFKC')
+      .replace(/[\u2018\u2019\u02bc]/g, "'")
+      .toLocaleLowerCase();
+  const words = searchable(query).trim().split(/\s+/).filter(Boolean);
   return items.filter((item) => {
     const kind = cameraMediaKind(item);
     if (
@@ -186,34 +202,39 @@ export function filterFeedDirectory(
     const itemRegion = item.feedType ? item.city : item.country;
     if (region && (itemRegion || '') !== region) return false;
     if (country && cameraCountry(item).value !== country) return false;
-    const haystack = [
-      item.name,
-      item.country,
-      item.countryCode,
-      item.countryName,
-      item.state,
-      item.city,
-      item.provider,
-      ...(item.tags || []),
-      ...(item.languages || []),
-    ]
-      .join(' ')
-      .toLocaleLowerCase();
+    const haystack = searchable(
+      [
+        item.name,
+        item.country,
+        item.countryCode,
+        item.countryName,
+        item.state,
+        item.city,
+        item.provider,
+        ...(item.tags || []),
+        ...(item.languages || []),
+        item.countryCode?.toUpperCase() === 'UA' || item.country === 'UA'
+          ? 'Україна Українська Українське Ukraine Ukrainian'
+          : '',
+      ].join(' '),
+    );
     return words.every((word) => haystack.includes(word));
   });
 }
 
 export async function readFeedDirectory(
   kind,
-  { signal, fetchImpl = globalThis.fetch } = {},
+  { signal, country = '', fetchImpl = globalThis.fetch } = {},
 ) {
   if (!['radio', 'cctv'].includes(kind)) throw new Error('Unknown directory.');
+  if (country && (kind !== 'radio' || country !== 'UA'))
+    throw new Error('Unsupported country directory.');
   const requestSignal = AbortSignal.any([
     ...(signal ? [signal] : []),
     AbortSignal.timeout(35_000),
   ]);
   const response = await fetchImpl(
-    `/api/${kind}/${kind === 'radio' ? 'stations' : 'sources'}`,
+    `/api/${kind}/${kind === 'radio' ? 'stations' : 'sources'}${country ? `?country=${country}` : ''}`,
     { signal: requestSignal, cache: 'no-store', credentials: 'same-origin' },
   );
   if (!response.ok)

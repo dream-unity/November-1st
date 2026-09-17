@@ -619,6 +619,55 @@ test('live network failures reload a fresh playlist with a finite three-attempt 
   assert.match(f.status().message, /1\/3/);
 });
 
+for (const fatal of [false, true]) {
+  test(`HLS HTTP 410 ends live playback without reconnecting, even when fatal is ${fatal}`, async (t) => {
+    const players = [];
+    class Hls {
+      static isSupported = () => true;
+      static Events = { ERROR: 'error' };
+      constructor() { players.push(this); }
+      on(_name, callback) { this.error = callback; }
+      loadSource() {}
+      attachMedia() {}
+      destroy() { this.destroyed = true; }
+    }
+    const f = fixture(t, {
+      feedType: 'hls', playbackKind: 'live', loadHls: async () => Hls,
+    });
+    await flush();
+    f.video.emit('canplay');
+    await flush();
+    f.video.emit('playing');
+    players[0].error('error', {
+      fatal, type: 'networkError', details: 'levelLoadError', response: { code: 410 },
+    });
+    assert.equal(f.status().status, 'ended');
+    assert.equal(f.status().reason, 'broadcast-ended');
+    assert.match(f.status().message, /broadcast has ended/);
+    assert.equal(players[0].destroyed, true);
+    assert.equal(f.video.source, null);
+    assert.equal(f.video.paused, true);
+    const loads = f.video.loadCount;
+    f.video.emit('canplay');
+    f.video.emit('playing');
+    players[0].error('error', {
+      fatal: true, type: 'networkError', details: 'fragLoadError', response: { code: 404 },
+    });
+    t.mock.timers.tick(60_000);
+    await flush();
+    f.playback.setActive(false);
+    f.playback.setActive(true);
+    await flush();
+    assert.equal(f.status().status, 'ended');
+    assert.equal(f.video.loadCount, loads);
+    assert.equal(players.length, 1, 'no timer or visibility change can replay the archived stream');
+    assert.equal(f.playback.retry(), true);
+    await flush();
+    assert.equal(players.length, 2, 'only an explicit retry requests fresh server admission');
+    assert.equal(f.status().status, 'loading');
+  });
+}
+
 test('pausing, hiding or destroying during reconnect prevents delayed source attachment', async (t) => {
   for (const operation of ['pause', 'hide', 'destroy']) {
     const video = new Video();

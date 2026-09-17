@@ -280,7 +280,11 @@ export function createCards({ state: layerState, services, parts, source }) {
     { userGesture = false } = {},
   ) {
     // An official embedded player cannot supply pixels to a globe texture.
-    if (record?.camera?.feedType === 'embed') return;
+    if (
+      record?.camera?.feedType === 'embed' ||
+      record?.camera?.liveOnly === true
+    )
+      return;
     if (typeof document !== 'undefined' && document.hidden && !userGesture)
       return;
     const now = Date.now();

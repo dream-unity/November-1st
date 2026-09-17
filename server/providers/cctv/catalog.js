@@ -5,6 +5,7 @@ import { allocateSourceCap, resolveCatalogCap } from './cap.js';
 import { loadGroundHeights, joinGroundHeights } from './groundHeights.js';
 import { normalizeSourceItem } from './normalize.js';
 import { loadGlobalCctvSources } from './globalSources.js';
+import { loadUkraineCctvSources } from './ukraineSources.js';
 import {
   loadAustinSourcesFromOpenData,
   loadCaltransSourcesFromOpenData,
@@ -31,6 +32,11 @@ const envEnabled = (name) => String(process.env[name] || '1').trim() !== '0';
  * kill switch.
  */
 const LIVE_PACKS = [
+  {
+    name: 'ukraine',
+    enabled: () => envEnabled('CCTV_UKRAINE_ENABLED'),
+    load: loadUkraineCctvSources,
+  },
   {
     name: 'global',
     enabled: () => envEnabled('CCTV_GLOBAL_ENABLED'),

@@ -44,6 +44,7 @@ test('the globe catalogue and public panel state retain global publisher metadat
     lon: 139.7,
     feedType: 'embed',
     playbackKind: 'live',
+    liveOnly: true,
     embedUrl: 'https://www.youtube.com/embed/abcdefghijk',
     sourcePage: 'https://publisher.example/camera',
     verifiedAt: '2026-09-17T12:00:00.000Z',
@@ -67,6 +68,7 @@ test('the globe catalogue and public panel state retain global publisher metadat
     'countryCode',
     'sourcePage',
     'verifiedAt',
+    'liveOnly',
   ]) {
     assert.equal(publicState[field], raw[field]);
   }
@@ -77,6 +79,8 @@ test('the globe catalogue and public panel state retain global publisher metadat
   assert.equal(publicState.playbackKind, 'live');
   assert.equal(publicState.frameUrl, null);
   assert.equal(publicState.mediaUrl, null);
+  const strictHls = { ...camera, feedType: 'hls', liveOnly: true };
+  assert.equal(frames.frameUrlFor(strictHls), null);
 });
 
 test('official camera embeds retain a labelled globe placeholder without creating image, video or iframe textures', (t) => {
@@ -159,6 +163,10 @@ test('even a hover or stale ambient-card request cannot fetch a frame for an off
     {},
     1000,
     { userGesture: true },
+  );
+  cards.fetchCardFrame(
+    { camera: { id: 'live-only', feedType: 'hls', liveOnly: true } },
+    {}, 1000, { userGesture: true },
   );
   assert.deepEqual(
     state,

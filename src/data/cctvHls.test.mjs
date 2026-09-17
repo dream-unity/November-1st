@@ -15,6 +15,17 @@ test('HLS relay confines resources to the registered origin and camera directory
   ]) assert.throws(() => resolveCctvHlsResource(sourceUrl, resource), /outside/);
 });
 
+test('an owner-published custom HTTPS port stays pinned while its relative HLS segments resolve', () => {
+  const ownerStream = 'https://eu2.camflg.com:5443/LiveApp/streams/bukovel8.m3u8';
+  assert.equal(resolveCctvHlsResource(ownerStream, 'bukovel8000018017.ts').href,
+    'https://eu2.camflg.com:5443/LiveApp/streams/bukovel8000018017.ts');
+  for (const outside of [
+    'https://eu2.camflg.com/LiveApp/streams/bukovel8000018017.ts',
+    'https://eu2.camflg.com:5444/LiveApp/streams/bukovel8000018017.ts',
+    '../private/config',
+  ]) assert.throws(() => resolveCctvHlsResource(ownerStream, outside), /outside/);
+});
+
 test('HLS master, segments, encryption keys and initialization maps are rewritten to the same-origin relay', () => {
   const input = '#EXTM3U\n#EXT-X-MEDIA:TYPE=AUDIO,URI="audio/list.m3u8"\n#EXT-X-STREAM-INF:BANDWIDTH=100\nvariant/low.m3u8\n#EXT-X-KEY:METHOD=AES-128,URI="key.bin"\n#EXT-X-MAP:URI="init.mp4"\n#EXTINF:4.0,\nsegment.ts\n';
   const output = rewriteCctvHlsPlaylist(input, { sourceUrl, playlistUrl: sourceUrl, cameraId: 'a/b' });
@@ -165,4 +176,107 @@ test('live HLS manifest reloads preserve sequence advancement instead of replayi
   assert.match(await second.text(), /MEDIA-SEQUENCE:5/);
   assert.equal(first.headers.get('cache-control'), 'no-store');
   assert.equal(second.headers.get('cache-control'), 'no-store');
+});
+
+test('live-only HLS rejects ended broadcasts and VOD without returning playable archive bytes', async () => {
+  for (const endTag of ['#EXT-X-ENDLIST', '#EXT-X-PLAYLIST-TYPE:VOD', '  #EXT-X-PLAYLIST-TYPE: VOD  ']) {
+    let signal;
+    await assert.rejects(fetchCctvHlsResource({
+      sourceUrl, cameraId: 'a', requireLive: true,
+      fetchImpl: async (_url, init) => {
+        signal = init.signal;
+        return new Response(`#EXTM3U\r\n#EXT-X-TARGETDURATION:6\r\n#EXTINF:6,\r\narchive.ts\r\n${endTag}\r\n`, {
+          headers: { 'content-type': 'application/vnd.apple.mpegurl' },
+        });
+      },
+    }), (error) => {
+      assert.equal(error.code, 'CCTV_BROADCAST_ENDED');
+      assert.equal(error.statusCode, 410);
+      assert.match(error.message, /broadcast has ended/);
+      return true;
+    });
+    assert.equal(signal.aborted, true, 'ended manifests still release their transport');
+  }
+});
+
+test('live-only policy admits a master but rejects an archived variant reached through its camera URL', async () => {
+  const cameraId = 'ua-owner-camera';
+  const requests = [];
+  const fetchImpl = async (url) => {
+    requests.push(url);
+    return new Response(url === sourceUrl
+      ? '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=250000\nvariant/low.m3u8?signature=public-token\n'
+      : '#EXTM3U\n#EXT-X-TARGETDURATION:6\n#EXTINF:6,\narchive.ts\n#EXT-X-ENDLIST\n', {
+      headers: { 'content-type': 'application/vnd.apple.mpegurl' },
+    });
+  };
+  const master = await fetchCctvHlsResource({ sourceUrl, cameraId, requireLive: true, fetchImpl });
+  assert.equal(master.status, 200);
+  const resourceLine = (await master.text()).split('\n').find((line) => line.startsWith('/api/cctv/media/'));
+  const variant = new URL(resourceLine, 'https://application.example');
+  assert.equal(variant.pathname, `/api/cctv/media/${cameraId}`);
+  assert.equal(variant.searchParams.get('resource'), 'https://camera.example/live/variant/low.m3u8?signature=public-token');
+  await assert.rejects(fetchCctvHlsResource({
+    sourceUrl, cameraId, requireLive: true, resource: variant.searchParams.get('resource'), fetchImpl,
+  }), { code: 'CCTV_BROADCAST_ENDED', statusCode: 410 });
+  assert.equal(requests.length, 2, 'the archive is rejected before any video segment is requested');
+});
+
+test('live-only HLS remains live across playlist reloads and stops once an event ends', async () => {
+  let sequence = 80;
+  const fetchImpl = async () => {
+    const current = sequence++;
+    return new Response(`#EXTM3U\n#EXT-X-PLAYLIST-TYPE:EVENT\n#EXT-X-TARGETDURATION:6\n#EXT-X-MEDIA-SEQUENCE:${current}\n#EXTINF:6,\npart-${current}.ts\n${current === 82 ? '#EXT-X-ENDLIST\n' : ''}`, {
+      headers: { 'content-type': 'application/vnd.apple.mpegurl' },
+    });
+  };
+  for (const expected of [80, 81]) {
+    const response = await fetchCctvHlsResource({ sourceUrl, cameraId: 'a', requireLive: true, fetchImpl });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+    assert.match(await response.text(), new RegExp(`MEDIA-SEQUENCE:${expected}`));
+  }
+  await assert.rejects(fetchCctvHlsResource({ sourceUrl, cameraId: 'a', requireLive: true, fetchImpl }), { code: 'CCTV_BROADCAST_ENDED' });
+});
+
+test('live-only HLS keeps binary segments, keys, redirects, and invalid-playlist protections', async () => {
+  const segment = await fetchCctvHlsResource({
+    sourceUrl, resource: 'chunk.ts', cameraId: 'a', requireLive: true,
+    fetchImpl: async () => new Response('live media', { headers: { 'content-type': 'video/mp2t' } }),
+  });
+  assert.equal(await segment.text(), 'live media');
+  const key = await fetchCctvHlsResource({
+    sourceUrl, resource: 'key.bin', cameraId: 'a', requireLive: true,
+    fetchImpl: async () => new Response('#EXT-X-ENDLIST', { headers: { 'content-type': 'application/octet-stream' } }),
+  });
+  assert.equal(await key.text(), '#EXT-X-ENDLIST', 'binary resources are not scanned as manifests');
+  let redirected = false;
+  await assert.rejects(fetchCctvHlsResource({
+    sourceUrl, cameraId: 'a', requireLive: true,
+    fetchImpl: async () => {
+      if (!redirected) {
+        redirected = true;
+        return new Response(null, { status: 302, headers: { location: 'variant/archive.m3u8' } });
+      }
+      return new Response('#EXTM3U\n#EXT-X-PLAYLIST-TYPE:VOD\n', { headers: { 'content-type': 'application/vnd.apple.mpegurl' } });
+    },
+  }), { code: 'CCTV_BROADCAST_ENDED' });
+  await assert.rejects(fetchCctvHlsResource({
+    sourceUrl, cameraId: 'a', requireLive: true,
+    fetchImpl: async () => new Response('<html>unavailable</html>\n#EXT-X-ENDLIST', { headers: { 'content-type': 'application/vnd.apple.mpegurl' } }),
+  }), /invalid HLS playlist/);
+});
+
+test('ordinary HLS cameras retain explicit finite-video compatibility when live-only policy is absent', async () => {
+  const playlist = '#EXTM3U\n#EXT-X-PLAYLIST-TYPE:VOD\n#EXTINF:6,\nrecorded.ts\n#EXT-X-ENDLIST\n';
+  for (const policy of [{}, { requireLive: false }]) {
+    const response = await fetchCctvHlsResource({
+      sourceUrl, cameraId: 'a', ...policy,
+      fetchImpl: async () => new Response(playlist, { headers: { 'content-type': 'application/vnd.apple.mpegurl' } }),
+    });
+    assert.equal(response.status, 200);
+    const body = await response.text();
+    assert.match(body, /#EXT-X-ENDLIST/);
+    assert.ok(body.includes(encodeURIComponent('https://camera.example/live/recorded.ts')));
+  }
 });

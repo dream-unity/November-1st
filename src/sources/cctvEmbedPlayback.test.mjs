@@ -701,3 +701,136 @@ test('oversized or malformed preflight bodies remain unknown and cannot mark a b
   assert.equal(f.players.length, 1);
   assert.equal(f.status().liveStatus, 'unknown');
 });
+
+for (const [name, options] of [
+  ['missing status endpoint', { statusUrl: undefined }],
+  ['cross-origin status endpoint', { statusUrl: 'https://other.example/api/cctv/embed-status/camera-one' }],
+  ['unknown status', { proof: { status: 'unknown', checkedAt: '2026-09-17T00:00:00.000Z' } }],
+  ['untimestamped live status', { proof: { status: 'live' } }],
+  ['malformed live timestamp', { proof: { status: 'live', checkedAt: 'not-a-date' } }],
+  ['non-string live timestamp', { proof: { status: 'live', checkedAt: 1789603200000 } }],
+  ['unrecognized response', { proof: { status: 'available', checkedAt: '2026-09-17T00:00:00.000Z' } }],
+]) {
+  test(`live-only embed refuses ${name} before loading any official player`, async (t) => {
+    let apiLoads = 0;
+    let requests = 0;
+    const f = fixture(t, {
+      statusUrl: '/api/cctv/embed-status/camera-one',
+      requireLiveStatus: true,
+      fetchImpl: async () => {
+        requests++;
+        return Response.json(options.proof || { status: 'live', checkedAt: '2026-09-17T00:00:00.000Z' });
+      },
+      loadApi: async () => {
+        apiLoads++;
+        return { Player: f.Player };
+      },
+      ...options,
+    });
+    await flush();
+    assert.equal(f.status().status, 'unavailable');
+    assert.equal(f.status().reason, 'live-status-unconfirmed');
+    assert.equal(f.status().liveStatus, 'unknown');
+    assert.match(f.status().message, /Live-only/);
+    assert.equal(apiLoads, 0);
+    assert.equal(f.players.length, 0);
+    assert.equal(f.container.children.length, 0);
+    if (name.includes('endpoint')) assert.equal(requests, 0);
+    t.mock.timers.tick(500);
+    assert.equal(f.status().reason, 'live-status-unconfirmed', 'preflight refusal clears the player-load deadline');
+  });
+}
+
+test('live-only embed requires fresh preflight on retry and allows a timestamped live result', async (t) => {
+  let requests = 0;
+  const f = fixture(t, {
+    statusUrl: '/api/cctv/embed-status/camera-one',
+    requireLiveStatus: true,
+    fetchImpl: async (_url, options) => {
+      assert.equal(options.cache, 'no-store');
+      return Response.json(++requests === 1
+        ? { status: 'unknown' }
+        : { status: 'live', checkedAt: '2026-09-17T00:00:00.000Z' });
+    },
+  });
+  await flush();
+  assert.equal(f.status().reason, 'live-status-unconfirmed');
+  assert.equal(f.players.length, 0);
+  f.playback.retry();
+  await flush();
+  assert.equal(requests, 2);
+  assert.equal(f.players.length, 1);
+  f.players[0].emit('onReady');
+  f.players[0].emit('onStateChange', 1);
+  assert.equal(f.status().status, 'playing');
+  assert.equal(f.status().liveStatus, 'live');
+});
+
+test('live-only embed timeout and HTTP failures cannot fall back to unchecked playback', async (t) => {
+  let requests = 0;
+  let signal;
+  const f = fixture(t, {
+    statusUrl: '/api/cctv/embed-status/camera-one',
+    requireLiveStatus: true,
+    statusTimeoutMs: 80,
+    fetchImpl: (_url, options) => {
+      signal = options.signal;
+      return ++requests === 1
+        ? new Promise(() => {})
+        : Promise.resolve(new Response(null, { status: 503 }));
+    },
+  });
+  await flush();
+  t.mock.timers.tick(80);
+  await flush();
+  assert.equal(signal.aborted, true);
+  assert.equal(f.status().reason, 'live-status-unconfirmed');
+  assert.equal(f.players.length, 0);
+  f.playback.retry();
+  await flush();
+  assert.equal(requests, 2);
+  assert.equal(f.status().reason, 'live-status-unconfirmed');
+  assert.equal(f.container.children.length, 0);
+});
+
+test('live-only embed still requires strictly newer server proof after an observed ending', async (t) => {
+  let requests = 0;
+  const f = fixture(t, {
+    statusUrl: '/api/cctv/embed-status/camera-one',
+    requireLiveStatus: true,
+    fetchImpl: async () => Response.json({
+      status: 'live',
+      checkedAt: ++requests < 3 ? '2026-09-17T00:00:00.000Z' : '2026-09-17T00:01:00.000Z',
+    }),
+  });
+  await flush();
+  f.players[0].emit('onReady');
+  f.players[0].emit('onStateChange', 1);
+  f.players[0].emit('onStateChange', 0);
+  f.playback.retry();
+  await flush();
+  assert.equal(f.players.length, 1);
+  assert.equal(f.status().reason, 'broadcast-ended-awaiting-fresh-status');
+  f.playback.retry();
+  await flush();
+  assert.equal(requests, 3);
+  assert.equal(f.players.length, 2);
+  f.players[1].emit('onReady');
+  f.players[1].emit('onStateChange', 1);
+  assert.equal(f.status().status, 'playing');
+});
+
+for (const status of ['ended', 'unavailable']) {
+  test(`live-only embeds retain actionable ${status} publisher status`, async (t) => {
+    const f = fixture(t, {
+      statusUrl: '/api/cctv/embed-status/camera-one',
+      requireLiveStatus: true,
+      fetchImpl: async () => Response.json({ status, message: 'Publisher status remains visible.' }),
+    });
+    await flush();
+    assert.equal(f.status().status, status);
+    assert.equal(f.status().reason, 'broadcast-not-live');
+    assert.equal(f.status().message, 'Publisher status remains visible.');
+    assert.equal(f.players.length, 0);
+  });
+}

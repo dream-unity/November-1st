@@ -39,7 +39,7 @@ function localProviderPlugins() {
     geocodeProxy(),
     weatherEffectsProxy(),
     cctvProxy({ sourceRoot: defaultSourceRoot }),
-    radioBrowserProxy(),
+    radioBrowserProxy({ sourceRoot: defaultSourceRoot }),
     gbfsProxy(),
     transitProxy(),
     adsbLolProxy(),

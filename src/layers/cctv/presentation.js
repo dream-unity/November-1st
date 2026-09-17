@@ -87,6 +87,7 @@ export function createPresentation({
       active: isActive,
       feedType: camera.feedType,
       playbackKind: camera.playbackKind,
+      liveOnly: camera.liveOnly === true,
       embedUrl: camera.embedUrl || '',
       sourcePage: camera.sourcePage || '',
       verifiedAt: camera.verifiedAt || '',

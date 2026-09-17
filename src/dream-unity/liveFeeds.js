@@ -10,6 +10,7 @@ import {
   interleaveCameraCountries,
   readFeedDirectory,
   readCctvSnapshot,
+  feedCoordinates,
 } from './liveFeedsModel.js';
 import './liveFeeds.css';
 import '../ui/styles/trafficReports.css';
@@ -128,6 +129,13 @@ export function installLiveFeeds({
   function globeAction(kind, item, status, signal) {
     if (typeof openOnGlobe !== 'function') return null;
     const show = button('Show on globe');
+    if (!feedCoordinates(item)) {
+      show.disabled = true;
+      show.textContent = 'Globe location unavailable';
+      show.title =
+        'This broadcaster has not supplied a reliable map location. Its audio is still available.';
+      return show;
+    }
     show.addEventListener(
       'click',
       async () => {
@@ -160,6 +168,12 @@ export function installLiveFeeds({
     cleanup();
     scope = new AbortController();
     const signal = scope.signal;
+    const suppliedCountry =
+      new URLSearchParams(globalThis.location?.search || '').get('country') ||
+      '';
+    const initialCountry = /^[a-z]{2}$/i.test(suppliedCountry)
+      ? suppliedCountry.toUpperCase()
+      : '';
     activeKind = kind;
     title.textContent = TITLES[kind];
     for (const [id, tab] of tabButtons) {
@@ -230,6 +244,10 @@ export function installLiveFeeds({
         '',
       ),
     );
+    if (kind === 'radio') {
+      region.append(new Option('Ukraine', 'Ukraine'));
+      if (initialCountry === 'UA') region.value = 'Ukraine';
+    }
     regionLabel.append(region);
     const refresh = button('Refresh directory');
     const countryFilter = kind === 'cctv' ? element('select') : null;
@@ -260,6 +278,19 @@ export function installLiveFeeds({
       filters.classList.add('du-feeds-camera-filters');
     }
     filters.append(refresh);
+    if (kind === 'radio') {
+      const ukraine = button('Ukraine stations');
+      ukraine.addEventListener(
+        'click',
+        () => {
+          region.value = 'Ukraine';
+          search.value = '';
+          region.dispatchEvent(new Event('change'));
+        },
+        { signal },
+      );
+      filters.append(ukraine);
+    }
     const directoryStatus = element(
       'p',
       'Loading directory…',
@@ -296,6 +327,10 @@ export function installLiveFeeds({
     let mediaLifetime = null;
     let disposeMedia = () => {};
     let loadGeneration = 0;
+    let radioCatalogCountry = '';
+    let requestedRadioCountry = null;
+    let initialCountryApplied = false;
+    const radioCountryNames = new Set(['Ukraine']);
     function stopMedia() {
       mediaLifetime?.abort();
       mediaLifetime = null;
@@ -400,13 +435,28 @@ export function installLiveFeeds({
           link.rel = 'noopener noreferrer';
           detail.append(link);
         }
+        if (!feedCoordinates(item))
+          detail.append(
+            element(
+              'p',
+              'This station has no verified map location; you can still listen here.',
+              'du-feeds-note',
+            ),
+          );
         detail.append(
           element(
             'p',
-            'Station metadata is supplied by the Radio Browser community. Broadcaster geographic restrictions may apply. An entry in the directory does not guarantee that its stream is currently online.',
+            `${item.sourceKind === 'curated-ukraine' ? 'This stream was listed from its broadcaster’s published source.' : 'Station metadata is supplied by the Radio Browser community.'} Broadcaster geographic restrictions may apply. An entry in the directory does not guarantee that its stream is currently online.`,
             'du-feeds-note',
           ),
         );
+        if (item.sourcePage && item.sourcePage !== item.homepage) {
+          const sourceLink = element('a', 'View broadcaster stream source');
+          sourceLink.href = item.sourcePage;
+          sourceLink.target = '_blank';
+          sourceLink.rel = 'noopener noreferrer';
+          detail.append(sourceLink);
+        }
         disposeMedia = () => player.destroy();
         start();
       } else {
@@ -433,6 +483,7 @@ export function installLiveFeeds({
             sourcePage: item.sourcePage,
             statusUrl: `/api/cctv/embed-status/${encodeURIComponent(item.id)}`,
             playbackKind: item.playbackKind,
+            requireLiveStatus: item.liveOnly === true,
             visibilityTarget: document,
             autoPlay: cameraMediaKind(item) === 'live',
             onStatus(value) {
@@ -708,7 +759,22 @@ export function installLiveFeeds({
       renderList();
     };
     search.addEventListener('input', resetFilter, { signal });
-    region.addEventListener('change', resetFilter, { signal });
+    region.addEventListener(
+      'change',
+      () => {
+        resetFilter();
+        if (kind === 'radio') {
+          const targetCountry = region.value === 'Ukraine' ? 'UA' : '';
+          if (
+            targetCountry !== radioCatalogCountry ||
+            (requestedRadioCountry !== null &&
+              requestedRadioCountry !== targetCountry)
+          )
+            void loadDirectory();
+        }
+      },
+      { signal },
+    );
     countryFilter?.addEventListener(
       'change',
       () => {
@@ -737,13 +803,16 @@ export function installLiveFeeds({
       const regionalItems = countryFilter
         ? filterFeedDirectory(items, '', '', 'all', countryFilter.value)
         : items;
-      for (const name of [
-        ...new Set(
-          regionalItems
-            .map((item) => (kind === 'radio' ? item.country : item.city))
-            .filter(Boolean),
-        ),
-      ].sort((a, b) => a.localeCompare(b)))
+      const names = new Set(
+        regionalItems
+          .map((item) => (kind === 'radio' ? item.country : item.city))
+          .filter(Boolean),
+      );
+      if (kind === 'radio') {
+        for (const name of names) radioCountryNames.add(name);
+        for (const name of radioCountryNames) names.add(name);
+      }
+      for (const name of [...names].sort((a, b) => a.localeCompare(b)))
         region.append(new Option(name, name));
       region.value = [...region.options].some(
         (option) => option.value === previousRegion,
@@ -756,12 +825,36 @@ export function installLiveFeeds({
       request?.abort();
       request = new AbortController();
       const requestSignal = AbortSignal.any([signal, request.signal]);
+      const requestedCountry =
+        kind === 'radio' && region.value === 'Ukraine' ? 'UA' : '';
+      requestedRadioCountry = requestedCountry;
       refresh.disabled = true;
       directoryStatus.textContent = 'Loading directory…';
       try {
-        const data = await readFeedDirectory(kind, { signal: requestSignal });
+        const data = await readFeedDirectory(kind, {
+          signal: requestSignal,
+          country: requestedCountry,
+        });
         if (requestSignal.aborted || generation !== loadGeneration) return;
+        radioCatalogCountry = requestedCountry;
         items = data.items;
+        if (selected) {
+          const replacement = items.find((item) => item.id === selected.id);
+          if (
+            !replacement ||
+            replacement.streamUrl !== selected.streamUrl ||
+            replacement.embedUrl !== selected.embedUrl
+          ) {
+            stopMedia();
+            selected = null;
+            detail.replaceChildren(
+              element(
+                'p',
+                'The selected source changed or is no longer in this directory. Choose an entry to play its current stream.',
+              ),
+            );
+          }
+        }
         if (countryFilter) {
           const previousCountry = countryFilter.value;
           countryFilter.replaceChildren(new Option('All countries', ''));
@@ -777,8 +870,29 @@ export function installLiveFeeds({
           )
             ? previousCountry
             : '';
+          if (
+            !initialCountryApplied &&
+            initialCountry &&
+            [...countryFilter.options].some(
+              (option) => option.value === initialCountry,
+            )
+          )
+            countryFilter.value = initialCountry;
         }
         updateRegions();
+        if (kind === 'radio' && !initialCountryApplied && initialCountry) {
+          const matching = items.find(
+            (item) => item.countryCode?.toUpperCase() === initialCountry,
+          );
+          if (
+            matching &&
+            [...region.options].some(
+              (option) => option.value === matching.country,
+            )
+          )
+            region.value = matching.country;
+        }
+        initialCountryApplied = true;
         directoryStatus.textContent = !items.length
           ? 'This directory currently contains no entries. Try refreshing later.'
           : `${data.stale || data.degraded ? 'Cached / degraded directory. ' : ''}${data.updatedAt ? `Directory updated ${new Date(data.updatedAt).toLocaleString()}. ` : ''}${data.rejected ? `${data.rejected} unusable entries were excluded. ` : ''}Choose an entry to check its media.`;
@@ -787,8 +901,10 @@ export function installLiveFeeds({
         if (!requestSignal.aborted)
           directoryStatus.textContent = `${errorCopy(error)}${items.length ? ' Previous directory retained.' : ''}`;
       } finally {
-        if (!signal.aborted && generation === loadGeneration)
+        if (!signal.aborted && generation === loadGeneration) {
+          requestedRadioCountry = null;
           refresh.disabled = false;
+        }
       }
     }
     refresh.addEventListener('click', () => void loadDirectory(), { signal });

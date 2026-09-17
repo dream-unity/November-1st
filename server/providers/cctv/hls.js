@@ -86,7 +86,7 @@ export function resolveCctvHlsResource(
 /** Rewrite all playlist URI forms, including variant, map and encryption key references. */
 export function rewriteCctvHlsPlaylist(
   text,
-  { sourceUrl, playlistUrl, cameraId },
+  { sourceUrl, playlistUrl, cameraId, requireLive = false },
 ) {
   if (
     !text
@@ -95,6 +95,25 @@ export function rewriteCctvHlsPlaylist(
       .startsWith('#EXTM3U')
   )
     throw new Error('Camera returned an invalid HLS playlist');
+  // A publisher can end an otherwise valid live URL or replace it with an
+  // archive. Check every playlist, including variants and later reloads;
+  // accepting a live-looking master alone does not establish live media.
+  if (
+    requireLive &&
+    text.split(/\r?\n/).some((line) => {
+      const tag = line.trim();
+      return (
+        /^#EXT-X-ENDLIST$/i.test(tag) ||
+        /^#EXT-X-PLAYLIST-TYPE\s*:\s*VOD$/i.test(tag)
+      );
+    })
+  )
+    throw Object.assign(
+      new Error(
+        'This camera broadcast has ended; archived video is unavailable in live-only mode',
+      ),
+      { code: 'CCTV_BROADCAST_ENDED', statusCode: 410 },
+    );
   const proxy = (value) => {
     const target = resolveCctvHlsResource(sourceUrl, value, playlistUrl);
     return `/api/cctv/media/${encodeURIComponent(cameraId)}?resource=${encodeURIComponent(target.toString())}`;
@@ -132,6 +151,7 @@ export async function fetchCctvHlsResource({
   fetchImpl = fetch,
   timeoutMs = 15_000,
   maxResourceBytes = process.env.VERCEL ? 4 * 1024 * 1024 : RESOURCE_MAX_BYTES,
+  requireLive = false,
 }) {
   let target = resolveCctvHlsResource(sourceUrl, resource || sourceUrl);
   const range = requestedByteRange(headers, maxResourceBytes);
@@ -224,6 +244,7 @@ export async function fetchCctvHlsResource({
           sourceUrl,
           playlistUrl: target,
           cameraId,
+          requireLive,
         })
       : bytes;
     const responseHeaders = {

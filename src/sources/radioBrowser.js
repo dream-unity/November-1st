@@ -66,30 +66,36 @@ export function publicRadioHttpsUrl(value) {
  * @param {object} [options]
  * @param {(value: unknown) => string|null} [options.normalizeUrl] URL admission
  *   policy, applied to both stream and homepage; returns a safe URL or null.
+ * @param {boolean} [options.requireGeo=true] Globe records require coordinates;
+ *   a country audio directory can retain unlocated stations without inventing a pin.
  */
 export function normalizeRadioBrowserStation(
   raw,
-  { normalizeUrl = publicRadioHttpsUrl } = {},
+  { normalizeUrl = publicRadioHttpsUrl, requireGeo = true } = {},
 ) {
   const id = cleanRadioText(raw?.stationuuid, 40).toLowerCase();
-  const lat =
-    raw?.geo_lat === null || raw?.geo_lat === '' ? null : Number(raw?.geo_lat);
-  const lon =
-    raw?.geo_long === null || raw?.geo_long === ''
+  const coordinate = (value) =>
+    value === undefined ||
+    value === null ||
+    (typeof value === 'string' && !value.trim())
       ? null
-      : Number(raw?.geo_long);
+      : typeof value === 'number' || typeof value === 'string'
+        ? Number(value)
+        : NaN;
+  const rawLat = coordinate(raw?.geo_lat);
+  const rawLon = coordinate(raw?.geo_long);
+  const hasGeo = rawLat !== null && rawLon !== null;
+  const lat = hasGeo ? rawLat : null;
+  const lon = hasGeo ? rawLon : null;
   const codec = cleanRadioText(raw?.codec, 16).toUpperCase();
   const streamUrl = normalizeUrl(raw?.url_resolved || raw?.url);
   if (
     !RADIO_UUID_RE.test(id) ||
     Number(raw?.lastcheckok) !== 1 ||
     Number(raw?.hls) === 1 ||
-    !Number.isFinite(lat) ||
-    lat < -90 ||
-    lat > 90 ||
-    !Number.isFinite(lon) ||
-    lon < -180 ||
-    lon > 180 ||
+    (requireGeo && !hasGeo) ||
+    (rawLat !== null && (!Number.isFinite(rawLat) || Math.abs(rawLat) > 90)) ||
+    (rawLon !== null && (!Number.isFinite(rawLon) || Math.abs(rawLon) > 180)) ||
     !/^(?:MP3|AAC(?:\+|-LC|-HE)?|HE-AAC)$/i.test(codec) ||
     !streamUrl
   )

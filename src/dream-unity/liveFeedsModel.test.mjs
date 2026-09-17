@@ -101,6 +101,71 @@ test('radio admits only public HTTPS streams and strips unsafe broadcaster links
   assert.equal(result.updatedAt, null);
 });
 
+test('radio keeps playable stations without a map location and never invents coordinates', () => {
+  for (const coords of [
+    { lat: null, lon: null },
+    { lat: 52, lon: undefined },
+    { lat: '50.1', lon: 31 },
+    { lat: 91, lon: 31 },
+  ]) {
+    const { items } = normalizeFeedDirectory('radio', {
+      stations: [
+        {
+          ...station,
+          ...coords,
+          sourceKind: 'curated-ukraine',
+          sourcePage: 'https://broadcaster.example/live',
+        },
+      ],
+    });
+    assert.equal(items.length, 1);
+    assert.equal(items[0].lat, null);
+    assert.equal(items[0].lon, null);
+    assert.equal(items[0].locationPrecision, 'unknown');
+    assert.equal(items[0].streamUrl, station.streamUrl);
+    assert.equal(items[0].sourcePage, 'https://broadcaster.example/live');
+  }
+});
+
+test('Ukrainian searches match country names, Cyrillic case, equivalent letters and apostrophes', () => {
+  const ukrainian = {
+    ...station,
+    name: 'Радіо Ї П’ЯТНИЦЯ',
+    country: 'Ukraine',
+    countryCode: 'UA',
+  };
+  for (const query of [
+    'Україна',
+    'українська',
+    'UKRAINE',
+    'радіо і\u0308',
+    "п'ятниця",
+    'пʼятниця',
+  ])
+    assert.deepEqual(filterFeedDirectory([ukrainian], query), [ukrainian]);
+  assert.equal(filterFeedDirectory([station], 'Україна').length, 0);
+});
+
+test('the Ukraine directory is requested explicitly and unsupported country paths never reach the network', async () => {
+  const calls = [];
+  const fetchImpl = async (url) => {
+    calls.push(url);
+    return Response.json({ stations: [station] });
+  };
+  await readFeedDirectory('radio', { country: 'UA', fetchImpl });
+  assert.deepEqual(calls, ['/api/radio/stations?country=UA']);
+  for (const country of ['GB', '../stations', 'UA&secret=x'])
+    await assert.rejects(
+      readFeedDirectory('radio', { country, fetchImpl }),
+      /Unsupported country/,
+    );
+  await assert.rejects(
+    readFeedDirectory('cctv', { country: 'UA', fetchImpl }),
+    /Unsupported country/,
+  );
+  assert.equal(calls.length, 1);
+});
+
 test('search matches all words across location, station genre and language with exact region filtering', () => {
   const second = {
     ...station,

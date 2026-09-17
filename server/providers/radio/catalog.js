@@ -3,6 +3,11 @@ import { randomUUID } from 'node:crypto';
 
 import { readResponseTextCapped } from '../common/http.js';
 import {
+  createUkraineRadioDirectory,
+  loadUkraineRadioSources,
+  loadUkraineRadioExclusions,
+} from '../radioUkraine.js';
+import {
   normalizeRadioBrowserStation,
   publicRadioStation,
   cleanRadioText,
@@ -69,6 +74,9 @@ export function createRadioProxyMiddleware({
   catalogTimeoutMs = RADIO_CATALOG_TIMEOUT_MS,
   fetchTimeoutMs = RADIO_FETCH_TIMEOUT_MS,
   discoveryTimeoutMs = RADIO_DISCOVERY_TIMEOUT_MS,
+  sourceRoot = process.cwd(),
+  loadUkraineSources = () => loadUkraineRadioSources({ sourceRoot }),
+  loadUkraineExclusions = () => loadUkraineRadioExclusions({ sourceRoot }),
 } = {}) {
   let mirrorCache = { origins: [...RADIO_FALLBACK_MIRRORS], cachedAt: 0 };
   let mirrorPromise = null;
@@ -211,6 +219,14 @@ export function createRadioProxyMiddleware({
     }
     throw lastError || new Error('No Radio Browser mirror is available');
   }
+
+  const ukraineDirectory = createUkraineRadioDirectory({
+    fetchPath,
+    now,
+    timeoutMs: catalogTimeoutMs,
+    loadSources: loadUkraineSources,
+    loadExclusions: loadUkraineExclusions,
+  });
 
   async function collectCatalog(signal) {
     const queries = [
@@ -435,8 +451,21 @@ export function createRadioProxyMiddleware({
         res.end();
         return;
       }
+      const country = requestUrl.searchParams.get('country');
+      if (
+        requestUrl.searchParams.getAll('country').length > 1 ||
+        (country !== null && country.toUpperCase() !== 'UA')
+      ) {
+        sendJson(res, 400, {
+          error:
+            'The country directory currently supports country=UA; omit country for the global directory.',
+        });
+        return;
+      }
       try {
-        const catalog = await getCatalog();
+        const catalog = country
+          ? await ukraineDirectory.getCatalog()
+          : await getCatalog();
         sendJson(res, 200, {
           stations: catalog.stations,
           updatedAt: catalog.updatedAt,
@@ -465,12 +494,18 @@ export function createRadioProxyMiddleware({
         return;
       }
       const id = clickMatch[1].toLowerCase();
-      if (!RADIO_UUID_RE.test(id) || !servedStationIds.has(id)) {
+      const ukraineStationKind = ukraineDirectory.stationKind(id);
+      if (
+        !RADIO_UUID_RE.test(id) ||
+        (!servedStationIds.has(id) && !ukraineStationKind)
+      ) {
         sendJson(res, 404, { error: 'Unknown radio station' });
         return;
       }
       res.writeHead(204, { 'Cache-Control': 'no-store' });
       res.end();
+      // Editorial UUIDs are application identities, never Radio Browser vote IDs.
+      if (ukraineStationKind === 'curated-ukraine') return;
       void fetchPath(
         `/json/url/${id}`,
         AbortSignal.timeout(RADIO_CLICK_TIMEOUT_MS),

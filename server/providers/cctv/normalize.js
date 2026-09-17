@@ -524,6 +524,7 @@ export function normalizeSourceItem(item) {
     groundElevationM: toFiniteNumber(item.groundElevationM),
     feedType,
     playbackKind,
+    liveOnly: item.liveOnly === true,
     url: typeof item.url === 'string' ? item.url : '',
     snapshotUrl: typeof item.snapshotUrl === 'string' ? item.snapshotUrl : '',
     license: String(item.license || item.licenseNote || ''),

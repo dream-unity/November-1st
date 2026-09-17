@@ -192,6 +192,7 @@ export function createCatalog({ state: layerState, services, parts, source }) {
         ).toLowerCase(),
         feedType,
         playbackKind: cameraMediaKind({ ...source, feedType }),
+        liveOnly: source.liveOnly === true,
         embedUrl: normalizeCctvEmbedUrl(source.embedUrl),
         sourcePage: String(source.sourcePage || ''),
         verifiedAt: String(source.verifiedAt || ''),

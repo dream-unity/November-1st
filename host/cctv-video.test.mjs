@@ -10,6 +10,7 @@ test('native hosted CCTV dispatch preserves advancing HLS playlists and binary s
   const originalCwd = process.cwd();
   const originalEnv = { ...process.env };
   let sequence = 100;
+  let ended = false;
   const upstreamRequests = [];
   const segment = Buffer.from([0x47, 0x40, 0x00, 0x10, 0xff, 0x00, 0x80]);
   const upstream = createServer((req, res) => {
@@ -20,7 +21,7 @@ test('native hosted CCTV dispatch preserves advancing HLS playlists and binary s
     } else if (req.url === '/camera/low/index.m3u8') {
       res.writeHead(200, { 'Content-Type': 'application/vnd.apple.mpegurl' });
       res.end(
-        `#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXT-X-MEDIA-SEQUENCE:${sequence}\n#EXTINF:10,\nsegment${sequence++}.ts\n`,
+        `#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXT-X-MEDIA-SEQUENCE:${sequence}\n#EXTINF:10,\nsegment${sequence++}.ts\n${ended ? '#EXT-X-ENDLIST\n' : ''}`,
       );
     } else if (/^\/camera\/low\/segment\d+\.ts$/.test(req.url)) {
       res.writeHead(200, { 'Content-Type': 'video/mp2t' });
@@ -55,6 +56,8 @@ test('native hosted CCTV dispatch preserves advancing HLS playlists and binary s
         lat: 38,
         lon: -121,
         feedType: 'hls',
+        playbackKind: 'live',
+        liveOnly: true,
         url: `${sourceOrigin}/camera/master.m3u8`,
       },
     ]),
@@ -77,7 +80,17 @@ test('native hosted CCTV dispatch preserves advancing HLS playlists and binary s
   };
   const sources = await get('/api/cctv/sources');
   assert.equal(sources.status, 200);
-  assert.equal((await sources.json()).sources[0].feedType, 'hls');
+  const listed = (await sources.json()).sources[0];
+  assert.equal(listed.feedType, 'hls');
+  assert.equal(listed.liveOnly, true);
+  const streamInfo = await (await get('/api/cctv/stream/live-test')).json();
+  assert.equal(streamInfo.liveOnly, true);
+  assert.equal(streamInfo.frameUrl, null);
+  for (const route of ['/api/cctv/frame/live-test', '/api/cctv/frame/live-test?strict=1']) {
+    const response = await get(route);
+    assert.equal(response.status, 409);
+    assert.equal((await response.json()).code, 'CCTV_LIVE_VIDEO_REQUIRED');
+  }
   const master = await get('/api/cctv/media/live-test');
   assert.equal(master.status, 200);
   const variant = (await master.text())
@@ -113,4 +126,9 @@ test('native hosted CCTV dispatch preserves advancing HLS playlists and binary s
     before,
     'unregistered directories never reach the upstream',
   );
+  ended = true;
+  const archive = await get(`${variant}&requireLive=false`);
+  assert.equal(archive.status, 410, 'client queries cannot disable the server live-only policy');
+  assert.equal(archive.headers.get('cache-control'), 'no-store');
+  assert.equal((await archive.json()).code, 'CCTV_BROADCAST_ENDED');
 });

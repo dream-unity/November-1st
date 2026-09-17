@@ -362,7 +362,20 @@ export function createCctvVideoPlayback({
       });
       const player = hlsPlayer;
       player.on(Hls.Events.ERROR, (_event, data) => {
-        if (destroyed || player !== hlsPlayer || !data?.fatal) return;
+        if (destroyed || player !== hlsPlayer) return;
+        const code = Number(data?.response?.code);
+        if (code === 410) {
+          // Live-only admission rejects an ended archive with HTTP 410. Stop
+          // before even hls.js's nonfatal retry can reopen the ended stream.
+          wantsPlayback = false;
+          fail(
+            'ended',
+            'This camera broadcast has ended. Archived playback is unavailable; retry later to check whether the live broadcast has resumed.',
+            'broadcast-ended',
+          );
+          return;
+        }
+        if (!data?.fatal) return;
         const network = data.type === 'networkError';
         const transient =
           network &&
@@ -391,7 +404,6 @@ export function createCctvVideoPlayback({
             manifestLoadError: 'manifest request',
             manifestLoadTimeOut: 'manifest timeout',
           }[data.details] || 'stream request';
-        const code = Number(data.response?.code);
         const http =
           Number.isInteger(code) && code >= 100 && code <= 599
             ? `, HTTP ${code}`

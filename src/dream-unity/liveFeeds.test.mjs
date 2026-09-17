@@ -175,6 +175,7 @@ function fixture(fetchImpl) {
     Audio: globalThis.Audio,
     fetch: globalThis.fetch,
     getComputedStyle: globalThis.getComputedStyle,
+    location: globalThis.location,
   };
   const doc = new EventTarget();
   const videos = [];
@@ -232,6 +233,7 @@ function fixture(fetchImpl) {
   globalThis.document = doc;
   globalThis.Audio = Audio;
   globalThis.fetch = fetchImpl;
+  globalThis.location = { search: '' };
   globalThis.getComputedStyle = (node) => ({
     visibility: node.visibility || 'visible',
   });
@@ -279,6 +281,241 @@ test('radio plays only after station click, synchronously stops globe audio, and
     find(f.doc, (node) => node.tagName === 'DIALOG').close();
     assert.equal(f.audio[0].paused, true);
     assert.equal(f.audio[0].src, '');
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('Ukraine deep links load the country catalogue and location-free stations still play without a false globe marker', async () => {
+  const calls = [];
+  const ukrainian = {
+    ...station,
+    name: 'Українське радіо',
+    lat: null,
+    lon: null,
+    country: 'Ukraine',
+    countryCode: 'UA',
+    sourceKind: 'curated-ukraine',
+  };
+  const f = fixture(async (url) => {
+    calls.push(url);
+    return Response.json({ stations: [ukrainian] });
+  });
+  globalThis.location.search = '?feed=radio&country=UA';
+  let globeCalls = 0;
+  const feeds = installLiveFeeds({
+    openOnGlobe() {
+      globeCalls++;
+    },
+  });
+  try {
+    feeds.open('radio');
+    await flush();
+    assert.deepEqual(calls, ['/api/radio/stations?country=UA']);
+    const country = find(
+      f.doc,
+      (node) => node.getAttribute('aria-label') === 'Filter by country',
+    );
+    assert.equal(country.value, 'Ukraine');
+    const list = find(f.doc, (node) => node.className === 'du-feeds-list');
+    click(
+      find(f.doc, (node) => node.dataset.feedId === station.id),
+      list,
+    );
+    await flush();
+    assert.match(f.doc.body.textContent, /Playing broadcaster audio/);
+    assert.match(f.doc.body.textContent, /no verified map location/);
+    assert.match(f.doc.body.textContent, /broadcaster’s published source/);
+    assert.equal(
+      find(f.doc, (node) => node.textContent === 'Globe location unavailable')
+        .disabled,
+      true,
+    );
+    assert.equal(globeCalls, 0);
+    feeds.destroy();
+    assert.equal(f.audio[0].paused, true);
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('Ukraine remains discoverable when global results omit it and its shortcut retries a failed country request', async () => {
+  const calls = [];
+  let uaRequests = 0;
+  const ukrainian = {
+    ...station,
+    id: '22345678-1234-1234-1234-123456789012',
+    name: 'Ukraine radio',
+    country: 'Ukraine',
+    countryCode: 'UA',
+  };
+  const f = fixture(async (url) => {
+    calls.push(url);
+    if (url.includes('?country=UA')) {
+      uaRequests++;
+      return uaRequests === 1
+        ? new Response('offline', { status: 503 })
+        : Response.json({ stations: [ukrainian] });
+    }
+    return Response.json({ stations: [station] });
+  });
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('radio');
+    await flush();
+    const country = find(
+      f.doc,
+      (node) => node.getAttribute('aria-label') === 'Filter by country',
+    );
+    assert.ok(country.options.some((option) => option.value === 'Ukraine'));
+    const shortcut = find(
+      f.doc,
+      (node) => node.textContent === 'Ukraine stations',
+    );
+    click(shortcut);
+    await flush();
+    assert.match(f.doc.body.textContent, /HTTP 503/);
+    click(shortcut);
+    await flush();
+    assert.equal(uaRequests, 2);
+    assert.ok(find(f.doc, (node) => node.dataset.feedId === ukrainian.id));
+    country.value = 'Example';
+    country.dispatchEvent(new Event('change'));
+    await flush();
+    assert.equal(calls.at(-1), '/api/radio/stations');
+    assert.ok(find(f.doc, (node) => node.dataset.feedId === station.id));
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('changing country while a request is pending aborts it and late country results cannot replace the chosen directory', async () => {
+  const pending = [];
+  const f = fixture(
+    (url, options) =>
+      new Promise((resolve) => pending.push({ url, options, resolve })),
+  );
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('radio');
+    pending[0].resolve(Response.json({ stations: [station] }));
+    await flush();
+    const country = find(
+      f.doc,
+      (node) => node.getAttribute('aria-label') === 'Filter by country',
+    );
+    country.value = 'Ukraine';
+    country.dispatchEvent(new Event('change'));
+    country.value = '';
+    country.dispatchEvent(new Event('change'));
+    assert.equal(pending[1].options.signal.aborted, true);
+    assert.equal(pending[2].url, '/api/radio/stations');
+    pending[2].resolve(Response.json({ stations: [station] }));
+    await flush();
+    pending[1].resolve(
+      Response.json({
+        stations: [{ ...station, name: 'Late Ukraine', country: 'Ukraine' }],
+      }),
+    );
+    await flush();
+    assert.doesNotMatch(f.doc.body.textContent, /Late Ukraine/);
+    assert.ok(find(f.doc, (node) => node.dataset.feedId === station.id));
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('a refreshed directory retires changed station URLs so retry cannot replay stale broadcaster addresses', async () => {
+  let refreshed = false;
+  const f = fixture(async () =>
+    Response.json({
+      stations: [
+        {
+          ...station,
+          streamUrl: refreshed
+            ? 'https://radio.example/new'
+            : station.streamUrl,
+        },
+      ],
+    }),
+  );
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('radio');
+    await flush();
+    const list = find(f.doc, (node) => node.className === 'du-feeds-list');
+    click(
+      find(f.doc, (node) => node.dataset.feedId === station.id),
+      list,
+    );
+    await flush();
+    refreshed = true;
+    click(find(f.doc, (node) => node.textContent === 'Refresh directory'));
+    await flush();
+    assert.equal(f.audio[0].paused, true);
+    assert.equal(f.audio[0].src, '');
+    assert.match(f.doc.body.textContent, /selected source changed/);
+    click(
+      find(f.doc, (node) => node.dataset.feedId === station.id),
+      list,
+    );
+    await flush();
+    assert.equal(f.audio.at(-1).src, 'https://radio.example/new');
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('a camera country deep link selects only a supported country and leaves live-only filtering enabled', async () => {
+  const f = fixture(async () =>
+    Response.json({
+      sources: [
+        {
+          ...camera,
+          country: 'UA',
+          countryName: 'Ukraine',
+          feedType: 'hls',
+          playbackKind: 'live',
+        },
+        {
+          ...camera,
+          id: 'other-country',
+          country: 'GB',
+          countryName: 'United Kingdom',
+          feedType: 'hls',
+          playbackKind: 'live',
+        },
+      ],
+    }),
+  );
+  globalThis.location.search = '?feed=cctv&country=UA';
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('cctv');
+    await flush();
+    assert.equal(
+      find(
+        f.doc,
+        (node) =>
+          node.getAttribute('aria-label') === 'Filter cameras by country',
+      ).value,
+      'UA',
+    );
+    const list = find(f.doc, (node) => node.className === 'du-feeds-list');
+    assert.equal(list.children.length, 1);
+    assert.equal(list.children[0].children[0].dataset.feedId, camera.id);
+    assert.equal(
+      find(
+        f.doc,
+        (node) => node.getAttribute('aria-label') === 'Camera media type',
+      ).value,
+      'live',
+    );
   } finally {
     feeds.destroy();
     f.restore();
@@ -854,13 +1091,18 @@ test('official camera embeds need player playback events and retain provider lin
   }
 });
 
-test('an ended official broadcast never starts an archive and unknown live status remains explicit during playback', async () => {
-  for (const checkedStatus of ['ended', 'unknown']) {
+test('ended broadcasts never start an archive and strict live-only cameras refuse unconfirmed playback', async () => {
+  for (const [checkedStatus, liveOnly] of [
+    ['ended', false],
+    ['unknown', false],
+    ['unknown', true],
+  ]) {
     const embed = {
       ...camera,
       id: 'checked-embed',
       feedType: 'embed',
       playbackKind: 'live',
+      liveOnly,
       embedUrl: 'https://www.youtube-nocookie.com/embed/5iDycGQWPCg',
       sourcePage: 'https://camera.example/public',
     };
@@ -903,13 +1145,18 @@ test('an ended official broadcast never starts an archive and unknown live statu
         f.doc,
         (node) => node.className === 'du-feed-media-kind',
       );
-      if (checkedStatus === 'ended') {
+      if (checkedStatus === 'ended' || liveOnly) {
         assert.equal(Boolean(player), false);
         assert.equal(
           find(f.doc, (node) => node.tagName === 'IFRAME'),
           undefined,
         );
-        assert.match(label.textContent, /Broadcast ended/);
+        assert.match(
+          label.textContent,
+          checkedStatus === 'ended'
+            ? /Broadcast ended/
+            : /Live status unconfirmed/,
+        );
       } else {
         assert.ok(player);
         events.onReady({ target: player });
