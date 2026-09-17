@@ -1,6 +1,6 @@
 # Australian live camera and radio coverage
 
-Source audit date: **17 September 2026**. These are source-verification results and catalogue counts. **Successful playback through the deployed application is pending separate validation.** A listed feed is not a guarantee of current availability.
+Source audit date: **17 September 2026**. Source evidence, catalogue counts and deployed playback checks are recorded separately below. A listed feed is not a guarantee of current availability.
 
 ## Camera inventory
 
@@ -50,4 +50,27 @@ Curated progressive sources returned public HTTPS audio bytes without a finite c
 
 The **227 community entries are not individually confirmed live streams** and retain unknown playback classification. The 306 total must not be described as 306 verified live stations. Duplicate stream aliases, mislabelled playlist files, a finite forest recording and an ABC candidate with mismatched station provenance were excluded. Old ABC URLs returning HTTP 403 were not admitted. Publisher outages, geographic restrictions and later URL changes remain possible.
 
-Deployment, browser video decoding, radio audibility and regression results require their own validation record; this source audit does not claim that every repository error or potential failure has been resolved.
+This audit does not claim that every repository error or potential failure has been resolved.
+
+## Deployed verification, 17 September 2026
+
+The implementation at commit `9714ea41a54a3d2a9b7f464c83922fe447129aea` was deployed to production. `/api/health` and `/build-info.json` returned that exact commit. Both GitHub Pages entry links preserved their feed/country query when redirecting to the application:
+
+- [Australian cameras](https://dream-unity.github.io/November-1st/?feed=cctv&country=AU)
+- [Australian radio](https://dream-unity.github.io/November-1st/?feed=radio&country=AU)
+
+Production returned 3,768 camera entries, including 231 Australian entries: **15 declared live sources and 216 snapshots**, with **8 publisher links counted separately**. The default Live video filter showed 15; Adelaide correctly showed no in-app cameras and three publisher links. Snapshot entries are not counted as continuous video.
+
+Two representative Darwin cameras were verified **inside the deployed app**: Zen Storm decoded 1920×1080 video and advanced from 21.00 to 32.00 seconds; Fannie Bay decoded 1920×1088 and advanced from 19.04 to 31.04 seconds. Both showed intermittent buffering. The application's Pause control removed each iframe completely. Other Darwin source players had been checked separately during source research; these two are the deployed browser playback samples.
+
+Busselton South's deployed status check was **unconfirmed**, so the app correctly withheld its iframe and offered retry/source controls. This is not evidence that the owner's broadcast is offline. The 15 listed entries must not be described as 15 successfully verified in-app streams. A configured server `YOUTUBE_API_KEY` is an optional official route for checking live status when the public watch-page check is unavailable; no key was configured in this release.
+
+Australian radio returned **306** entries and the existing Ukraine endpoint retained **152**. ABC Radio Hobart's HLS stream reached the player's media-driven playing state, paused, resumed and stopped. Territory FM's progressive audio also reached playing. Switching to Ukraine retired the Australian selection, and returning to Australia restored the full directory. Audio is not attached to the page DOM, so these browser observations establish the player event/state flow rather than an independently measured audio clock or identified spoken programme.
+
+Validation passed: the full unit suite and serialized allocation gates, all **59 host tests**, package boundaries, formatting and production build. The final publisher-admission changes passed their six focused tests. [GitHub CI](https://github.com/dream-unity/November-1st/actions/runs/35203962946) passed on Node 24.14, Node 26 and Windows onboarding. GitHub Pages deployment succeeded.
+
+The cloud test browser cannot initialize WebGL. The existing recovery correctly kept radio and camera directories usable, but the 3D globe itself could not be visually verified in that browser.
+
+A separate bounded request batch across all 15 Australian status endpoints returned one live result (Zen Harbour), five HTTP 200 unknown results (YouTube), and nine client-side transport timeouts. The nine unanswered requests cannot be classified as live or offline from that batch. The successful YouTube results and the deployed browser sample demonstrate a current verification limitation; they do not establish that every YouTube source is unavailable.
+
+The post-verification cleanup removes internal review instructions from Darwin attribution copy and records this report. Playback and provider logic remain the code verified above.
