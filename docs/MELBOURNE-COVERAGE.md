@@ -115,3 +115,11 @@ The first deployed Spotswood HLS test exposed a real compatibility defect: playl
 The cloud browser could not initialize WebGL. Recovery kept the radio and camera directories usable, but the globe itself was not visually verified in this environment.
 
 The fragment MIME repair and final directory cleanup passed **96 focused regressions**, all **59 host tests**, formatting and production rebuild. A freshly fetched real camera segment sample also passed the actual relay function, preserving all bytes and range while returning `video/mp2t`.
+
+### Final production result
+
+The repaired implementation is commit **`c2835decd275541225320848489e54e2691afe01`**, deployed as `dpl_C3kcP5RVMcQTvUkNKMcjm1tGTSHK`. Health and build metadata both returned the exact commit. [Final CI](https://github.com/dream-unity/November-1st/actions/runs/35276884039) and [GitHub Pages deployment](https://github.com/dream-unity/November-1st/actions/runs/35276882737) succeeded.
+
+The deployed Spotswood fragment endpoint returned **HTTP 200, `video/mp2t`**, with MPEG-TS sync bytes. Inside the application, video decoded at **1280×720**, reached readyState 4 and advanced from **66.97 to 96.81 seconds**. The screenshot showed the correct outdoor trailer-yard scene, owner branding and continuous playback. Intermittent buffering was observed. Pause stopped playback at **97.28 seconds**, which remained stable on the next check. Resume advanced to **137.61 seconds**; switching to radio removed the video element entirely. These observations establish successful in-app continuous video for this source, rather than merely an entry or a playlist response.
+
+The final API returned **26 Melbourne radio entries: 25 curated and 1 community-inferred**, **315 Australian stations** overall and **153 Ukrainian stations**. All **8 Melbourne camera entries** and the **2 separate publisher links** remained available in the metropolitan view. The global camera count changed from 3,776 to 3,597 between refreshes while Australian coverage remained 238; external directory counts are dynamic, not a fixed coverage promise.
