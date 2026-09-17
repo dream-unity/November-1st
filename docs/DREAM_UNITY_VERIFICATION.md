@@ -1,5 +1,44 @@
 # Verification record
 
+## Continuous CCTV video — 2026-09-17 UTC
+
+See [the continuous-video repair record](CCTV_LIVE_VIDEO_REPAIR.md) for the
+confirmed causes, correction matrix, provider evidence and coverage limits.
+
+- `npm test`: **340 test files completed; 4,306 tests, 4,305 passed, zero failed
+  or cancelled, one Windows-only native-DACL test skipped**. Both isolated
+  allocation probes completed; the ordinary suite contains 4,292 tests.
+- `npm run test:host`: **56 passed**, including a complete native HTTP HLS
+  catalogue/master/variant/segment/refresh path with Vercel rewrite parameters.
+- Production build, all package/import ownership checks, formatting of 930
+  adopted source files, and whitespace checks passed.
+- The transport/native suite passed all 50 focused checks, including exact
+  fragment integrity, native open/suffix ranges, upstream error status retention,
+  nested playlist rewriting, and registered-directory restrictions.
+- The frontend/CCTV and glyph-subset suite passed all 52 focused checks. The
+  full run exposed and corrected a pre-existing scanner false positive for
+  nested ternary conditions, without adding nonexistent font glyphs.
+- Replaying the four captured Caltrans catalogues selected 300 unique declared
+  HLS streams. Reversing source rows and independently failing each district
+  preserved the identity and location of every overlapping selected camera.
+
+### Deployed browser checks
+
+The preview at `e861bf8` loaded 3,661 cameras: 300 declared live-video streams,
+3,361 snapshots and no finite clips. Live video was the default filter.
+Selecting Caltrans **(C014) I-5: First Avenue (San Diego)** produced an actually
+decoded 640 × 480 road scene. Playback time advanced beyond 82 seconds; Pause
+held at 85.061411 seconds across observations, and Play resumed beyond 106
+seconds. Switching cameras removed the previous player's media. The provider's
+unavailable **C016 / 6th Avenue** showed a retryable error with zero snapshot
+images. The separate Snapshots filter found Warendorf, decoded its 640 × 360
+image and removed the video element. Closing the panel left no video element.
+
+That longer browser check also caught a transient native-player failure after
+an expired segment returned HTTP 404. The final player adds the bounded live
+reconnection documented in the repair record; the initial picture was not
+accepted as sufficient continuity verification.
+
 ## Usable radio, cameras and traffic — 2026-09-17 UTC
 
 See [the complete feature-path repair record](LIVE_FEEDS_REPAIR.md). The full

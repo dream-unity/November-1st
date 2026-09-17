@@ -544,6 +544,8 @@ test('CCTV starts with declared live video only, exposes snapshot counts, and pl
     assert.match(f.doc.body.textContent, /Clips \/ other videos \(2\)/);
     click(list.children[0].children[0], list);
     const video = f.videos[0];
+    await import('hls.js');
+    await flush();
     assert.equal(video.src, '/api/cctv/media/live');
     assert.equal(video.controls, true);
     assert.equal(video.muted, true);

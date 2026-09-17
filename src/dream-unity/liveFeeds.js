@@ -415,6 +415,7 @@ export function installLiveFeeds({
           const pauseVideo = button('Pause video');
           const retry = button('Retry video');
           const playback = createCctvVideoPlayback({
+            playbackKind: item.playbackKind,
             visibilityTarget: document,
             video,
             url: `/api/cctv/media/${encodeURIComponent(item.id)}`,
@@ -431,9 +432,12 @@ export function installLiveFeeds({
                       : 'Playing camera video. The source does not confirm continuous live coverage.'
                   : value.message || value.status;
               playVideo.disabled = value.status === 'playing';
-              pauseVideo.disabled = !['playing', 'loading', 'ready'].includes(
-                value.status,
-              );
+              pauseVideo.disabled = ![
+                'playing',
+                'loading',
+                'ready',
+                'reconnecting',
+              ].includes(value.status);
               retry.hidden = !['unavailable', 'unsupported', 'ended'].includes(
                 value.status,
               );

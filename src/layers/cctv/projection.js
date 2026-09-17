@@ -226,6 +226,7 @@ export function createProjection({
       video.preload = 'auto';
       runtime.video = video;
       runtime.playback = createCctvVideoPlayback({
+        playbackKind: record.camera.playbackKind,
         visibilityTarget: document,
         video,
         url: parts.frames.mediaUrlFor(record.camera),

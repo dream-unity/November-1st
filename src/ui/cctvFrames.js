@@ -43,6 +43,7 @@ export function _syncCctvVideo(activeCamera, enabled) {
   this._cctvFrameWrap?.appendChild(video);
   this._cctvFrameWrap?.appendChild(retry);
   this._cctvPlayback = createCctvVideoPlayback({
+    playbackKind: activeCamera.playbackKind,
     visibilityTarget: document,
     initiallyActive: panelVisible(),
     video,

@@ -3,6 +3,7 @@ export function createCctvVideoPlayback({
   video,
   url,
   feedType,
+  playbackKind = 'video',
   onStatus = () => {},
   timeoutMs = 20_000,
   autoPlay = true,
@@ -19,8 +20,15 @@ export function createCctvVideoPlayback({
   let pendingPlay = null;
   let generation = 0;
   let hlsPlayer = null;
+  let hlsLoadingStopped = false;
   let sourceAttached = false;
   let wantsPlayback = autoPlay;
+  let reconnectTimer = null;
+  let reconnectAttempts = 0;
+  let stableSince = null;
+  let stableMediaTime = null;
+  const recoverLive = playbackKind === 'live';
+  const MAX_RECONNECTS = 3;
   const hls = feedType === 'hls';
   const nativeSupported =
     !hls ||
@@ -39,27 +47,76 @@ export function createCctvVideoPlayback({
     clearTimeout(playTimer);
     playTimer = null;
   }
-  function publish(status, message) {
+  function clearReconnect() {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+  function resetStability() {
+    stableSince = null;
+    stableMediaTime = null;
+  }
+  function publish(status, message, reason) {
     if (destroyed) return;
     state = status;
-    onStatus({ status, message });
+    onStatus({ status, message, ...(reason ? { reason } : {}) });
+  }
+  function stopHlsLoading() {
+    if (!hlsPlayer || hlsLoadingStopped) return;
+    hlsLoadingStopped = true;
+    hlsPlayer.stopLoad?.();
+  }
+  function startHlsLoading() {
+    if (!hlsPlayer || !hlsLoadingStopped) return;
+    hlsLoadingStopped = false;
+    hlsPlayer.startLoad?.(-1);
   }
   function unload() {
     sourceAttached = false;
     const player = hlsPlayer;
     hlsPlayer = null;
+    hlsLoadingStopped = false;
     player?.destroy();
     video.pause();
     video.removeAttribute('src');
     video.load();
   }
-  function fail(status, message) {
+  function fail(status, message, reason, transient = false) {
     clearTimer();
     clearPlayTimer();
+    clearReconnect();
+    resetStability();
     pendingPlay = null;
     generation++;
     unload();
-    publish(status, message);
+    if (
+      transient &&
+      recoverLive &&
+      active &&
+      wantsPlayback &&
+      reconnectAttempts < MAX_RECONNECTS
+    ) {
+      reconnectAttempts++;
+      const attempt = generation;
+      publish(
+        'reconnecting',
+        `Reconnecting live camera (${reconnectAttempts}/${MAX_RECONNECTS}). ${message}`,
+        reason,
+      );
+      reconnectTimer = setTimeout(
+        () => {
+          reconnectTimer = null;
+          if (!destroyed && active && wantsPlayback && attempt === generation)
+            load();
+        },
+        1000 * 2 ** (reconnectAttempts - 1),
+      );
+      return;
+    }
+    publish(
+      status,
+      `${message}${transient && recoverLive && reconnectAttempts >= MAX_RECONNECTS ? ' Automatic reconnect limit reached. Press Retry video to try again.' : ''}`,
+      reason,
+    );
   }
   function armTimer() {
     if (timer || !active || destroyed) return;
@@ -67,9 +124,9 @@ export function createCctvVideoPlayback({
       timer = null;
       fail(
         'unavailable',
-        hls
-          ? hlsHelp
-          : 'Camera video timed out — retry or choose another camera',
+        'Camera video timed out while loading or buffering — retry or choose another camera',
+        'buffer-timeout',
+        true,
       );
     }, timeoutMs);
   }
@@ -81,6 +138,8 @@ export function createCctvVideoPlayback({
       fail(
         'unavailable',
         'Camera playback did not start — retry or choose another camera',
+        'play-start-timeout',
+        true,
       );
     }, timeoutMs);
   }
@@ -98,7 +157,7 @@ export function createCctvVideoPlayback({
       return;
     wantsPlayback = true;
     const attempt = generation;
-    hlsPlayer?.startLoad?.(-1);
+    startHlsLoading();
     armPlayTimer(attempt);
     let result;
     try {
@@ -116,6 +175,7 @@ export function createCctvVideoPlayback({
           publish(
             'blocked',
             'Browser blocked automatic playback. Press Play video to start.',
+            'autoplay-blocked',
           );
         } else {
           fail(
@@ -123,6 +183,9 @@ export function createCctvVideoPlayback({
             hls
               ? hlsHelp
               : 'Camera video could not play — retry or choose another camera',
+            error?.name === 'NotSupportedError'
+              ? 'unsupported-format'
+              : 'play-rejected',
           );
         }
       })
@@ -150,12 +213,18 @@ export function createCctvVideoPlayback({
     clearTimer();
     clearPlayTimer();
     wantsPlayback = true;
+    if (stableSince === null) {
+      stableSince = Date.now();
+      stableMediaTime = video.currentTime;
+    }
     publish('playing', 'Camera video is playing.');
   }
   function paused() {
     if (destroyed || !active || !sourceAttached || !video.paused) return;
     wantsPlayback = false;
-    hlsPlayer?.stopLoad?.();
+    clearReconnect();
+    resetStability();
+    stopHlsLoading();
     generation++;
     pendingPlay = null;
     clearTimer();
@@ -170,6 +239,7 @@ export function createCctvVideoPlayback({
       (video.paused && !wantsPlayback)
     )
       return;
+    resetStability();
     publish('loading', 'Camera video is buffering');
     armTimer();
   }
@@ -178,11 +248,17 @@ export function createCctvVideoPlayback({
     const code = video.error?.code;
     fail(
       'unavailable',
-      hls
-        ? hlsHelp
-        : code === 3 || code === 4
-          ? 'Camera video format cannot be decoded by this browser'
-          : 'Camera video connection failed — retry or choose another camera',
+      code === 3 || code === 4
+        ? `Camera video cannot be decoded or supported by this browser (media error ${code}).`
+        : `Camera video connection failed (media error ${code || 'unknown'}) — retry or choose another camera`,
+      code === 2
+        ? 'media-network-error'
+        : code === 3
+          ? 'media-decode-error'
+          : code === 4
+            ? 'media-unsupported'
+            : 'media-error',
+      code === 2,
     );
   }
   const listeners = {
@@ -193,14 +269,34 @@ export function createCctvVideoPlayback({
     play: () => {
       if (destroyed || !sourceAttached || !active) return;
       wantsPlayback = true;
-      hlsPlayer?.startLoad?.(-1);
+      startHlsLoading();
       armPlayTimer(generation);
     },
     playing,
+    timeupdate: () => {
+      if (
+        state !== 'playing' ||
+        stableSince === null ||
+        !active ||
+        !wantsPlayback
+      )
+        return;
+      // A seek or metadata event does not establish stability. Require both a
+      // minute of uninterrupted playback and at least 30 seconds of media progress.
+      if (
+        Date.now() - stableSince >= 60_000 &&
+        Number.isFinite(video.currentTime) &&
+        Number.isFinite(stableMediaTime) &&
+        video.currentTime - stableMediaTime >= 30
+      )
+        reconnectAttempts = 0;
+    },
     pause: paused,
     ended: () => {
       if (destroyed || !sourceAttached) return;
       wantsPlayback = false;
+      clearReconnect();
+      resetStability();
       clearTimer();
       clearPlayTimer();
       publish(
@@ -227,22 +323,36 @@ export function createCctvVideoPlayback({
     );
     if (!active) return;
     armTimer();
-    if (nativeSupported) {
+    const attachNative = () => {
       sourceAttached = true;
       video.src = url;
       video.load();
+    };
+    if (!hls) {
+      attachNative();
       return;
     }
     try {
       const Hls = await loadHls();
       if (destroyed || !active || attempt !== generation) return;
       if (!Hls?.isSupported?.()) {
-        fail('unsupported', 'This browser cannot play HLS camera video');
+        if (nativeSupported) attachNative();
+        else
+          fail(
+            'unsupported',
+            'This browser cannot play HLS camera video',
+            'hls-unsupported',
+          );
         return;
       }
       hlsPlayer = new Hls({
         maxBufferLength: 20,
         backBufferLength: 10,
+        // Public traffic playlists may contain only three short-lived segments.
+        // Start close to the live edge instead of requesting already expired media.
+        liveSyncDurationCount: 1,
+        liveMaxLatencyDurationCount: 3,
+        maxLiveSyncPlaybackRate: 1.1,
         manifestLoadingTimeOut: timeoutMs,
         manifestLoadingMaxRetry: 1,
         levelLoadingTimeOut: timeoutMs,
@@ -253,14 +363,64 @@ export function createCctvVideoPlayback({
       const player = hlsPlayer;
       player.on(Hls.Events.ERROR, (_event, data) => {
         if (destroyed || player !== hlsPlayer || !data?.fatal) return;
-        fail('unavailable', hlsHelp);
+        const network = data.type === 'networkError';
+        const transient =
+          network &&
+          [
+            'fragLoadError',
+            'fragLoadTimeOut',
+            'levelLoadError',
+            'levelLoadTimeOut',
+            'manifestLoadError',
+            'manifestLoadTimeOut',
+            'keyLoadError',
+            'keyLoadTimeOut',
+            'audioTrackLoadError',
+            'audioTrackLoadTimeOut',
+          ].includes(data.details);
+        const invalidManifest = [
+          'manifestParsingError',
+          'manifestIncompatibleCodecsError',
+        ].includes(data.details);
+        const request =
+          {
+            fragLoadError: 'fragment request',
+            fragLoadTimeOut: 'fragment timeout',
+            levelLoadError: 'playlist request',
+            levelLoadTimeOut: 'playlist timeout',
+            manifestLoadError: 'manifest request',
+            manifestLoadTimeOut: 'manifest timeout',
+          }[data.details] || 'stream request';
+        const code = Number(data.response?.code);
+        const http =
+          Number.isInteger(code) && code >= 100 && code <= 599
+            ? `, HTTP ${code}`
+            : '';
+        fail(
+          'unavailable',
+          invalidManifest
+            ? 'Camera playlist format or codecs are not supported.'
+            : network
+              ? `Camera ${request} failed${http}.`
+              : 'Camera stream could not be decoded.',
+          invalidManifest
+            ? 'hls-format-error'
+            : network
+              ? 'hls-network-error'
+              : 'hls-media-error',
+          transient,
+        );
       });
       sourceAttached = true;
       player.loadSource(url);
       player.attachMedia(video);
     } catch {
       if (destroyed || attempt !== generation) return;
-      fail('unavailable', hlsHelp);
+      // A throwing attach/load operation may already own MediaSource listeners.
+      // Release that partial session before native fallback attaches the same video.
+      unload();
+      if (nativeSupported) attachNative();
+      else fail('unavailable', hlsHelp, 'hls-adapter-error');
     }
   }
   function updateActive() {
@@ -268,19 +428,21 @@ export function createCctvVideoPlayback({
     if (destroyed || next === active) return;
     active = next;
     if (!active) {
+      const resumePending =
+        sourceAttached || Boolean(reconnectTimer) || state === 'loading';
       generation++;
       clearTimer();
       clearPlayTimer();
+      clearReconnect();
+      resetStability();
       pendingPlay = null;
-      hlsPlayer?.stopLoad?.();
+      stopHlsLoading();
       video.pause();
-      if (sourceAttached && wantsPlayback)
+      if (wantsPlayback && resumePending)
         publish('suspended', 'Camera video paused while hidden or inactive.');
-    } else if (
-      ['unavailable', 'unsupported'].includes(state) ||
-      !sourceAttached
-    ) {
-      load();
+    } else if (!sourceAttached) {
+      if (state === 'loading' || (state === 'suspended' && wantsPlayback))
+        load();
     } else {
       if (wantsPlayback) {
         publish('ready', 'Resuming camera video');
@@ -295,6 +457,8 @@ export function createCctvVideoPlayback({
     resume,
     play() {
       if (destroyed || !active) return false;
+      clearReconnect();
+      reconnectAttempts = 0;
       wantsPlayback = true;
       if (
         ['unavailable', 'unsupported'].includes(state) ||
@@ -312,8 +476,15 @@ export function createCctvVideoPlayback({
     },
     pause() {
       wantsPlayback = false;
+      clearTimer();
+      clearPlayTimer();
+      pendingPlay = null;
+      clearReconnect();
+      resetStability();
+      generation++;
       video.pause();
       paused();
+      if (!sourceAttached) publish('paused', 'Camera video is paused.');
     },
     retry() {
       if (
@@ -322,6 +493,8 @@ export function createCctvVideoPlayback({
         !['unavailable', 'blocked', 'unsupported', 'ended'].includes(state)
       )
         return false;
+      clearReconnect();
+      reconnectAttempts = 0;
       wantsPlayback = true;
       unload();
       load();
@@ -337,6 +510,8 @@ export function createCctvVideoPlayback({
       generation++;
       clearTimer();
       clearPlayTimer();
+      clearReconnect();
+      resetStability();
       pendingPlay = null;
       visibilityTarget?.removeEventListener?.(
         'visibilitychange',

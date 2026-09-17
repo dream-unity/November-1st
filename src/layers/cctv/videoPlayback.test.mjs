@@ -42,7 +42,7 @@ async function flush() {
 }
 
 function fixture(t, options = {}) {
-  t.mock.timers.enable({ apis: ['setTimeout'] });
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
   const video = options.video || new Video();
   const statuses = [];
   const playback = createCctvVideoPlayback({
@@ -50,6 +50,7 @@ function fixture(t, options = {}) {
     url: '/camera',
     feedType: 'mp4',
     timeoutMs: 100,
+    loadHls: async () => ({ isSupported: () => false }),
     onStatus: (value) => statuses.push(value),
     ...options,
   });
@@ -70,10 +71,11 @@ test('unsupported HLS is identified after the browser adapter check and does not
   assert.equal(f.statuses.length, 2);
 });
 
-test('native HLS is attempted and stream failures give an actionable retry message', (t) => {
+test('native HLS is attempted and stream failures give an actionable retry message', async (t) => {
   const video = new Video();
   video.canPlayType = () => 'maybe';
   const f = fixture(t, { video, feedType: 'hls' });
+  await flush();
   assert.equal(video.source, '/camera');
   video.emit('error');
   assert.equal(f.status().status, 'unavailable');
@@ -195,6 +197,7 @@ test('initial loading and later stalls have finite deadlines, with an explicit r
   );
   f.playback.setActive(false);
   f.playback.setActive(true);
+  f.playback.retry();
   f.video.emit('canplay');
   await flush();
   assert.equal(f.status().status, 'ready');
@@ -481,6 +484,7 @@ test('a finite HLS playlist ending reconnects on explicit Play rather than silen
   const video = new Video();
   video.canPlayType = () => 'maybe';
   const f = fixture(t, { video, feedType: 'hls' });
+  await flush();
   video.emit('canplay');
   await flush();
   video.emit('playing');
@@ -489,6 +493,7 @@ test('a finite HLS playlist ending reconnects on explicit Play rather than silen
   f.playback.play();
   assert.ok(video.loadCount > loads);
   assert.equal(f.status().status, 'loading');
+  await flush();
   assert.equal(video.source, '/camera');
 });
 
@@ -525,4 +530,308 @@ test('a collapsed camera panel performs no source loading until explicitly activ
   f.playback.setActive(false);
   assert.equal(f.video.paused, true);
   assert.equal(f.status().status, 'suspended');
+});
+
+test('MSE-capable browsers use the controlled HLS player even when they advertise native HLS', async (t) => {
+  const video = new Video();
+  video.canPlayType = () => 'maybe';
+  let player;
+  class Hls {
+    static isSupported = () => true;
+    static Events = { ERROR: 'error' };
+    constructor(options) {
+      player = this;
+      this.options = options;
+    }
+    on(_event, callback) {
+      this.error = callback;
+    }
+    loadSource(url) {
+      this.source = url;
+    }
+    attachMedia(media) {
+      this.media = media;
+    }
+    destroy() {
+      this.destroyed = true;
+    }
+  }
+  const f = fixture(t, {
+    video,
+    feedType: 'hls',
+    playbackKind: 'live',
+    loadHls: async () => Hls,
+  });
+  await flush();
+  assert.equal(video.source, null, 'native src must not bypass controlled HLS');
+  assert.equal(player.source, '/camera');
+  assert.equal(player.media, video);
+  assert.equal(player.options.liveSyncDurationCount, 1);
+  assert.equal(player.options.liveMaxLatencyDurationCount, 3);
+  player.error('error', {
+    fatal: true,
+    type: 'networkError',
+    details: 'fragLoadError',
+    response: { code: 404 },
+    url: 'secret-url',
+  });
+  assert.equal(f.status().status, 'reconnecting');
+  assert.equal(f.status().reason, 'hls-network-error');
+  assert.match(f.status().message, /fragment request failed, HTTP 404/);
+  assert.doesNotMatch(f.status().message, /secret-url/);
+});
+
+test('live network failures reload a fresh playlist with a finite three-attempt backoff budget', async (t) => {
+  const video = new Video();
+  video.canPlayType = () => 'maybe';
+  video.error = { code: 2 };
+  const f = fixture(t, { video, feedType: 'hls', playbackKind: 'live' });
+  await flush();
+  for (let i = 0; i < 3; i++) {
+    video.emit('error');
+    assert.equal(f.status().status, 'reconnecting');
+    assert.equal(f.status().reason, 'media-network-error');
+    assert.match(f.status().message, new RegExp(`${i + 1}/3`));
+    assert.equal(video.source, null);
+    t.mock.timers.tick(1000 * 2 ** i - 1);
+    assert.equal(video.source, null);
+    t.mock.timers.tick(1);
+    await flush();
+    assert.equal(video.source, '/camera');
+  }
+  video.emit('error');
+  assert.equal(f.status().status, 'unavailable');
+  assert.match(f.status().message, /limit reached/);
+  const loads = video.loadCount;
+  t.mock.timers.tick(60_000);
+  assert.equal(video.loadCount, loads);
+  f.playback.setActive(false);
+  f.playback.setActive(true);
+  await flush();
+  assert.equal(
+    video.loadCount,
+    loads,
+    'visibility cannot evade a terminal recovery budget',
+  );
+  assert.equal(f.playback.retry(), true);
+  await flush();
+  video.emit('error');
+  assert.match(f.status().message, /1\/3/);
+});
+
+test('pausing, hiding or destroying during reconnect prevents delayed source attachment', async (t) => {
+  for (const operation of ['pause', 'hide', 'destroy']) {
+    const video = new Video();
+    video.canPlayType = () => 'maybe';
+    video.error = { code: 2 };
+    const doc = new EventTarget();
+    doc.hidden = false;
+    const f = fixture(t, {
+      video,
+      feedType: 'hls',
+      playbackKind: 'live',
+      visibilityTarget: doc,
+    });
+    await flush();
+    video.emit('error');
+    if (operation === 'hide') {
+      doc.hidden = true;
+      doc.dispatchEvent(new Event('visibilitychange'));
+    } else f.playback[operation]();
+    const loads = video.loadCount;
+    t.mock.timers.tick(10_000);
+    await flush();
+    assert.equal(video.source, null);
+    assert.equal(video.loadCount, loads);
+    if (operation === 'pause') {
+      doc.hidden = true;
+      doc.dispatchEvent(new Event('visibilitychange'));
+      doc.hidden = false;
+      doc.dispatchEvent(new Event('visibilitychange'));
+      await flush();
+      assert.equal(
+        video.source,
+        null,
+        'a paused reconnect stays paused across visibility changes',
+      );
+    }
+    f.playback.destroy();
+    t.mock.timers.reset();
+  }
+});
+
+test('finite clips, unconfirmed video and decode/unsupported failures never automatically reconnect', async (t) => {
+  for (const [playbackKind, code] of [
+    ['clip', 2],
+    ['video', 2],
+    ['live', 3],
+    ['live', 4],
+  ]) {
+    const video = new Video();
+    video.error = { code };
+    const f = fixture(t, { video, playbackKind });
+    video.emit('error');
+    assert.equal(f.status().status, 'unavailable');
+    assert.ok(f.status().reason);
+    const loads = video.loadCount;
+    t.mock.timers.tick(10_000);
+    assert.equal(video.loadCount, loads);
+    f.playback.destroy();
+    t.mock.timers.reset();
+  }
+});
+
+test('reconnect budget resets only after stable elapsed playback and advancing media time', async (t) => {
+  const video = new Video();
+  video.error = { code: 2 };
+  video.currentTime = 0;
+  const f = fixture(t, { video, playbackKind: 'live' });
+  video.emit('error');
+  t.mock.timers.tick(1000);
+  video.emit('canplay');
+  await flush();
+  video.emit('playing');
+  video.currentTime = 60;
+  video.emit('timeupdate');
+  video.emit('error');
+  assert.match(
+    f.status().message,
+    /2\/3/,
+    'a seek alone does not reset the budget',
+  );
+  t.mock.timers.tick(2000);
+  video.currentTime = 0;
+  video.emit('canplay');
+  await flush();
+  video.emit('playing');
+  t.mock.timers.tick(60_000);
+  video.currentTime = 60;
+  video.emit('timeupdate');
+  video.emit('error');
+  assert.match(f.status().message, /1\/3/);
+});
+
+test('a partially attached HLS adapter is destroyed before native fallback reuses its video', async (t) => {
+  const video = new Video();
+  video.canPlayType = () => 'maybe';
+  let player;
+  class Hls {
+    static isSupported = () => true;
+    static Events = { ERROR: 'error' };
+    constructor() {
+      player = this;
+    }
+    on() {}
+    loadSource() {}
+    attachMedia() {
+      throw new Error('adapter attachment failed');
+    }
+    destroy() {
+      this.destroyed = true;
+    }
+  }
+  const f = fixture(t, { video, feedType: 'hls', loadHls: async () => Hls });
+  await flush();
+  assert.equal(player.destroyed, true);
+  assert.equal(video.source, '/camera');
+  video.emit('canplay');
+  await flush();
+  video.emit('playing');
+  assert.equal(f.status().status, 'playing');
+});
+
+test('explicit pause while the HLS adapter is still importing cancels the initial loading deadline', async (t) => {
+  const video = new Video();
+  video.canPlayType = () => 'maybe';
+  let resolveAdapter;
+  const f = fixture(t, {
+    video,
+    feedType: 'hls',
+    playbackKind: 'live',
+    loadHls: () =>
+      new Promise((resolve) => {
+        resolveAdapter = resolve;
+      }),
+  });
+  f.playback.pause();
+  t.mock.timers.tick(10_000);
+  assert.equal(f.status().status, 'paused');
+  resolveAdapter({ isSupported: () => false });
+  await flush();
+  assert.equal(video.source, null);
+  assert.equal(f.status().status, 'paused');
+});
+
+test('HLS loading restarts only after a real suspension, not on every play event', async (t) => {
+  let player;
+  class Hls {
+    static isSupported = () => true;
+    static Events = { ERROR: 'error' };
+    constructor() {
+      player = this;
+      this.starts = 0;
+      this.stops = 0;
+    }
+    on() {}
+    loadSource() {}
+    attachMedia() {}
+    destroy() {}
+    startLoad() {
+      this.starts++;
+    }
+    stopLoad() {
+      this.stops++;
+    }
+  }
+  const f = fixture(t, { feedType: 'hls', loadHls: async () => Hls });
+  await flush();
+  f.video.emit('canplay');
+  await flush();
+  f.video.emit('play');
+  f.video.emit('playing');
+  assert.equal(player.starts, 0, 'initial HLS loader must not be restarted');
+  f.playback.pause();
+  assert.equal(player.stops, 1);
+  f.playback.play();
+  f.video.emit('play');
+  await flush();
+  f.video.emit('playing');
+  assert.equal(
+    player.starts,
+    1,
+    'resume and native play event must not restart twice',
+  );
+});
+
+test('invalid HLS manifests remain terminal even when hls.js categorizes them as network errors', async (t) => {
+  let player;
+  class Hls {
+    static isSupported = () => true;
+    static Events = { ERROR: 'error' };
+    constructor() {
+      player = this;
+    }
+    on(_event, callback) {
+      this.error = callback;
+    }
+    loadSource() {}
+    attachMedia() {}
+    destroy() {}
+  }
+  const f = fixture(t, {
+    feedType: 'hls',
+    playbackKind: 'live',
+    loadHls: async () => Hls,
+  });
+  await flush();
+  player.error('error', {
+    fatal: true,
+    type: 'networkError',
+    details: 'manifestParsingError',
+  });
+  assert.equal(f.status().status, 'unavailable');
+  assert.equal(f.status().reason, 'hls-format-error');
+  const count = f.statuses.length;
+  t.mock.timers.tick(10_000);
+  assert.equal(f.statuses.length, count);
 });

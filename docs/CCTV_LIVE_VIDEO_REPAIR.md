@@ -23,6 +23,7 @@ and describes public dataset integration in its
 | Discovery | Thousands of images obscured the absence of video | CCTV opens in Live video, with separate Snapshot, Clips/other videos and All cameras filters and explicit counts |
 | Media truthfulness | Video container support was confused with live coverage | Declared live streams, finite clips, unidentified video and snapshots carry distinct classifications |
 | Playback state | Metadata/can-play events could look like playing media | Playing, paused, buffering, blocked, ended and unavailable states reflect media events; explicit Play/Pause/Retry controls remain available |
+| Live continuity | Temporary delivery failures can outlive the provider's short sliding window | MSE playback joins the newest complete live segment; transient failures reconnect to a fresh playlist with a finite budget |
 | Playback lifecycle | Pause, browser autoplay refusal and hidden-page work were insufficiently distinguished | User pause is respected; browser refusal retains a manual play path; visibility and selection/close teardown cancel obsolete work |
 | Globe integration | The original projection expected only the old ready state | The original camera panel and globe projection recognize the expanded media states without replacing the full application |
 | Fragment integrity | A generic range clamp could silently shorten an HLS fragment | Oversized fragments fail explicitly; exact finite ranges are validated, and a safely bounded ignored-range response is sliced correctly |
@@ -59,6 +60,12 @@ catalogue → master → variant → binary segment → advancing variant. It in
 Vercel's injected rewrite parameter and encoded resource query, checks no-store
 playlists, and proves out-of-directory requests never reach the upstream.
 
+A sustained direct-provider probe also established a three-segment (~30-second)
+live window. Valid 2.6 MiB segments sometimes exceeded the acquisition deadline;
+the next playlist advanced and returned valid media again. An earlier valid
+segment later returned HTTP 404 directly from the provider. Those expired
+fragments need a new live playlist, not indefinite retries of an old URL.
+
 Final automated totals and deployed browser results are recorded in
 [DREAM_UNITY_VERIFICATION.md](DREAM_UNITY_VERIFICATION.md).
 
@@ -66,7 +73,8 @@ Final automated totals and deployed browser results are recorded in
 
 - The initial continuous-video integration is Caltrans, California. Other
   agencies' still-only feeds remain under Snapshots.
-- The browser player supports native HLS where available and hls.js elsewhere.
+- The browser player prefers hls.js with Media Source support and falls back
+  to native HLS where necessary.
   It starts selected live video muted; browsers may require a Play action.
 - Camera outages and upstream latency remain visible. There is no claim that
   every catalogue entry has been watched or is online at all times.
