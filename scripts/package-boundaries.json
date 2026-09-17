@@ -184,7 +184,9 @@
       "src/data/cctvFootprint.js",
       "src/sources/cctvTypes.js",
       "src/sources/httpBody.js",
-      "server/providers/cctv/hls.js"
+      "server/providers/cctv/hls.js",
+      "server/providers/cctv/globalSources.js",
+      "server/providers/cctv/embedStatus.js"
     ],
     "external": []
   },
@@ -434,7 +436,9 @@
       "src/ui/cctvFrames.js",
       "src/ui/cctvPresentation.js",
       "src/sources/cctvVideoPlayback.js",
-      "src/sources/cctvTypes.js"
+      "src/sources/cctvTypes.js",
+      "src/sources/cctvEmbedPlayback.js",
+      "src/sources/httpBody.js"
     ],
     "external": ["hls.js"]
   },
@@ -603,7 +607,9 @@
       "src/ui/displayBindings.js",
       "src/ui/shellFacade.js",
       "src/sources/cctvVideoPlayback.js",
-      "src/sources/cctvTypes.js"
+      "src/sources/cctvTypes.js",
+      "src/sources/cctvEmbedPlayback.js",
+      "src/sources/httpBody.js"
     ],
     "external": ["cesium", "hls.js"]
   },
@@ -1059,7 +1065,9 @@
       "src/data/inputOwnership.js",
       "src/layers/cctv/sourcePolicy.js",
       "src/sources/cctvVideoPlayback.js",
-      "src/sources/cctvTypes.js"
+      "src/sources/cctvTypes.js",
+      "src/sources/cctvEmbedPlayback.js",
+      "src/sources/httpBody.js"
     ],
     "external": ["cesium", "hls.js"]
   },
@@ -1842,7 +1850,8 @@
       "src/ui/sceneSharing.js",
       "src/sources/cctvVideoPlayback.js",
       "src/sources/radioBrowser.js",
-      "src/sources/cctvTypes.js"
+      "src/sources/cctvTypes.js",
+      "src/sources/cctvEmbedPlayback.js"
     ],
     "external": [
       "@mapbox/vector-tile",
@@ -2241,7 +2250,8 @@
       "src/sources/overpassRoads.js",
       "src/sources/cctvVideoPlayback.js",
       "src/sources/radioBrowser.js",
-      "src/sources/cctvTypes.js"
+      "src/sources/cctvTypes.js",
+      "src/sources/cctvEmbedPlayback.js"
     ],
     "external": [
       "cesium",

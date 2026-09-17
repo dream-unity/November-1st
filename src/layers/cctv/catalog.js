@@ -1,4 +1,7 @@
-import { cameraMediaKind } from '../../sources/cctvTypes.js';
+import {
+  cameraMediaKind,
+  normalizeCctvEmbedUrl,
+} from '../../sources/cctvTypes.js';
 import { CAMERA_SEEDS, SOURCE_ENDPOINT } from './policy.js';
 
 export function createCatalog({ state: layerState, services, parts, source }) {
@@ -176,6 +179,9 @@ export function createCatalog({ state: layerState, services, parts, source }) {
         name: String(source.name || seed?.name || id),
         cityId,
         city: String(source.city || city?.name || seed?.city || 'Global'),
+        country: String(source.country || ''),
+        countryName: String(source.countryName || source.country || ''),
+        countryCode: String(source.countryCode || ''),
         provider: String(
           source.provider || seed?.provider || 'Configured CCTV Source',
         ),
@@ -186,6 +192,9 @@ export function createCatalog({ state: layerState, services, parts, source }) {
         ).toLowerCase(),
         feedType,
         playbackKind: cameraMediaKind({ ...source, feedType }),
+        embedUrl: normalizeCctvEmbedUrl(source.embedUrl),
+        sourcePage: String(source.sourcePage || ''),
+        verifiedAt: String(source.verifiedAt || ''),
         feedConfigured: typeof source.url === 'string' && !!source.url.trim(),
         lat,
         lon,

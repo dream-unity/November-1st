@@ -1,9 +1,13 @@
 import { createRadioStreamPlayer } from '../layers/radio/playback.js';
 import { createCctvVideoPlayback } from '../sources/cctvVideoPlayback.js';
+import { createCctvEmbedPlayback } from '../sources/cctvEmbedPlayback.js';
 import { cameraMediaKind, cameraMediaLabel } from '../sources/cctvTypes.js';
 import { mountTrafficReports } from '../ui/trafficReports.js';
 import {
   filterFeedDirectory,
+  cameraCountry,
+  cameraCountryOptions,
+  interleaveCameraCountries,
   readFeedDirectory,
   readCctvSnapshot,
 } from './liveFeedsModel.js';
@@ -193,7 +197,7 @@ export function installLiveFeeds({
       'p',
       kind === 'radio'
         ? 'Search radio stations, then choose Listen. Audio comes directly from the broadcaster; it stops when this panel closes or you change feed type.'
-        : 'Live video is selected by default. Choose a live camera to watch continuous video, starting muted. Snapshots and finite video clips are available separately; not every agency publishes live streams.',
+        : 'Live video is selected by default. Choose a country and camera to watch a direct stream or the provider’s official video player. Video starts muted where supported. Snapshots and finite clips are available separately; coverage varies by country and provider.',
       'du-feeds-intro',
     );
     const filters = element('div', '', 'du-feeds-filters');
@@ -201,7 +205,7 @@ export function installLiveFeeds({
       'label',
       kind === 'radio'
         ? 'Search name, country, language or genre'
-        : 'Search camera, city or provider',
+        : 'Search camera, country, city or provider',
     );
     const search = element('input');
     search.type = 'search';
@@ -209,7 +213,7 @@ export function installLiveFeeds({
     search.placeholder =
       kind === 'radio'
         ? 'e.g. jazz, London, French'
-        : 'e.g. Austin, Finland, highway';
+        : 'e.g. Australia, GB, Tokyo, highway';
     searchLabel.append(search);
     const regionLabel = element(
       'label',
@@ -228,7 +232,16 @@ export function installLiveFeeds({
     );
     regionLabel.append(region);
     const refresh = button('Refresh directory');
-    filters.append(searchLabel, regionLabel, refresh);
+    const countryFilter = kind === 'cctv' ? element('select') : null;
+    filters.append(searchLabel);
+    if (countryFilter) {
+      const countryLabel = element('label', 'Country');
+      countryFilter.setAttribute('aria-label', 'Filter cameras by country');
+      countryFilter.append(new Option('All countries', ''));
+      countryLabel.append(countryFilter);
+      filters.append(countryLabel);
+    }
+    filters.append(regionLabel);
     const mediaFilter = kind === 'cctv' ? element('select') : null;
     const mediaOptions = [
       ['live', 'Live video'],
@@ -246,6 +259,7 @@ export function installLiveFeeds({
       filters.append(mediaLabel);
       filters.classList.add('du-feeds-camera-filters');
     }
+    filters.append(refresh);
     const directoryStatus = element(
       'p',
       'Loading directory…',
@@ -300,7 +314,9 @@ export function installLiveFeeds({
         'p',
         kind === 'radio'
           ? [item.state, item.country].filter(Boolean).join(', ')
-          : [item.city, item.provider].filter(Boolean).join(' · '),
+          : [item.city, cameraCountry(item).name, item.provider]
+              .filter(Boolean)
+              .join(' · '),
       );
       const status = element('p', '', 'du-feeds-status');
       status.setAttribute('role', 'status');
@@ -399,7 +415,66 @@ export function installLiveFeeds({
           [item.credit, item.license].filter(Boolean).join(' · '),
           'du-feeds-note',
         );
-        if (['mp4', 'webm', 'hls'].includes(item.feedType)) {
+        if (item.feedType === 'embed') {
+          const embed = element('div', '', 'du-feed-embed');
+          const playVideo = button('Play video');
+          const pauseVideo = button('Pause video');
+          const retry = button('Retry video');
+          const mediaLabel = element(
+            'p',
+            `${cameraMediaLabel(item)} · Official provider player`,
+            'du-feed-media-kind',
+          );
+          detail.append(mediaLabel, embed);
+          const playback = createCctvEmbedPlayback({
+            container: embed,
+            embedUrl: item.embedUrl,
+            title: item.name,
+            sourcePage: item.sourcePage,
+            statusUrl: `/api/cctv/embed-status/${encodeURIComponent(item.id)}`,
+            playbackKind: item.playbackKind,
+            visibilityTarget: document,
+            autoPlay: cameraMediaKind(item) === 'live',
+            onStatus(value) {
+              if (mediaSignal.aborted) return;
+              status.textContent = value.message || value.status;
+              const verifiedLabel = {
+                unknown: 'Live status unconfirmed',
+                ended: 'Broadcast ended',
+                unavailable: 'Broadcast unavailable',
+              }[value.liveStatus];
+              mediaLabel.textContent = `${verifiedLabel || cameraMediaLabel(item)} · Official provider player`;
+              playVideo.disabled = value.status === 'playing';
+              pauseVideo.disabled = ![
+                'playing',
+                'loading',
+                'ready',
+                'blocked',
+              ].includes(value.status);
+              retry.hidden = !['unavailable', 'unsupported', 'ended'].includes(
+                value.status,
+              );
+            },
+          });
+          playVideo.addEventListener('click', () => playback.play(), {
+            signal: mediaSignal,
+          });
+          pauseVideo.addEventListener('click', () => playback.pause(), {
+            signal: mediaSignal,
+          });
+          retry.addEventListener('click', () => playback.retry(), {
+            signal: mediaSignal,
+          });
+          actions.append(playVideo, pauseVideo, retry);
+          detail.append(
+            element(
+              'p',
+              'Use the provider’s video controls for sound or fullscreen. Its availability, advertising and geographic restrictions apply. If embedding is unavailable, use the provider link below. Closing this panel or changing cameras stops the player.',
+              'du-feeds-note',
+            ),
+          );
+          disposeMedia = () => playback.destroy();
+        } else if (['mp4', 'webm', 'hls'].includes(item.feedType)) {
           const video = element('video');
           video.controls = true;
           video.muted = true;
@@ -539,18 +614,43 @@ export function installLiveFeeds({
         }
         if (globe) actions.append(globe);
         detail.append(actions, attribution);
+        if (item.sourcePage) {
+          const sourceLink = element('a', 'Visit camera provider');
+          sourceLink.href = item.sourcePage;
+          sourceLink.target = '_blank';
+          sourceLink.rel = 'noopener noreferrer';
+          detail.append(sourceLink);
+        }
       }
       name.focus({ preventScroll: true });
       detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       renderList();
     }
     function renderList() {
-      const matches = filterFeedDirectory(
+      if (mediaFilter) {
+        for (const option of mediaFilter.options) {
+          const label = mediaOptions.find(
+            ([value]) => value === option.value,
+          )[1];
+          const matching = filterFeedDirectory(
+            items,
+            search.value,
+            region.value,
+            option.value,
+            countryFilter.value,
+          ).length;
+          option.textContent = `${label} (${matching})`;
+        }
+      }
+      const filtered = filterFeedDirectory(
         items,
         search.value,
         region.value,
         mediaFilter?.value || 'all',
+        countryFilter?.value || '',
       );
+      const matches =
+        kind === 'cctv' ? interleaveCameraCountries(filtered) : filtered;
       list.replaceChildren();
       const shown = matches.slice(0, visibleCount);
       const itemLabel = kind === 'radio' ? 'stations' : 'cameras';
@@ -558,7 +658,7 @@ export function installLiveFeeds({
         ? `Showing ${shown.length} of ${matches.length} matching ${itemLabel} (${items.length} in this directory).`
         : items.length
           ? kind === 'cctv'
-            ? 'No cameras match this media type, search and region. Change the filters to view other available sources.'
+            ? 'No cameras match this media type, search, country and region. Change the filters to view other available sources.'
             : 'No matches. Try a different search or region.'
           : '';
       for (const item of shown) {
@@ -574,7 +674,12 @@ export function installLiveFeeds({
             ? [item.country, item.tags.slice(0, 3).join(', ')]
                 .filter(Boolean)
                 .join(' · ')
-            : [item.city, item.provider, cameraMediaLabel(item)]
+            : [
+                item.city,
+                cameraCountry(item).name,
+                item.provider,
+                cameraMediaLabel(item),
+              ]
                 .filter(Boolean)
                 .join(' · '),
           'du-feed-subtitle',
@@ -604,6 +709,14 @@ export function installLiveFeeds({
     };
     search.addEventListener('input', resetFilter, { signal });
     region.addEventListener('change', resetFilter, { signal });
+    countryFilter?.addEventListener(
+      'change',
+      () => {
+        updateRegions();
+        resetFilter();
+      },
+      { signal },
+    );
     mediaFilter?.addEventListener('change', resetFilter, { signal });
     more.addEventListener(
       'click',
@@ -613,6 +726,31 @@ export function installLiveFeeds({
       },
       { signal },
     );
+    function updateRegions() {
+      const previousRegion = region.value;
+      region.replaceChildren(
+        new Option(
+          kind === 'radio' ? 'All countries' : 'All cities / regions',
+          '',
+        ),
+      );
+      const regionalItems = countryFilter
+        ? filterFeedDirectory(items, '', '', 'all', countryFilter.value)
+        : items;
+      for (const name of [
+        ...new Set(
+          regionalItems
+            .map((item) => (kind === 'radio' ? item.country : item.city))
+            .filter(Boolean),
+        ),
+      ].sort((a, b) => a.localeCompare(b)))
+        region.append(new Option(name, name));
+      region.value = [...region.options].some(
+        (option) => option.value === previousRegion,
+      )
+        ? previousRegion
+        : '';
+    }
     async function loadDirectory() {
       const generation = ++loadGeneration;
       request?.abort();
@@ -624,37 +762,23 @@ export function installLiveFeeds({
         const data = await readFeedDirectory(kind, { signal: requestSignal });
         if (requestSignal.aborted || generation !== loadGeneration) return;
         items = data.items;
-        if (mediaFilter) {
-          for (const option of mediaFilter.options) {
-            const label = mediaOptions.find(
-              ([value]) => value === option.value,
-            )[1];
-            const matching = filterFeedDirectory(
-              items,
-              '',
-              '',
-              option.value,
-            ).length;
-            option.textContent = `${label} (${matching})`;
-          }
+        if (countryFilter) {
+          const previousCountry = countryFilter.value;
+          countryFilter.replaceChildren(new Option('All countries', ''));
+          for (const country of cameraCountryOptions(items))
+            countryFilter.append(
+              new Option(
+                `${country.name} — ${country.live} listed live / ${country.total} cameras`,
+                country.value,
+              ),
+            );
+          countryFilter.value = [...countryFilter.options].some(
+            (option) => option.value === previousCountry,
+          )
+            ? previousCountry
+            : '';
         }
-        const previousRegion = region.value;
-        region.replaceChildren(
-          new Option(
-            kind === 'radio' ? 'All countries' : 'All cities / regions',
-            '',
-          ),
-        );
-        for (const name of [
-          ...new Set(
-            items.map((item) => item.country || item.city).filter(Boolean),
-          ),
-        ].sort((a, b) => a.localeCompare(b)))
-          region.append(new Option(name, name));
-        if (
-          [...region.options].some((option) => option.value === previousRegion)
-        )
-          region.value = previousRegion;
+        updateRegions();
         directoryStatus.textContent = !items.length
           ? 'This directory currently contains no entries. Try refreshing later.'
           : `${data.stale || data.degraded ? 'Cached / degraded directory. ' : ''}${data.updatedAt ? `Directory updated ${new Date(data.updatedAt).toLocaleString()}. ` : ''}${data.rejected ? `${data.rejected} unusable entries were excluded. ` : ''}Choose an entry to check its media.`;

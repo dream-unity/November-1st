@@ -27,9 +27,33 @@ export function isVideoFeedType(feedType) {
   return feedType === 'mp4' || feedType === 'webm' || feedType === 'hls';
 }
 
+/** Only owner-enabled official players; never accept arbitrary iframe HTML. */
+export function normalizeCctvEmbedUrl(value) {
+  if (typeof value !== 'string' || /[\s\u0000-\u001f\u007f]/.test(value))
+    return '';
+  try {
+    const url = new URL(value);
+    if (
+      url.protocol !== 'https:' ||
+      url.username ||
+      url.password ||
+      url.port ||
+      url.search ||
+      url.hash ||
+      !['www.youtube.com', 'www.youtube-nocookie.com'].includes(url.hostname) ||
+      !/^\/embed\/[A-Za-z0-9_-]{11}$/.test(url.pathname)
+    )
+      return '';
+    return `https://www.youtube-nocookie.com${url.pathname}`;
+  } catch {
+    return '';
+  }
+}
+
 /** Containers alone do not prove a source is live; only declared live sources do. */
 export function cameraMediaKind(camera) {
-  if (!isVideoFeedType(normalizeFeedType(camera?.feedType))) return 'snapshot';
+  const type = normalizeFeedType(camera?.feedType);
+  if (!isVideoFeedType(type) && type !== 'embed') return 'snapshot';
   return ['live', 'clip'].includes(camera?.playbackKind)
     ? camera.playbackKind
     : 'video';

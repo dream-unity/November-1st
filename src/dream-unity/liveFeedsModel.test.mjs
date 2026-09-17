@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {
   normalizeFeedDirectory,
   filterFeedDirectory,
+  cameraCountry,
+  cameraCountryOptions,
+  interleaveCameraCountries,
   readFeedDirectory,
   readCctvSnapshot,
 } from './liveFeedsModel.js';
@@ -273,4 +276,186 @@ test('media classification never infers live streaming from an HLS or MP4 contai
     filterFeedDirectory(result.items, 'missing', '', 'live').length,
     0,
   );
+});
+
+test('camera countries are explicit source metadata and source links must be public HTTPS', () => {
+  const sources = [
+    {
+      ...camera,
+      id: 'australia',
+      country: 'au',
+      countryName: 'Australia',
+      sourcePage: 'https://camera.example/public',
+    },
+    {
+      ...camera,
+      id: 'britain',
+      countryCode: 'gb',
+      countryName: 'United Kingdom',
+      sourcePage: 'https://user:secret@camera.example/',
+    },
+    { ...camera, sourcePage: 'javascript:alert(1)' },
+  ];
+  const { items } = normalizeFeedDirectory('cctv', { sources });
+  assert.equal(items[0].country, 'AU');
+  assert.equal(items[0].countryCode, 'AU');
+  assert.equal(items[0].countryName, 'Australia');
+  assert.equal(items[0].sourcePage, 'https://camera.example/public');
+  assert.equal(items[1].country, 'GB');
+  assert.equal(items[1].sourcePage, null);
+  assert.equal(items[2].sourcePage, null);
+  assert.deepEqual(cameraCountry(items[2]), {
+    code: '',
+    name: 'Unknown country',
+    value: '__unknown__',
+  });
+  assert.equal(items[2].country, '', 'Austin coordinates do not imply USA');
+});
+
+test('camera search, country, city and media filters intersect independently without changing radio country semantics', () => {
+  const { items } = normalizeFeedDirectory('cctv', {
+    sources: [
+      {
+        ...camera,
+        id: 'au-live',
+        city: 'Richmond',
+        country: 'AU',
+        countryName: 'Australia',
+        feedType: 'hls',
+        playbackKind: 'live',
+      },
+      {
+        ...camera,
+        id: 'au-still',
+        city: 'Richmond',
+        country: 'AU',
+        countryName: 'Australia',
+      },
+      {
+        ...camera,
+        id: 'us-live',
+        city: 'Richmond',
+        country: 'US',
+        countryName: 'United States',
+        feedType: 'hls',
+        playbackKind: 'live',
+      },
+      camera,
+    ],
+  });
+  const ids = (...args) => filterFeedDirectory(items, ...args).map((x) => x.id);
+  assert.deepEqual(ids('australia', 'Richmond', 'live', 'AU'), ['au-live']);
+  assert.deepEqual(ids('au richmond', '', 'snapshot', 'AU'), ['au-still']);
+  assert.deepEqual(ids('united states', 'Richmond', 'live', 'US'), ['us-live']);
+  assert.deepEqual(ids('', 'Richmond', 'live', 'US'), ['us-live']);
+  assert.deepEqual(ids('australia', '', 'all', 'US'), []);
+  assert.deepEqual(ids('', '', 'all', '__unknown__'), [camera.id]);
+  assert.equal(filterFeedDirectory([station], '', 'United Kingdom').length, 1);
+});
+
+test('country coverage counts declared live sources without promoting clips or unknown media', () => {
+  const { items } = normalizeFeedDirectory('cctv', {
+    sources: [
+      {
+        ...camera,
+        id: 'au-live',
+        country: 'AU',
+        countryName: 'Australia',
+        feedType: 'hls',
+        playbackKind: 'live',
+      },
+      {
+        ...camera,
+        id: 'au-unknown',
+        country: 'AU',
+        countryName: 'Australia',
+        feedType: 'hls',
+      },
+      {
+        ...camera,
+        id: 'au-clip',
+        country: 'AU',
+        countryName: 'Australia',
+        feedType: 'mp4',
+        playbackKind: 'clip',
+      },
+      {
+        ...camera,
+        id: 'gb-image',
+        country: 'GB',
+        countryName: 'United Kingdom',
+        playbackKind: 'live',
+      },
+      camera,
+    ],
+  });
+  assert.deepEqual(
+    cameraCountryOptions(items).map(({ value, name, total, live }) => ({
+      value,
+      name,
+      total,
+      live,
+    })),
+    [
+      { value: 'AU', name: 'Australia', total: 3, live: 1 },
+      { value: 'GB', name: 'United Kingdom', total: 1, live: 0 },
+      { value: '__unknown__', name: 'Unknown country', total: 1, live: 0 },
+    ],
+  );
+});
+
+test('official video embeds are admitted only through the shared provider allowlist', () => {
+  const valid = {
+    ...camera,
+    id: 'official',
+    country: 'JP',
+    countryName: 'Japan',
+    feedType: 'embed',
+    playbackKind: 'live',
+    embedUrl: 'https://www.youtube-nocookie.com/embed/5iDycGQWPCg',
+  };
+  for (const embedUrl of [
+    'javascript:alert(1)',
+    'https://attacker.example/embed/5iDycGQWPCg',
+    'https://www.youtube-nocookie.com.attacker.example/embed/5iDycGQWPCg',
+    'https://user:secret@www.youtube-nocookie.com/embed/5iDycGQWPCg',
+    'https://www.youtube-nocookie.com/embed/invalid',
+  ]) {
+    const result = normalizeFeedDirectory('cctv', {
+      sources: [valid, { ...valid, id: 'invalid', embedUrl }],
+    });
+    assert.deepEqual(
+      result.items.map((item) => item.id),
+      ['official'],
+    );
+    assert.equal(result.items[0].playbackKind, 'live');
+    assert.equal(result.rejected, 1);
+    assert.equal(cameraCountryOptions(result.items)[0].live, 1);
+  }
+});
+
+test('camera display interleaves countries without dropping records or changing within-country order', () => {
+  const sources = [
+    ...Array.from({ length: 40 }, (_, index) => ({
+      ...camera,
+      id: `us-${index}`,
+      country: 'US',
+    })),
+    { ...camera, id: 'jp-1', country: 'JP' },
+    { ...camera, id: 'jp-2', country: 'JP' },
+    { ...camera, id: 'au-1', country: 'AU' },
+    camera,
+  ];
+  const shown = interleaveCameraCountries(sources);
+  assert.deepEqual(
+    shown.slice(0, 6).map((item) => item.id),
+    ['us-0', 'jp-1', 'au-1', camera.id, 'us-1', 'jp-2'],
+  );
+  assert.equal(shown.length, sources.length);
+  assert.deepEqual(
+    shown.filter((item) => item.country === 'US'),
+    sources.filter((item) => item.country === 'US'),
+  );
+  assert.deepEqual(interleaveCameraCountries([]), []);
+  assert.equal(sources[1].id, 'us-1', 'the original catalogue is not mutated');
 });

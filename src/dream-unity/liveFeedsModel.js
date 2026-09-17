@@ -1,5 +1,9 @@
 import { publicRadioHttpsUrl, RADIO_UUID_RE } from '../sources/radioBrowser.js';
-import { normalizeFeedType, cameraMediaKind } from '../sources/cctvTypes.js';
+import {
+  normalizeFeedType,
+  cameraMediaKind,
+  normalizeCctvEmbedUrl,
+} from '../sources/cctvTypes.js';
 import {
   readResponseJsonCapped,
   readResponseTextCapped,
@@ -21,6 +25,60 @@ const coordinate = (value, limit) =>
 
 export function feedCoordinates(item) {
   return coordinate(item?.lat, 90) && coordinate(item?.lon, 180);
+}
+
+/** Country comes from source metadata, never a coordinate guess. */
+export function cameraCountry(item) {
+  const suppliedCode = text(item?.countryCode || item?.country, 80);
+  const code = /^[a-z]{2}$/i.test(suppliedCode)
+    ? suppliedCode.toUpperCase()
+    : '';
+  const suppliedName = text(item?.countryName, 80);
+  const name = suppliedName || (!code ? text(item?.country, 80) : '') || code;
+  return {
+    code,
+    name: name || 'Unknown country',
+    value: code || (name ? `name:${name}` : '__unknown__'),
+  };
+}
+
+export function cameraCountryOptions(items) {
+  const countries = new Map();
+  for (const item of items) {
+    const country = cameraCountry(item);
+    let entry = countries.get(country.value);
+    if (!entry) {
+      entry = { ...country, total: 0, live: 0 };
+      countries.set(country.value, entry);
+    }
+    entry.total++;
+    if (cameraMediaKind(item) === 'live') entry.live++;
+  }
+  return [...countries.values()].sort((a, b) =>
+    a.value === '__unknown__'
+      ? 1
+      : b.value === '__unknown__'
+        ? -1
+        : a.name.localeCompare(b.name),
+  );
+}
+
+/** Give each represented country a first-page place without reordering its cameras. */
+export function interleaveCameraCountries(items) {
+  const countries = new Map();
+  for (const item of items) {
+    const key = cameraCountry(item).value;
+    if (!countries.has(key)) countries.set(key, { items: [], index: 0 });
+    countries.get(key).items.push(item);
+  }
+  const queue = [...countries.values()];
+  const result = [];
+  for (let cursor = 0; cursor < queue.length; cursor++) {
+    const country = queue[cursor];
+    result.push(country.items[country.index++]);
+    if (country.index < country.items.length) queue.push(country);
+  }
+  return result;
 }
 
 /** Admit only stream URLs usable on this HTTPS site; directory text stays text. */
@@ -67,19 +125,28 @@ export function normalizeFeedDirectory(kind, payload) {
       });
     } else {
       const feedType = normalizeFeedType(raw.feedType);
-      if (!['image', 'mjpeg', 'mp4', 'webm', 'hls'].includes(feedType))
+      if (!['image', 'mjpeg', 'mp4', 'webm', 'hls', 'embed'].includes(feedType))
         continue;
+      const embedUrl =
+        feedType === 'embed' ? normalizeCctvEmbedUrl(raw.embedUrl) : null;
+      if (feedType === 'embed' && !embedUrl) continue;
+      const country = cameraCountry(raw);
       items.push({
         ...raw,
         id,
         name,
         feedType,
+        embedUrl,
         playbackKind: cameraMediaKind({ ...raw, feedType }),
+        country: country.code,
+        countryCode: country.code,
+        countryName: country.value === '__unknown__' ? '' : country.name,
         city: text(raw.city, 100),
         provider: text(raw.provider, 100),
         license: text(raw.license, 500),
         credit: text(raw.credit, 500),
         sourceKind: text(raw.sourceKind, 100),
+        sourcePage: publicRadioHttpsUrl(raw.sourcePage),
       });
     }
     seen.add(id);
@@ -104,6 +171,7 @@ export function filterFeedDirectory(
   query = '',
   region = '',
   mediaKind = 'all',
+  country = '',
 ) {
   const words = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
   return items.filter((item) => {
@@ -115,11 +183,14 @@ export function filterFeedDirectory(
         : kind !== mediaKind)
     )
       return false;
-    if (region && (item.country || item.city || '') !== region) return false;
+    const itemRegion = item.feedType ? item.city : item.country;
+    if (region && (itemRegion || '') !== region) return false;
+    if (country && cameraCountry(item).value !== country) return false;
     const haystack = [
       item.name,
       item.country,
       item.countryCode,
+      item.countryName,
       item.state,
       item.city,
       item.provider,

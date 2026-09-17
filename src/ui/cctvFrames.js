@@ -1,4 +1,5 @@
 import { createCctvVideoPlayback } from '../sources/cctvVideoPlayback.js';
+import { createCctvEmbedPlayback } from '../sources/cctvEmbedPlayback.js';
 import {
   isVideoFeedType,
   cameraMediaKind,
@@ -8,31 +9,44 @@ import {
 
 /** Keep the panel's video playable without depending on a 3D monitor plane. */
 export function _syncCctvVideo(activeCamera, enabled) {
-  if (!enabled || !activeCamera || !isVideoFeedType(activeCamera.feedType)) {
+  const embedded = activeCamera?.feedType === 'embed';
+  if (
+    !enabled ||
+    !activeCamera ||
+    (!embedded && !isVideoFeedType(activeCamera.feedType))
+  ) {
     this._clearCctvVideo();
     return false;
   }
   const panelVisible = () =>
     !this._cctvPanel?.hidden &&
     !this._cctvPanel?.classList?.contains('collapsed');
-  if (this._cctvVideoCameraId === activeCamera.id) {
+  if (
+    this._cctvVideoCameraId === activeCamera.id &&
+    this._cctvVideoFeedType === activeCamera.feedType &&
+    (!embedded || this._cctvVideoEmbedUrl === activeCamera.embedUrl)
+  ) {
     this._cctvPlayback?.setActive(panelVisible());
     return true;
   }
   this._clearCctvFrame();
   this._clearCctvVideo();
-  const video = document.createElement('video');
-  video.className = 'cctv-video';
-  video.controls = true;
-  video.muted = true;
-  video.loop = false;
-  video.preload = 'auto';
-  video.playsInline = true;
+  const video = document.createElement(embedded ? 'div' : 'video');
+  video.className = embedded ? 'cctv-embed' : 'cctv-video';
+  if (!embedded) {
+    video.controls = true;
+    video.muted = true;
+    video.loop = false;
+    video.preload = 'auto';
+    video.playsInline = true;
+  }
   video.setAttribute(
     'aria-label',
     `${activeCamera.name || 'CCTV'} camera video`,
   );
   this._cctvVideoCameraId = activeCamera.id;
+  this._cctvVideoFeedType = activeCamera.feedType;
+  this._cctvVideoEmbedUrl = activeCamera.embedUrl;
   this._cctvVideo = video;
   const retry = document.createElement('button');
   retry.type = 'button';
@@ -42,7 +56,41 @@ export function _syncCctvVideo(activeCamera, enabled) {
   this._cctvVideoRetry = retry;
   this._cctvFrameWrap?.appendChild(video);
   this._cctvFrameWrap?.appendChild(retry);
-  this._cctvPlayback = createCctvVideoPlayback({
+  if (embedded) {
+    const pause = document.createElement('button');
+    pause.type = 'button';
+    pause.textContent = 'Pause camera video';
+    pause.hidden = true;
+    pause.onclick = () => this._cctvPlayback?.pause();
+    this._cctvVideoPause = pause;
+    this._cctvFrameWrap?.appendChild(pause);
+    const note = document.createElement('p');
+    note.className = 'cctv-embed-note';
+    note.textContent =
+      'Watch with the camera publisher’s video controls. This video is not projected onto the globe.';
+    this._cctvVideoNote = note;
+    this._cctvFrameWrap?.appendChild(note);
+    try {
+      const sourcePage = new URL(activeCamera.sourcePage);
+      if (
+        sourcePage.protocol === 'https:' &&
+        !sourcePage.username &&
+        !sourcePage.password
+      ) {
+        const link = document.createElement('a');
+        link.href = sourcePage.href;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = 'Open camera source';
+        link.className = 'cctv-embed-source';
+        this._cctvVideoSource = link;
+        this._cctvFrameWrap?.appendChild(link);
+      }
+    } catch {
+      /* A missing source page never prevents the approved player. */
+    }
+  }
+  const playbackOptions = {
     playbackKind: activeCamera.playbackKind,
     visibilityTarget: document,
     initiallyActive: panelVisible(),
@@ -53,12 +101,19 @@ export function _syncCctvVideo(activeCamera, enabled) {
     onStatus: (status) => {
       if (this.destroyed || this._cctvVideo !== video) return;
       this._cctvVideoStatus = status;
-      retry.hidden = ![
-        'blocked',
-        'unavailable',
-        'unsupported',
-        'ended',
-      ].includes(status.status);
+      retry.hidden = embedded
+        ? ['playing', 'loading', 'suspended'].includes(status.status)
+        : !['blocked', 'unavailable', 'unsupported', 'ended'].includes(
+            status.status,
+          );
+      if (embedded) {
+        retry.textContent = ['unavailable', 'ended'].includes(status.status)
+          ? 'Retry camera video'
+          : 'Play camera video';
+        this._cctvVideoPause.hidden = !['playing', 'loading'].includes(
+          status.status,
+        );
+      }
       this._cctvFrameWrap?.classList.toggle(
         'loading',
         status.status === 'loading',
@@ -69,7 +124,16 @@ export function _syncCctvVideo(activeCamera, enabled) {
       );
       this._syncCctvSourceBadge(activeCamera, true);
     },
-  });
+  };
+  this._cctvPlayback = embedded
+    ? createCctvEmbedPlayback({
+        ...playbackOptions,
+        container: video,
+        embedUrl: activeCamera.embedUrl,
+        statusUrl: `/api/cctv/embed-status/${encodeURIComponent(activeCamera.id)}`,
+        title: `${activeCamera.name || 'CCTV'} live camera`,
+      })
+    : createCctvVideoPlayback(playbackOptions);
   if (this._cctvPanel && typeof MutationObserver !== 'undefined') {
     this._cctvVideoObserver = new MutationObserver(() => {
       if (!this.destroyed && this._cctvVideo === video)
@@ -90,9 +154,17 @@ export function _clearCctvVideo() {
   this._cctvPlayback = null;
   this._cctvVideoRetry?.remove();
   this._cctvVideoRetry = null;
+  this._cctvVideoPause?.remove();
+  this._cctvVideoPause = null;
+  this._cctvVideoNote?.remove();
+  this._cctvVideoNote = null;
+  this._cctvVideoSource?.remove();
+  this._cctvVideoSource = null;
   this._cctvVideo?.remove();
   this._cctvVideo = null;
   this._cctvVideoCameraId = null;
+  this._cctvVideoFeedType = null;
+  this._cctvVideoEmbedUrl = null;
   this._cctvVideoStatus = null;
 }
 
@@ -201,12 +273,18 @@ export function _syncCctvSourceBadge(activeCamera, enabled) {
     return;
   }
   if (this._cctvVideoStatus) {
-    const { status, message } = this._cctvVideoStatus;
+    const { status, message, liveStatus } = this._cctvVideoStatus;
+    const mediaLabel =
+      activeCamera.feedType === 'embed' && liveStatus !== 'live'
+        ? 'VIDEO PLAYER'
+        : cameraMediaLabel(activeCamera).toUpperCase();
     this._cctvSourceBadge.textContent =
       status === 'playing'
-        ? `${cameraMediaLabel(activeCamera).toUpperCase()} · PLAYING`
+        ? activeCamera.feedType === 'embed' && liveStatus !== 'live'
+          ? message || 'STREAM PLAYING · LIVE STATUS UNCONFIRMED'
+          : `${mediaLabel} · PLAYING`
         : status === 'ready'
-          ? `${cameraMediaLabel(activeCamera).toUpperCase()} · READY — USE PLAY CONTROLS`
+          ? `${mediaLabel} · READY — USE PLAY CONTROLS`
           : message || 'CAMERA VIDEO · UNAVAILABLE';
     this._cctvSourceBadge.dataset.frameState = hasCctvVideoFrame(status)
       ? 'ready'

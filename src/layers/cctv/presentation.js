@@ -39,7 +39,7 @@ export function createPresentation({
       `FOV ${Math.round(active.camera.fovDeg)}°`,
       `COVERAGE ${area.toFixed(2)}km²`,
       overlapCount > 0 ? `OVERLAP ${overlapCount} cams` : 'ISOLATED VIEW',
-      `PROJ ${layerState._showProjection ? 'MONITOR' : 'OFF'}`,
+      `PROJ ${layerState._showProjection ? (active.camera.feedType === 'embed' ? 'CAMERA PANEL ONLY' : 'MONITOR') : 'OFF'}`,
       layerState._coverageMode === 'viewshed' ? 'VIEWSHED' : null,
       `CAL ${calBadge.replace('-', ' ').toUpperCase()}`,
       health?.sourceKind
@@ -72,6 +72,9 @@ export function createPresentation({
       id: camera.id,
       name: camera.name,
       city: camera.city,
+      country: camera.country || '',
+      countryName: camera.countryName || camera.country || '',
+      countryCode: camera.countryCode || '',
       provider: camera.provider,
       lat: camera.lat,
       lon: camera.lon,
@@ -84,6 +87,9 @@ export function createPresentation({
       active: isActive,
       feedType: camera.feedType,
       playbackKind: camera.playbackKind,
+      embedUrl: camera.embedUrl || '',
+      sourcePage: camera.sourcePage || '',
+      verifiedAt: camera.verifiedAt || '',
       sourceKind:
         health?.sourceKind ||
         camera.sourceKind ||

@@ -4,6 +4,7 @@ import { DEFAULT_CCTV_SOURCE_FILE, CCTV_SOURCE_CACHE_MS } from './constants.js';
 import { allocateSourceCap, resolveCatalogCap } from './cap.js';
 import { loadGroundHeights, joinGroundHeights } from './groundHeights.js';
 import { normalizeSourceItem } from './normalize.js';
+import { loadGlobalCctvSources } from './globalSources.js';
 import {
   loadAustinSourcesFromOpenData,
   loadCaltransSourcesFromOpenData,
@@ -30,6 +31,11 @@ const envEnabled = (name) => String(process.env[name] || '1').trim() !== '0';
  * kill switch.
  */
 const LIVE_PACKS = [
+  {
+    name: 'global',
+    enabled: () => envEnabled('CCTV_GLOBAL_ENABLED'),
+    load: loadGlobalCctvSources,
+  },
   { name: 'austin', enabled: () => true, load: loadAustinSourcesFromOpenData },
   {
     name: 'caltrans',
@@ -199,11 +205,31 @@ export function createCctvCatalog({ sourceRoot = process.cwd() } = {}) {
       : [];
     // Live packs first so file/env overrides win on duplicate IDs; each pack
     // keeps its own priority order and the catalog cap is shared fairly.
+    const countries = {
+      austin: ['US', 'United States'],
+      caltrans: ['US', 'United States'],
+      txdot: ['US', 'United States'],
+      tfl: ['GB', 'United Kingdom'],
+      ontario: ['CA', 'Canada'],
+      drivebc: ['CA', 'Canada'],
+      calgary: ['CA', 'Canada'],
+      fintraffic: ['FI', 'Finland'],
+      tallinn: ['EE', 'Estonia'],
+      tarktee: ['EE', 'Estonia'],
+      warendorf: ['DE', 'Germany'],
+      nsw: ['AU', 'Australia'],
+    };
     const normalizePack = (name, items) => ({
       name,
       sources: items
         .filter((item) => item && typeof item === 'object')
-        .map((item) => normalizeSourceItem(item))
+        .map((item) =>
+          normalizeSourceItem({
+            country: countries[name]?.[0] || '',
+            countryName: countries[name]?.[1] || '',
+            ...item,
+          }),
+        )
         .filter((item) => item.id),
     });
     const packs = [

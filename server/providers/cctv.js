@@ -1,4 +1,5 @@
 import { createCctvCatalog } from './cctv/catalog.js';
+import { createCctvEmbedStatus } from './cctv/embedStatus.js';
 import {
   normalizeFeedType,
   isVideoFeedType,
@@ -39,6 +40,7 @@ export { CCTV_FRAME_FETCH_TIMEOUT_MS, fetchCctvImageFromUpstream };
  */
 export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
   const getCctvSources = createCctvCatalog({ sourceRoot });
+  const getEmbedStatus = createCctvEmbedStatus();
   /** @type {Map<string,{id:string,status:string,sourceKind:string,label:string,message:string,updatedAt:number}>} */
   const health = new Map();
   /** Cap on health map entries to prevent unbounded growth. Sized to the
@@ -78,7 +80,15 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
       mediaUrl: isVideoFeedType(feedType)
         ? `/api/cctv/media/${encodeURIComponent(cameraId)}`
         : null,
-      frameUrl: `/api/cctv/frame/${encodeURIComponent(cameraId)}`,
+      frameUrl:
+        feedType === 'embed'
+          ? null
+          : `/api/cctv/frame/${encodeURIComponent(cameraId)}`,
+      embedUrl: source?.embedUrl || '',
+      sourcePage: source?.sourcePage || '',
+      country: source?.country || '',
+      countryName: source?.countryName || '',
+      verifiedAt: source?.verifiedAt || '',
       provider: source?.provider || '',
       sourceKind:
         source?.sourceKind || (source?.url ? 'configured' : 'fallback'),
@@ -169,6 +179,12 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
               name: source.name,
               city: source.city,
               cityId: source.cityId,
+              country: source.country,
+              countryName: source.countryName,
+              embedUrl: source.embedUrl,
+              sourcePage: source.sourcePage,
+              verifiedAt: source.verifiedAt,
+              locationAccuracy: source.locationAccuracy,
               provider: source.provider,
               lat: source.lat,
               lon: source.lon,
@@ -211,6 +227,30 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
           return;
         }
 
+        if (url.pathname.startsWith('/embed-status/')) {
+          const cameraId = decodedPath.slice('/embed-status/'.length).trim();
+          const source = sourceById.get(cameraId);
+          const statusCode = !source
+            ? 404
+            : source.feedType !== 'embed'
+              ? 409
+              : 200;
+          const payload =
+            statusCode === 200
+              ? await getEmbedStatus(source)
+              : {
+                  error: !source
+                    ? 'Camera is not in the current catalogue'
+                    : 'Camera does not use an official embedded player',
+                };
+          res.writeHead(statusCode, {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+          });
+          res.end(JSON.stringify(payload));
+          return;
+        }
+
         if (url.pathname.startsWith('/stream/')) {
           const cameraId =
             decodedPath.slice('/stream/'.length).trim() || 'camera';
@@ -242,6 +282,21 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
           const source = sourceById.get(cameraId);
           const mediaUrl = source?.url || '';
           const feedType = normalizeFeedType(source?.feedType || 'image');
+
+          if (feedType === 'embed') {
+            res.writeHead(409, {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-store',
+            });
+            res.end(
+              JSON.stringify({
+                code: 'CCTV_OFFICIAL_PLAYER_REQUIRED',
+                error: 'Watch this camera through its official embedded player',
+                embedUrl: source.embedUrl,
+              }),
+            );
+            return;
+          }
 
           if (!mediaUrl || !/^https?:\/\//i.test(mediaUrl)) {
             setHealth(cameraId, {
@@ -428,6 +483,21 @@ export function cctvProxy({ sourceRoot = process.cwd() } = {}) {
           });
           res.end(
             JSON.stringify({ error: 'Camera is not in the current catalogue' }),
+          );
+          return;
+        }
+        if (source?.feedType === 'embed') {
+          res.writeHead(409, {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+          });
+          res.end(
+            JSON.stringify({
+              code: 'CCTV_OFFICIAL_PLAYER_REQUIRED',
+              error:
+                'Watch this camera through its official embedded player; no snapshot substitute is provided',
+              embedUrl: source.embedUrl,
+            }),
           );
           return;
         }

@@ -1,5 +1,6 @@
 import {
   normalizeFeedType,
+  normalizeCctvEmbedUrl,
   isVideoFeedType,
 } from '../../../src/sources/cctvTypes.js';
 export { normalizeFeedType, isVideoFeedType };
@@ -494,6 +495,21 @@ export function normalizeSourceItem(item) {
     name: String(item.name || item.id || '').trim(),
     city: String(item.city || ''),
     cityId: String(item.cityId || ''),
+    country: /^[A-Z]{2}$/.test(
+      String(item.country || item.countryCode || '').toUpperCase(),
+    )
+      ? String(item.country || item.countryCode).toUpperCase()
+      : '',
+    countryName: String(item.countryName || '').trim(),
+    embedUrl:
+      feedType === 'embed'
+        ? normalizeCctvEmbedUrl(item.embedUrl || item.url)
+        : '',
+    sourcePage: safePublicSourcePage(item.sourcePage),
+    verifiedAt: Number.isFinite(Date.parse(item.verifiedAt))
+      ? new Date(item.verifiedAt).toISOString()
+      : '',
+    locationAccuracy: String(item.locationAccuracy || '').trim(),
     provider: String(item.provider || 'Configured CCTV Source'),
     lat: toFiniteNumber(item.lat),
     lon: toFiniteNumber(item.lon),
@@ -527,4 +543,18 @@ export function normalizeSourceItem(item) {
     // Data, which never sets this field). Passed through as-is to the client.
     poseSource: item.poseSource === 'curated' ? 'curated' : undefined,
   };
+}
+
+/** Attribution links are HTTPS pages, never executable protocols or credentials. */
+export function safePublicSourcePage(value) {
+  if (typeof value !== 'string' || /[\s\u0000-\u001f\u007f]/.test(value))
+    return '';
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password
+      ? url.href
+      : '';
+  } catch {
+    return '';
+  }
 }

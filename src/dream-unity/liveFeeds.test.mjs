@@ -40,6 +40,10 @@ class Element extends EventTarget {
       node.parentElement = this;
     }
   }
+  appendChild(node) {
+    this.append(node);
+    return node;
+  }
   replaceChildren(...nodes) {
     this.children = [];
     this._text = '';
@@ -605,5 +609,320 @@ test('snapshot and other-video filters never silently pretend images or unknown 
   } finally {
     feeds.destroy();
     f.restore();
+  }
+});
+
+test('CCTV country choices expose listed-live counts and compose with city, search and media filters', async () => {
+  const sources = [
+    {
+      ...camera,
+      id: 'au-live',
+      city: 'Richmond',
+      country: 'AU',
+      countryName: 'Australia',
+      feedType: 'hls',
+      playbackKind: 'live',
+    },
+    {
+      ...camera,
+      id: 'au-still',
+      city: 'Melbourne',
+      country: 'AU',
+      countryName: 'Australia',
+    },
+    {
+      ...camera,
+      id: 'gb-live',
+      city: 'London',
+      country: 'GB',
+      countryName: 'United Kingdom',
+      feedType: 'hls',
+      playbackKind: 'live',
+    },
+    camera,
+  ];
+  const f = fixture(async () => Response.json({ sources }));
+  const feeds = installLiveFeeds();
+  const change = (node, value) => {
+    node.value = value;
+    node.dispatchEvent(new Event('change'));
+  };
+  try {
+    feeds.open('cctv');
+    await flush();
+    const country = find(
+      f.doc,
+      (node) => node.getAttribute('aria-label') === 'Filter cameras by country',
+    );
+    const region = find(
+      f.doc,
+      (node) => node.getAttribute('aria-label') === 'Filter by city or region',
+    );
+    const search = find(f.doc, (node) => node.type === 'search');
+    const list = find(f.doc, (node) => node.className === 'du-feeds-list');
+    assert.ok(country);
+    assert.deepEqual(
+      country.options.map((option) => option.value),
+      ['', 'AU', 'GB', '__unknown__'],
+    );
+    assert.match(country.textContent, /Australia — 1 listed live \/ 2 cameras/);
+    assert.match(
+      country.textContent,
+      /Unknown country — 0 listed live \/ 1 cameras/,
+    );
+    change(country, 'AU');
+    assert.deepEqual(
+      region.options.map((option) => option.value),
+      ['', 'Melbourne', 'Richmond'],
+    );
+    assert.equal(list.children.length, 1);
+    assert.match(list.textContent, /Australia/);
+    assert.match(f.doc.body.textContent, /Snapshots \(1\)/);
+    change(region, 'Melbourne');
+    assert.equal(list.children.length, 0);
+    cameraFilter(f.doc, 'snapshot');
+    assert.equal(list.children[0].children[0].dataset.feedId, 'au-still');
+    change(country, 'GB');
+    assert.equal(
+      region.value,
+      '',
+      'a city outside the chosen country is cleared',
+    );
+    assert.deepEqual(
+      region.options.map((option) => option.value),
+      ['', 'London'],
+    );
+    assert.equal(
+      list.children.length,
+      0,
+      'media choice remains selected across countries',
+    );
+    cameraFilter(f.doc, 'live');
+    search.value = 'United Kingdom';
+    search.dispatchEvent(new Event('input'));
+    assert.equal(list.children[0].children[0].dataset.feedId, 'gb-live');
+    search.value = 'Australia';
+    search.dispatchEvent(new Event('input'));
+    assert.equal(list.children.length, 0);
+    assert.match(f.doc.body.textContent, /Live video \(0\)/);
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('CCTV directory refresh clears vanished country and city choices instead of trapping results in an empty filter', async () => {
+  let sources = [
+    {
+      ...camera,
+      country: 'AU',
+      countryName: 'Australia',
+      city: 'Melbourne',
+      feedType: 'hls',
+      playbackKind: 'live',
+    },
+  ];
+  const f = fixture(async () => Response.json({ sources }));
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('cctv');
+    await flush();
+    const country = find(
+      f.doc,
+      (node) => node.getAttribute('aria-label') === 'Filter cameras by country',
+    );
+    country.value = 'AU';
+    country.dispatchEvent(new Event('change'));
+    const region = find(
+      f.doc,
+      (node) => node.getAttribute('aria-label') === 'Filter by city or region',
+    );
+    region.value = 'Melbourne';
+    region.dispatchEvent(new Event('change'));
+    sources = [
+      {
+        ...camera,
+        id: 'replacement',
+        country: 'GB',
+        countryName: 'United Kingdom',
+        city: 'London',
+        feedType: 'hls',
+        playbackKind: 'live',
+      },
+    ];
+    click(find(f.doc, (node) => node.textContent === 'Refresh directory'));
+    await flush();
+    assert.equal(country.value, '');
+    assert.equal(region.value, '');
+    const list = find(f.doc, (node) => node.className === 'du-feeds-list');
+    assert.equal(list.children[0].children[0].dataset.feedId, 'replacement');
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('official camera embeds need player playback events and retain provider links when embedding fails', async () => {
+  const embed = {
+    ...camera,
+    id: 'official-japan',
+    name: 'Official city camera',
+    country: 'JP',
+    countryName: 'Japan',
+    feedType: 'embed',
+    playbackKind: 'live',
+    embedUrl: 'https://www.youtube-nocookie.com/embed/5iDycGQWPCg',
+    sourcePage: 'https://camera.example/japan',
+  };
+  const requests = [];
+  const f = fixture(async (url) => {
+    const path = new URL(url, 'https://app.example').pathname;
+    requests.push(path);
+    if (path.startsWith('/api/cctv/embed-status/'))
+      return Response.json({
+        status: 'live',
+        checkedAt: new Date().toISOString(),
+      });
+    return Response.json({ sources: [embed] });
+  });
+  let events;
+  let player;
+  f.doc.defaultView = {
+    location: { origin: 'https://app.example' },
+    YT: {
+      Player: class {
+        constructor(iframe, options) {
+          events = options.events;
+          this.iframe = iframe;
+          player = this;
+        }
+        mute() {
+          this.muted = true;
+        }
+        playVideo() {
+          this.playRequested = true;
+        }
+        destroy() {
+          this.destroyed = true;
+          this.iframe.remove();
+        }
+      },
+    },
+  };
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('cctv');
+    await flush();
+    const list = find(f.doc, (node) => node.className === 'du-feeds-list');
+    assert.equal(list.children[0].children[0].dataset.feedId, embed.id);
+    click(list.children[0].children[0], list);
+    await flush();
+    assert.ok(find(f.doc, (node) => node.tagName === 'IFRAME'));
+    assert.match(f.doc.body.textContent, /Official provider player/);
+    assert.doesNotMatch(f.doc.body.textContent, /Camera video is playing/);
+    events.onReady({ target: player });
+    assert.equal(player.muted, true);
+    assert.equal(player.playRequested, true);
+    assert.doesNotMatch(f.doc.body.textContent, /Camera video is playing/);
+    events.onStateChange({ data: 1 });
+    assert.match(f.doc.body.textContent, /Camera video is playing/);
+    events.onError({ data: 150 });
+    assert.match(f.doc.body.textContent, /does not allow embedded playback/);
+    assert.equal(player.destroyed, true);
+    assert.equal(
+      find(f.doc, (node) => node.tagName === 'IFRAME'),
+      undefined,
+    );
+    assert.equal(
+      find(f.doc, (node) => node.tagName === 'IMG'),
+      undefined,
+    );
+    assert.deepEqual(
+      requests,
+      ['/api/cctv/sources', '/api/cctv/embed-status/official-japan'],
+      'embeds never fall back to snapshot requests',
+    );
+    const link = find(
+      f.doc,
+      (node) => node.textContent === 'Visit camera provider',
+    );
+    assert.equal(link.href, embed.sourcePage);
+    assert.equal(link.rel, 'noopener noreferrer');
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('an ended official broadcast never starts an archive and unknown live status remains explicit during playback', async () => {
+  for (const checkedStatus of ['ended', 'unknown']) {
+    const embed = {
+      ...camera,
+      id: 'checked-embed',
+      feedType: 'embed',
+      playbackKind: 'live',
+      embedUrl: 'https://www.youtube-nocookie.com/embed/5iDycGQWPCg',
+      sourcePage: 'https://camera.example/public',
+    };
+    const f = fixture(async (url) =>
+      Response.json(
+        new URL(url, 'https://app.example').pathname.startsWith(
+          '/api/cctv/embed-status/',
+        )
+          ? { status: checkedStatus, checkedAt: new Date().toISOString() }
+          : { sources: [embed] },
+      ),
+    );
+    let events;
+    let player;
+    f.doc.defaultView = {
+      location: { origin: 'https://app.example' },
+      YT: {
+        Player: class {
+          constructor(iframe, options) {
+            this.iframe = iframe;
+            events = options.events;
+            player = this;
+          }
+          mute() {}
+          playVideo() {}
+          destroy() {
+            this.iframe.remove();
+          }
+        },
+      },
+    };
+    const feeds = installLiveFeeds();
+    try {
+      feeds.open('cctv');
+      await flush();
+      const list = find(f.doc, (node) => node.className === 'du-feeds-list');
+      click(list.children[0].children[0], list);
+      await flush();
+      const label = find(
+        f.doc,
+        (node) => node.className === 'du-feed-media-kind',
+      );
+      if (checkedStatus === 'ended') {
+        assert.equal(Boolean(player), false);
+        assert.equal(
+          find(f.doc, (node) => node.tagName === 'IFRAME'),
+          undefined,
+        );
+        assert.match(label.textContent, /Broadcast ended/);
+      } else {
+        assert.ok(player);
+        events.onReady({ target: player });
+        events.onStateChange({ data: 1 });
+        assert.match(label.textContent, /Live status unconfirmed/);
+        assert.match(f.doc.body.textContent, /live status unconfirmed/);
+      }
+      assert.ok(
+        find(f.doc, (node) => node.textContent === 'Visit camera provider'),
+      );
+    } finally {
+      feeds.destroy();
+      f.restore();
+    }
   }
 });

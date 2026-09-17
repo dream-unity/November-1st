@@ -159,6 +159,7 @@ export function createFrames({ state: layerState, services, parts, source }) {
    */
 
   function frameUrlFor(...args) {
+    if (args[0]?.feedType === 'embed') return null;
     return source.getFrameUrl(...args);
   }
 
@@ -169,6 +170,7 @@ export function createFrames({ state: layerState, services, parts, source }) {
    */
 
   function mediaUrlFor(...args) {
+    if (args[0]?.feedType === 'embed') return null;
     return source.getMediaUrl(...args);
   }
 
@@ -319,6 +321,7 @@ export function createFrames({ state: layerState, services, parts, source }) {
       return;
     }
 
+    if (runtime.mode === 'embed') return;
     refreshProjectionImage(record);
     if (runtime.image && runtime.imageReady) {
       if (runtime.drawnImageStamp !== runtime.imageStamp) {

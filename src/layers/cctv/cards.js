@@ -131,9 +131,11 @@ export function createCards({ state: layerState, services, parts, source }) {
           record.camera.lon,
         ),
         inView,
-        isVideo: parts.model.isVideoFeedType(
-          parts.model.normalizeFeedType(record.camera.feedType),
-        ),
+        isVideo:
+          record.camera.feedType === 'embed' ||
+          parts.model.isVideoFeedType(
+            parts.model.normalizeFeedType(record.camera.feedType),
+          ),
         sx,
         sy,
       });
@@ -277,6 +279,8 @@ export function createCards({ state: layerState, services, parts, source }) {
     refreshMs,
     { userGesture = false } = {},
   ) {
+    // An official embedded player cannot supply pixels to a globe texture.
+    if (record?.camera?.feedType === 'embed') return;
     if (typeof document !== 'undefined' && document.hidden && !userGesture)
       return;
     const now = Date.now();

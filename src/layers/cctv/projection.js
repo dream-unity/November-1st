@@ -178,7 +178,12 @@ export function createProjection({
     const ctx = canvas.getContext('2d', { alpha: true });
 
     const feedType = parts.model.normalizeFeedType(record.camera.feedType);
-    const mode = parts.model.isVideoFeedType(feedType) ? 'video' : 'image';
+    const mode =
+      feedType === 'embed'
+        ? 'embed'
+        : parts.model.isVideoFeedType(feedType)
+          ? 'video'
+          : 'image';
     const runtime = {
       mode,
       canvas,
@@ -214,7 +219,18 @@ export function createProjection({
       lastSwappedCanvasStamp: 0,
     };
 
-    parts.frames.paintProjectionPlaceholder(ctx, record.camera);
+    if (mode === 'embed') {
+      runtime.mediaStatus = {
+        status: 'external',
+        message:
+          'Watch live video in the camera panel. Globe projection is unavailable.',
+      };
+    }
+    parts.frames.paintProjectionPlaceholder(
+      ctx,
+      record.camera,
+      runtime.mediaStatus,
+    );
 
     if (mode === 'video') {
       const video = document.createElement('video');
@@ -257,7 +273,7 @@ export function createProjection({
           services.render.governorRequestRender?.('cctv-video-status');
         },
       });
-    } else {
+    } else if (mode === 'image') {
       const img = new Image();
       img.decoding = 'async';
       img.crossOrigin = 'anonymous';

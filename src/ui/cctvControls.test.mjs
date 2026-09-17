@@ -313,3 +313,224 @@ test('the camera panel renders video controls, keeps an existing stream across r
   assert.equal(videos[0].removed, true);
   assert.equal(controls._cctvFrame.hidden, false);
 });
+
+function embeddedPanelFixture(t, currentStatus = 'live') {
+  const { controls, requests } = fixture(t);
+  const previous = {
+    document: globalThis.document,
+    fetch: globalThis.fetch,
+    MutationObserver: globalThis.MutationObserver,
+  };
+  const players = [];
+  const observers = [];
+  const statusRequests = [];
+  const document = new EventTarget();
+  document.hidden = false;
+  document.createElement = (tag) =>
+    Object.assign(new EventTarget(), element(), {
+      tagName: tag,
+      ownerDocument: document,
+      children: [],
+      setAttribute(name, value) {
+        this[name] = value;
+      },
+      appendChild(child) {
+        child.parentNode = this;
+        this.children.push(child);
+      },
+      remove() {
+        if (this.parentNode)
+          this.parentNode.children = this.parentNode.children.filter(
+            (child) => child !== this,
+          );
+        this.removed = true;
+      },
+    });
+  class Player {
+    constructor(iframe, options) {
+      this.iframe = iframe;
+      this.events = options.events;
+      this.plays = 0;
+      players.push(this);
+    }
+    mute() {}
+    playVideo() {
+      this.plays++;
+    }
+    destroy() {
+      this.destroyed = true;
+      this.iframe.remove();
+    }
+    emit(name, data) {
+      this.events[name]?.({ target: this, data });
+    }
+  }
+  document.defaultView = {
+    location: { origin: 'https://app.example' },
+    YT: { Player },
+  };
+  globalThis.document = document;
+  globalThis.fetch = async (url) => {
+    statusRequests.push(url);
+    return Response.json({
+      status: currentStatus,
+      checkedAt: '2026-09-17T12:00:00.000Z',
+      message:
+        currentStatus === 'ended' ? 'The publisher ended this broadcast.' : '',
+    });
+  };
+  globalThis.MutationObserver = class {
+    constructor(callback) {
+      this.callback = callback;
+      observers.push(this);
+    }
+    observe() {}
+    disconnect() {
+      this.disconnected = true;
+    }
+  };
+  t.after(() => Object.assign(globalThis, previous));
+  controls._cctvPanel = document.createElement('section');
+  controls._cctvFrameWrap = document.createElement('div');
+  controls._cctvSourceBadge = element();
+  controls.actions.setPanelCollapsed = () => {};
+  const state = {
+    enabled: true,
+    activeCameraId: 'jp-embed',
+    activeCamera: {
+      id: 'jp-embed',
+      name: 'Tokyo public camera',
+      feedType: 'embed',
+      playbackKind: 'live',
+      embedUrl: 'https://www.youtube-nocookie.com/embed/abcdefghijk',
+      sourcePage: 'https://publisher.example/camera',
+      frameUrl: '/api/cctv/frame/jp-embed',
+    },
+  };
+  return {
+    controls,
+    requests,
+    players,
+    observers,
+    state,
+    document,
+    statusRequests,
+  };
+}
+
+const flushEmbedPanel = () => new Promise((resolve) => setImmediate(resolve));
+
+test('the globe camera panel plays an official embed, never loads snapshot pixels and fully releases media on pause or camera change', async (t) => {
+  const f = embeddedPanelFixture(t);
+  f.controls._renderCctvState(f.state);
+  await flushEmbedPanel();
+  assert.equal(f.requests.length, 0);
+  assert.equal(f.controls._cctvFrame.hidden, true);
+  assert.equal(f.players.length, 1);
+  assert.equal(
+    f.statusRequests[0],
+    'https://app.example/api/cctv/embed-status/jp-embed',
+  );
+  assert.equal(
+    f.controls._cctvVideoSource.href,
+    'https://publisher.example/camera',
+  );
+  assert.match(f.controls._cctvVideoNote.textContent, /not projected/);
+  f.players[0].emit('onReady');
+  assert.doesNotMatch(f.controls._cctvSourceBadge.textContent, /PLAYING/);
+  f.players[0].emit('onStateChange', 1);
+  assert.match(f.controls._cctvSourceBadge.textContent, /LIVE VIDEO · PLAYING/);
+  f.controls._renderCctvState(f.state);
+  await flushEmbedPanel();
+  assert.equal(
+    f.players.length,
+    1,
+    'routine camera metadata updates keep the current player',
+  );
+  f.controls._cctvVideoPause.onclick();
+  assert.equal(f.players[0].destroyed, true);
+  assert.equal(f.controls._cctvVideo.children.length, 0);
+  assert.equal(
+    f.controls._cctvVideoRetry.hidden,
+    false,
+    'a paused iframe still has a working Play button',
+  );
+  f.controls._cctvVideoRetry.onclick();
+  await flushEmbedPanel();
+  assert.equal(f.players.length, 2);
+  f.players[0].emit('onStateChange', 1);
+  assert.equal(
+    f.controls._cctvVideoStatus.status,
+    'loading',
+    'late old-player events are ignored',
+  );
+  const removedContainer = f.controls._cctvVideo;
+  f.controls._renderCctvState({
+    ...f.state,
+    activeCameraId: 'snapshot',
+    activeCamera: { id: 'snapshot', feedType: 'image', frameUrl: '/snapshot' },
+  });
+  assert.equal(f.players[1].destroyed, true);
+  assert.equal(removedContainer.removed, true);
+  assert.equal(f.observers[0].disconnected, true);
+  assert.equal(
+    f.requests.length,
+    1,
+    'only selecting a real snapshot starts a snapshot request',
+  );
+});
+
+test('collapsing the globe camera panel unloads the iframe and resumes only intended playback', async (t) => {
+  const f = embeddedPanelFixture(t);
+  f.controls._renderCctvState(f.state);
+  await flushEmbedPanel();
+  f.players[0].emit('onReady');
+  f.players[0].emit('onStateChange', 1);
+  f.controls._cctvPanel.classList.add('collapsed');
+  f.observers[0].callback();
+  assert.equal(f.players[0].destroyed, true);
+  assert.equal(f.controls._cctvVideo.children.length, 0);
+  f.controls._cctvPanel.classList.remove('collapsed');
+  f.observers[0].callback();
+  await flushEmbedPanel();
+  assert.equal(f.players.length, 2);
+  f.controls._cctvVideoPause.onclick();
+  f.controls._cctvPanel.classList.add('collapsed');
+  f.observers[0].callback();
+  f.controls._cctvPanel.classList.remove('collapsed');
+  f.observers[0].callback();
+  await flushEmbedPanel();
+  assert.equal(
+    f.players.length,
+    2,
+    'manually paused media remains paused after reopening',
+  );
+  assert.equal(f.controls._cctvVideoRetry.hidden, false);
+});
+
+test('the globe camera panel refuses ended broadcasts and does not claim unconfirmed playback is live', async (t) => {
+  for (const status of ['ended', 'unknown']) {
+    await t.test(status, async (t) => {
+      const f = embeddedPanelFixture(t, status);
+      f.controls._renderCctvState(f.state);
+      await flushEmbedPanel();
+      assert.equal(f.requests.length, 0);
+      if (status === 'ended') {
+        assert.equal(f.players.length, 0);
+        assert.match(f.controls._cctvSourceBadge.textContent, /ended/);
+        assert.equal(f.controls._cctvVideoRetry.hidden, false);
+      } else {
+        f.players[0].emit('onReady');
+        f.players[0].emit('onStateChange', 1);
+        assert.match(
+          f.controls._cctvSourceBadge.textContent,
+          /live status unconfirmed/i,
+        );
+        assert.doesNotMatch(
+          f.controls._cctvSourceBadge.textContent,
+          /LIVE VIDEO/,
+        );
+      }
+    });
+  }
+});
