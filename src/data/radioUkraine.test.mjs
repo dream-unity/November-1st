@@ -139,6 +139,33 @@ test('merged directory prefers verified URLs and deduplicates identity, URL and 
   assert.equal(selected[1].name, 'Public Radio Jazz');
 });
 
+test('quality variants and editorial bilingual aliases deduplicate without merging distinct programmes', () => {
+  const curated = normalizeUkraineRadioSources([
+    curatedRow({ id: 'kiss-digital', name: 'KISS FM Digital', streamUrl: 'https://radio.example.org/kiss-digital' }),
+    curatedRow({ id: 'pihota', name: 'Радіопіхота — Radio Pihota', streamUrl: 'https://radio.example.org/pihota' }),
+    curatedRow({ id: 'bilingual', name: 'Радіо Світ – World Radio', streamUrl: 'https://radio.example.org/world' }),
+    curatedRow({ id: 'hyphen', name: 'Radio-One', streamUrl: 'https://radio.example.org/radio-one' }),
+    curatedRow({ id: 'programme-dash', name: 'Independent Radio — Jazz', streamUrl: 'https://radio.example.org/independent-jazz' }),
+  ]);
+  const names = [
+    'Kiss FM Digital HD', 'Kiss FM Digital [HQ]', 'Kiss FM Digital (LQ)',
+    'Kiss FM Digital HD (AAC)', 'РАДІОПІХОТА', 'Radio Pihota', 'World Radio',
+    'KISS FM Ukrainian', 'KISS FM', 'KISS FM Deep', 'Radio', 'One', 'Radio HD FM', 'RadioHD',
+    'Community — Classical', 'Community', 'Classical', 'Independent Radio', 'Jazz',
+  ];
+  const rows = names.map((name, index) => normalizeRadioBrowserStation(directoryRow({
+    stationuuid: `99000000-0000-4000-8000-${index.toString(16).padStart(12, '0')}`,
+    name,
+    url_resolved: `https://directory.example.org/${index}`,
+  }), { requireGeo: false }));
+  const selected = mergeUkraineRadioStations(curated, rows);
+  assert.deepEqual(selected.map((station) => station.name), [
+    'KISS FM Digital', 'Радіопіхота — Radio Pihota', 'Радіо Світ – World Radio', 'Radio-One', 'Independent Radio — Jazz',
+    'KISS FM Ukrainian', 'KISS FM', 'KISS FM Deep', 'Radio', 'One', 'Radio HD FM', 'RadioHD',
+    'Community — Classical', 'Community', 'Classical', 'Independent Radio', 'Jazz',
+  ]);
+});
+
 test('country discovery is coalesced, bounded, cached and omits the geographic filter', async () => {
   let calls = 0;
   const directory = createUkraineRadioDirectory({

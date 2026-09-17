@@ -10,11 +10,11 @@ The inventory is [config/cctv_sources.ukraine.json](../config/cctv_sources.ukrai
 
 | Camera ID | Official view | Verification on 2026-09-17 UTC |
 | --- | --- | --- |
-| `ua-bukovel8` | Lift #5. Mountain station | Advancing HLS playlist; official-page browser decoded 1280×720 video and progressed to 5.97 seconds while playing |
-| `ua-bukovel9` | Lift #12. Mountain station | Advancing HLS playlist; individual browser decoding not yet verified |
-| `ua-bukovel28` | Lake of Youth | Advancing HLS playlist; individual browser decoding not yet verified |
-| `ua-bukovel27` | Mavka Aquapark | Advancing HLS playlist; individual browser decoding not yet verified |
-| `ua-bukovel26` | VODA club | Advancing HLS playlist; individual browser decoding not yet verified |
+| `ua-bukovel8` | Lift #5. Mountain station | Official and deployed browser decoded 1280×720 video; deployed playback advanced beyond 50 seconds and Pause worked |
+| `ua-bukovel9` | Lift #12. Mountain station | Deployed browser decoded 1280×720 video, reaching 35.97 seconds |
+| `ua-bukovel28` | Lake of Youth | Deployed browser decoded 2560×1440 video, advancing from 16.83 to 51.91 seconds |
+| `ua-bukovel27` | Mavka Aquapark | Deployed browser decoded 2560×1440 video, reaching 30.85 seconds |
+| `ua-bukovel26` | VODA club | Deployed browser decoded 1920×1080 video, reaching 29.91 seconds |
 
 Between approximately 07:02 and 07:12 UTC, media sequences advanced from 18017 to 18324, 18034 to 18341, 18032 to 18339, 18030 to 18337 and 14542 to 14789 respectively. All five playlists contained current `EXT-X-PROGRAM-DATE-TIME` values and no `EXT-X-ENDLIST`. This establishes that the published playlists were advancing at the time checked; it does not independently certify every camera's pixels or future uptime.
 
@@ -49,7 +49,7 @@ The curated Ukraine scope is ordinary owner-published tourism, nature and public
 
 The previous global directory required both coordinates and a place within a 750-station worldwide popularity cap. The downloaded Ukraine sample contained 348 community records; only 43 passed the old geographic admission rules. The dedicated `/api/radio/stations?country=UA` query accepts usable HTTPS MP3/AAC stations without coordinates, deduplicates programme names and URLs, and has a separate 600-station ceiling. The global globe directory retains its existing geometry and limit.
 
-[config/radio_sources.ukraine.json](../config/radio_sources.ukraine.json) supplies 20 reviewed broadcaster programmes as a fallback. Bounded transport checks received HTTP 200, audio/mpeg and 4,096 audio bytes with no finite Content-Length from 23 URLs; duplicate bitrate variants and an unverified owner page were excluded. This is transport evidence, not proof of audible identity for every station. The registry includes broadcaster source pages and per-entry evidence. A known finite sound-effect file is explicitly excluded from dynamic discovery as well as the curated inventory.
+[config/radio_sources.ukraine.json](../config/radio_sources.ukraine.json) supplies 20 reviewed broadcaster programmes as a fallback. Bounded transport checks received HTTP 200, audio/mpeg and 4,096 audio bytes with no finite Content-Length from 23 URLs; duplicate bitrate variants and an unverified owner page were excluded. This is transport evidence, not proof of audible identity for every station. The registry includes broadcaster source pages and per-entry evidence. A known finite sound-effect file and an evidenced US station mislabeled Ukraine are explicitly excluded from dynamic discovery as well as the curated inventory.
 
 The dedicated directory has coalesced refreshes, a 30-second upstream budget, a 45-minute healthy cache and a seven-day stale limit. Outages expose a degraded state and retain curated or bounded stale results. Registry paths resolve from the immutable source archive, independently of the server's writable state directory. Curated station IDs are stable application identities; selecting them does not submit fabricated votes to Radio Browser.
 
@@ -57,6 +57,16 @@ Missing station coordinates remain `null`. Audio playback stays available; **Sho
 
 ## Deployment verification
 
-Pending production verification.
+Production runtime revision: `7b1cec50627a15716a3566a8b55f51162b332c7a`, Vercel deployment `dpl_8vF6zcKZRqbPpHQULBbpV5pUuBM8`. Public `/api/health` returned that exact revision with status `ok`. The GitHub Pages link preserved both `feed=cctv` and `country=UA`, selected Ukraine, and displayed five live entries with zero snapshots or clips.
+
+The public country radio endpoint returned **155 entries: 20 curated and 135 community-directory entries**, with `degraded:false`. **130 entries had no coordinates**, demonstrating that usable broadcaster audio is no longer discarded for lacking a map pin. These are observed directory counts, not simultaneous audible-playback guarantees.
+
+All **4,505 automated checks passed**, with one existing platform-specific skip on Linux: 4,433 ordinary unit tests, 14 allocation checks and 58 hosted integration tests. Formatting checked 935 runtime files; import/package boundaries and the production build passed. Tests cover country transitions and failed-request retries, stale-response cancellation, coordinate-free playback, source-archive loading after a working-directory change, source admission, HLS archive rejection, no-frame behavior, strict official-player admission and playback teardown.
+
+All five cameras decoded moving video through the public application, as detailed in the table above. Camera switching released the previous session. The browser reported both playing and intermittent buffering states; no still-image substitutes were used. `/api/cctv/stream/ua-bukovel8` returned `liveOnly:true` and `frameUrl:null`; its strict frame endpoint returned HTTP 409 with `CCTV_LIVE_VIDEO_REQUIRED`.
+
+The GitHub Pages radio deep link retained `country=UA` and displayed the scoped directory. KISS FM Ukrainian and Radio NV reached the browser's actual `playing` event, displaying “Playing broadcaster audio.” KISS FM pause displayed “Paused”; Radio NV stop was also checked. The location button was correctly disabled for the unlocated curated entries. This verifies player operation for those samples, not independent auditory identity of all 155 entries.
+
+The test environment cannot initialize WebGL, so the independent feed directory was verified through the existing recovery interface; a full hardware-accelerated globe walkthrough remains unverified here. Production error/warning logs had no entries at the time checked. GitHub CI run `35194839322` passed Node 24.14, Node 26 and Windows onboarding; Pages run `35194837869` also passed.
 
 This record distinguishes registry validation, live playlist observations, official-page playback and application playback. It does not claim that every external feed is permanently available or that every possible future error has been eliminated.

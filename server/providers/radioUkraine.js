@@ -128,13 +128,29 @@ export function loadUkraineRadioExclusions({
   };
 }
 
-function stationNameKey(station) {
-  return station.name
+function stationNameKey(name) {
+  return name
     .normalize('NFKC')
     .toLocaleLowerCase('uk')
     .replace(/\b\d{2,4}\s*k(?:b(?:it)?s?|bps)?\b/gi, '')
     .replace(/\b(?:mp3|aac(?:\+|-lc|-he)?)\b/gi, '')
+    .replace(/\(\s*\)|\[\s*\]/g, '')
+    .replace(/(?:\s+(?:hd|hq|lq)|\s*[\[(]\s*(?:hd|hq|lq)\s*[\])])\s*$/i, '')
     .replace(/[\p{P}\p{S}\s]+/gu, '');
+}
+
+function stationNameKeys(station) {
+  // Editorial bilingual titles explicitly separate aliases with an en/em dash.
+  // Ordinary hyphens and community titles are not interpreted as alias lists.
+  const components = station.name.split(/\s+[–—]\s+/);
+  const bilingual =
+    components.some((name) => /\p{Script=Cyrillic}/u.test(name)) &&
+    components.some((name) => /\p{Script=Latin}/u.test(name) && !/\p{Script=Cyrillic}/u.test(name));
+  const names =
+    station.sourceKind === 'curated-ukraine' && bilingual
+      ? [station.name, ...components]
+      : [station.name];
+  return [...new Set(names.map(stationNameKey).filter(Boolean))];
 }
 
 /** Prefer verified editorial URLs, then keep distinct programmes from the directory. */
@@ -145,16 +161,16 @@ export function mergeUkraineRadioStations(curated, directory) {
   const programmes = new Set();
   for (const station of [...curated, ...directory]) {
     if (!station || station.countryCode !== 'UA') continue;
-    const programme = stationNameKey(station);
+    const programmeKeys = stationNameKeys(station);
     if (
       ids.has(station.id) ||
       streams.has(station.streamUrl) ||
-      programmes.has(programme)
+      programmeKeys.some((key) => programmes.has(key))
     )
       continue;
     ids.add(station.id);
     streams.add(station.streamUrl);
-    programmes.add(programme);
+    for (const key of programmeKeys) programmes.add(key);
     selected.push(station);
     if (selected.length >= UKRAINE_RADIO_LIMIT) break;
   }
