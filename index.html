@@ -65,6 +65,18 @@
     <!-- du:pages-entry-head:end -->
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/src/dream-unity/welcome.css" />
+    <style>
+      /* Hide the full interface before first paint, even while CSS loads. */
+      #du-application[hidden],
+      #du-welcome [hidden],
+      #du-welcome[hidden] {
+        display: none !important;
+      }
+      #du-application {
+        display: contents;
+      }
+    </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -118,7 +130,7 @@
         style="
           position: fixed;
           inset: 0;
-          z-index: 1001;
+          z-index: 3000;
           padding: 32px;
           background: #0a0a0f;
           color: #e8eaed;
@@ -133,23 +145,117 @@
         >.
       </div>
     </noscript>
-    <!-- gev:template scene-chrome -->
+    <main id="du-welcome" aria-labelledby="du-welcome-title">
+      <section id="du-welcome-start" class="du-welcome-card">
+        <img
+          class="du-welcome-logo"
+          src="/logo.svg"
+          alt=""
+          width="80"
+          height="80"
+        />
+        <p class="du-welcome-eyebrow">Dream World</p>
+        <h1 id="du-welcome-title">God’s Eye View</h1>
+        <p class="du-welcome-intro">A new way to explore our world.</p>
+        <div class="du-welcome-choices">
+          <button id="du-new-user" type="button">New User</button>
+          <button id="du-continue" class="du-welcome-secondary" type="button">
+            Continue
+          </button>
+        </div>
+      </section>
+      <section
+        id="du-welcome-guide"
+        class="du-welcome-card du-welcome-guide"
+        aria-labelledby="du-guide-title"
+        hidden
+      >
+        <p class="du-welcome-eyebrow">A quick introduction</p>
+        <h2 id="du-guide-title" tabindex="-1">Welcome to God’s Eye View</h2>
+        <p class="du-guide-lede">
+          Explore Earth on an interactive globe. Follow aircraft and satellites,
+          listen to radio from other places, and watch public cameras. You
+          choose what to explore, at your own pace.
+        </p>
+        <ol class="du-guide-steps">
+          <li>
+            <h3>Start with a place</h3>
+            <p>
+              Open <strong>LOCATION</strong>, search for a city or landmark, and
+              choose a result. Drag the globe to look around. Scroll to zoom, or
+              use one finger to move and two fingers to pinch on a touch screen.
+            </p>
+          </li>
+          <li>
+            <h3>Add something to explore</h3>
+            <p>
+              Open <strong>DATA LAYERS</strong> with its
+              <strong>+</strong> button. Try one layer first, such as aircraft,
+              satellites or earthquakes. Select a marker for more information.
+              When following an aircraft, <strong>Cockpit</strong> offers
+              another view.
+            </p>
+          </li>
+          <li>
+            <h3>Listen, watch and check the roads</h3>
+            <p>
+              Use <strong>Live radio</strong>, <strong>CCTV cameras</strong> or
+              <strong>Traffic reports</strong> near the top of the screen.
+              Search or filter by place, then choose a station, camera or
+              report. Cameras start with the <strong>Live video</strong> filter;
+              snapshots are listed separately.
+            </p>
+          </li>
+          <li>
+            <h3>Keep it simple</h3>
+            <p>
+              You do not need every panel at once. Close a panel when you have
+              finished. Use the <strong>globe button</strong> at the top to
+              return to a view of Earth. Explore
+              <strong>VISUAL PRESETS</strong> or <strong>SCENES</strong> when
+              you feel ready.
+            </p>
+          </li>
+        </ol>
+        <p class="du-guide-note">
+          The information comes from public sources. Coverage and update times
+          vary; not every view is live. Some optional features, including AI
+          voice, may be unavailable. <strong>Data sources</strong> explains what
+          is connected.
+        </p>
+        <p class="du-guide-return">
+          To return to the Dream Unity home page, choose
+          <strong>↖ Dream Unity</strong> inside the app.
+        </p>
+        <div class="du-welcome-choices du-guide-actions">
+          <button id="du-guide-continue" type="button">Continue</button>
+          <button id="du-guide-back" class="du-welcome-secondary" type="button">
+            Back
+          </button>
+        </div>
+      </section>
+      <p id="du-welcome-status" role="status" aria-live="polite"></p>
+    </main>
 
-    <!-- gev:template cockpit -->
+    <div id="du-application" hidden inert>
+      <!-- gev:template scene-chrome -->
 
-    <!-- gev:template display-controls -->
+      <!-- gev:template cockpit -->
 
-    <!-- gev:template command-dock -->
+      <!-- gev:template display-controls -->
 
-    <!-- gev:template layer-panels -->
+      <!-- gev:template command-dock -->
 
-    <!-- gev:template context -->
+      <!-- gev:template layer-panels -->
 
-    <!-- gev:template welcome -->
+      <!-- gev:template context -->
 
-    <!-- gev:template provider-settings -->
+      <!-- gev:template welcome -->
 
-    <!-- gev:template hud-loading -->
+      <!-- gev:template provider-settings -->
+
+      <!-- gev:template hud-loading -->
+    </div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

@@ -1,33 +1,15 @@
-import { createStandaloneApplication } from './standalone/application.js';
-import { describeError } from './standalone/errors.js';
-import {
-  installDreamUnityChrome,
-  showStartupFailure,
-} from './dream-unity/chrome.js';
-import { installLiveFeeds } from './dream-unity/liveFeeds.js';
-import { createGlobeFeedActions } from './dream-unity/globeFeeds.js';
+import { installWelcome } from './dream-unity/welcome.js';
 
-const application = createStandaloneApplication({
-  googleApiKey: import.meta.env.GOOGLE_MAPS_API_KEY,
-  cesiumToken: import.meta.env.CESIUM_ION_TOKEN,
-  allowQaRegistration: import.meta.env.DEV,
-});
+// Retain the public binding used by local QA; it is created only on Continue.
+export let application;
 
-const globeFeeds = createGlobeFeedActions(application);
-const liveFeeds = installLiveFeeds({
-  openOnGlobe: globeFeeds.openOnGlobe,
-  beforeRadioPlay: globeFeeds.beforeRadioPlay,
+installWelcome({
+  loadApplication: async () => {
+    const runtime = await import('./standalone/entry.js');
+    return {
+      startGodsEye() {
+        application = runtime.startGodsEye();
+      },
+    };
+  },
 });
-installDreamUnityChrome({
-  onOpenFeed: (kind, opener) => liveFeeds.open(kind, opener),
-});
-const initialFeed = new URLSearchParams(window.location.search).get('feed');
-if (['radio', 'cctv', 'traffic'].includes(initialFeed))
-  liveFeeds.open(initialFeed);
-
-application.start().catch((error) => {
-  console.error("God's Eye View initialization failed:", error);
-  showStartupFailure({ message: describeError(error), errors: error?.errors });
-});
-
-export { application };

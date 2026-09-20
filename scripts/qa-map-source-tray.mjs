@@ -258,6 +258,8 @@ try {
   // launcher on every navigation so its Escape/Space handlers cannot turn a
   // tray assertion into a mission or voice action in a pristine browser.
   await page.goto(`${appUrl}/?welcome=0`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+  await page.waitForSelector('#du-continue', { visible: true, timeout: 60_000 });
+  await page.click('#du-continue');
   await page.waitForFunction(() => window.__godsEyeView?.styleManager, { timeout: 60_000 });
   await page.waitForFunction(
     () => document.getElementById('loading-screen')?.classList.contains('hidden'),
@@ -1225,6 +1227,8 @@ try {
         waitUntil: 'domcontentloaded',
         timeout: 60_000,
       });
+      await page.waitForSelector('#du-continue', { visible: true, timeout: 60_000 });
+      await page.click('#du-continue');
       await page.waitForFunction(() => window.__godsEyeView?.styleManager, { timeout: 60_000 });
       await page.waitForFunction(
         () => document.getElementById('loading-screen')?.classList.contains('hidden'),

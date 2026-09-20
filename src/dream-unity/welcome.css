@@ -1,0 +1,181 @@
+#du-welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  box-sizing: border-box;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: max(28px, env(safe-area-inset-top))
+    max(20px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom))
+    max(20px, env(safe-area-inset-left));
+  background: radial-gradient(
+    ellipse at 50% 20%,
+    #133444 0,
+    #091723 52%,
+    #07111b 100%
+  );
+  color: #eff7fa;
+  font:
+    16px/1.6 Inter,
+    system-ui,
+    sans-serif;
+  text-align: left;
+  color-scheme: dark;
+}
+
+#du-welcome *,
+#du-welcome *::before,
+#du-welcome *::after {
+  box-sizing: border-box;
+}
+.du-welcome-card {
+  width: min(100%, 520px);
+  margin: max(24px, 9vh) auto 0;
+}
+#du-welcome-start {
+  text-align: center;
+}
+.du-welcome-logo {
+  display: block;
+  margin: 0 auto 26px;
+}
+#du-welcome .du-welcome-eyebrow {
+  margin: 0 0 12px;
+  color: #a7dae7;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+#du-welcome h1 {
+  margin: 0;
+  font-size: clamp(2.4rem, 7vw, 3.5rem);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  color: #f5fbff;
+}
+#du-welcome .du-welcome-intro {
+  margin: 20px 0 36px;
+  color: #bbcfda;
+  font-size: 1.05rem;
+}
+.du-welcome-choices {
+  display: grid;
+  gap: 14px;
+}
+#du-welcome button {
+  width: 100%;
+  min-height: 58px;
+  border: 1px solid #b4edfa;
+  border-radius: 12px;
+  padding: 15px 24px;
+  background: #b4edfa;
+  color: #09202d;
+  font:
+    600 1.05rem/1.4 Inter,
+    system-ui,
+    sans-serif;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+#du-welcome button:hover {
+  background: #d4f6ff;
+}
+#du-welcome button.du-welcome-secondary {
+  background: #102632;
+  color: #edf8ff;
+  border-color: #577985;
+}
+#du-welcome button.du-welcome-secondary:hover {
+  background: #1c3b49;
+}
+#du-welcome button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 5px;
+}
+#du-welcome button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+#du-welcome .du-welcome-guide {
+  max-width: 720px;
+  width: 100%;
+  margin-top: 12px;
+}
+#du-welcome h2 {
+  margin: 0 0 20px;
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  color: #f5fbff;
+}
+#du-welcome .du-guide-lede {
+  font-size: 1.08rem;
+  color: #d6e5ed;
+}
+.du-guide-steps {
+  display: grid;
+  gap: 24px;
+  margin: 30px 0;
+  padding-left: 26px;
+}
+.du-guide-steps li {
+  padding-left: 8px;
+}
+.du-guide-steps li::marker {
+  color: #a7dae7;
+  font-weight: 600;
+}
+#du-welcome h3 {
+  margin: 0 0 6px;
+  color: #f5fbff;
+  font-size: 1.05rem;
+  line-height: 1.4;
+}
+#du-welcome p {
+  margin: 0 0 16px;
+  color: #bfced9;
+}
+#du-welcome .du-guide-steps p {
+  margin: 0;
+}
+#du-welcome strong {
+  color: #eef8ff;
+  font-weight: 600;
+}
+#du-welcome .du-guide-note {
+  padding: 18px 20px;
+  border-left: 2px solid #628e9e;
+  background: #102632;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.92rem;
+}
+#du-welcome .du-guide-return {
+  font-size: 0.92rem;
+}
+.du-guide-actions {
+  grid-template-columns: 2fr 1fr;
+  margin-top: 26px;
+}
+#du-welcome-status {
+  max-width: 720px;
+  margin: 20px auto 0 !important;
+  text-align: center;
+}
+#du-welcome-status:empty {
+  display: none;
+}
+@media (max-width: 420px) {
+  .du-welcome-card {
+    margin-top: 8vh;
+  }
+  .du-welcome-logo {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 20px;
+  }
+  .du-guide-actions {
+    grid-template-columns: 1fr;
+  }
+}
