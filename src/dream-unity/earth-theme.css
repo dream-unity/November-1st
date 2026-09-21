@@ -187,9 +187,9 @@ textarea {
 }
 
 .first-run-kicker,
-.first-run-choices button > .material-symbols-outlined:first-child,
+.first-run-choices :is(button, summary) > .material-symbols-outlined:first-child,
 .first-run-arrow,
-.first-run-choices button:is(:hover, :focus-visible) .first-run-arrow {
+.first-run-choices :is(button, summary):is(:hover, :focus-visible) .first-run-arrow {
   color: var(--du-bronze);
 }
 
@@ -202,15 +202,15 @@ textarea {
   color: var(--text-secondary);
 }
 
-.first-run-choices button,
-.first-run-choices button.first-run-explore {
+.first-run-choices :is(button, summary),
+.first-run-choices :is(button, summary).first-run-explore {
   color: var(--du-ink);
   background: #fffdf8;
   border-color: var(--du-line);
 }
 
-.first-run-choices button:hover,
-.first-run-choices button:focus-visible {
+.first-run-choices :is(button, summary):hover,
+.first-run-choices :is(button, summary):focus-visible {
   background: #efe7d8;
   border-color: var(--du-bronze);
 }
@@ -517,7 +517,7 @@ textarea {
 .panel-collapse-btn:focus-visible,
 .du-navigation :focus-visible,
 .first-run-dismiss:focus-visible,
-.first-run-choices button:focus-visible {
+.first-run-choices :is(button, summary):focus-visible {
   outline: 2px solid var(--du-bronze);
   outline-offset: 3px;
 }
@@ -586,14 +586,50 @@ textarea {
   line-height: 1.45;
 }
 
-.first-run-choices button {
+.first-run-choices :is(button, summary) {
   min-height: 64px;
   border-radius: 9px;
   padding: 10px 12px;
 }
 
-.first-run-choices button:is(:hover, :focus-visible) {
+.first-run-choices :is(button, summary):is(:hover, :focus-visible) {
   transform: none;
+}
+
+.first-run-category > summary {
+  list-style: none;
+}
+
+.first-run-category > summary::-webkit-details-marker {
+  display: none;
+}
+
+.first-run-category-arrow {
+  color: var(--du-bronze);
+  transition: transform 180ms ease;
+}
+
+.first-run-category[open] > summary {
+  background: #efe7d8;
+  border-color: var(--du-bronze);
+}
+
+.first-run-category[open] .first-run-category-arrow {
+  transform: rotate(180deg);
+}
+
+.first-run-category-choices {
+  display: grid;
+  gap: 7px;
+  margin: 8px 0 4px 14px;
+  padding-left: 12px;
+  border-left: 2px solid var(--du-line);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .first-run-category-arrow {
+    transition: none;
+  }
 }
 
 .first-run-footer,
@@ -794,7 +830,7 @@ body:has(#first-run-launcher.visible:not([hidden])) #intel-hud {
     font-size: 12px;
   }
 
-  .first-run-choices button {
+  .first-run-choices :is(button, summary) {
     min-height: 54px;
   }
 }

@@ -11,16 +11,25 @@
     <h2 id="first-run-title">Explore God's Earth</h2>
     <p id="first-run-description">Choose live activity to follow, or explore the map at your own pace.</p>
     <div class="first-run-choices">
-      <button type="button" data-first-run-choice="contacts">
-        <span class="material-symbols-outlined" aria-hidden="true">radar</span>
-        <span><strong>Aircraft &amp; ships</strong><small>Follow live aircraft, vessels and nearby sites</small></span>
-        <span class="material-symbols-outlined first-run-arrow" aria-hidden="true">arrow_forward</span>
-      </button>
-      <button type="button" data-first-run-choice="space-missions">
-        <span class="material-symbols-outlined" aria-hidden="true">rocket_launch</span>
-        <span><strong>Space missions</strong><small>Launches, spacecraft and orbital context</small></span>
-        <span class="material-symbols-outlined first-run-arrow" aria-hidden="true">arrow_forward</span>
-      </button>
+      <details class="first-run-category" data-first-run-category>
+        <summary tabindex="0">
+          <span class="material-symbols-outlined" aria-hidden="true">radar</span>
+          <span><strong>Air, Sea &amp; Space</strong><small>Aircraft, ships, satellites and launches</small></span>
+          <span class="material-symbols-outlined first-run-category-arrow" aria-hidden="true">arrow_drop_down</span>
+        </summary>
+        <div class="first-run-category-choices">
+          <button type="button" data-first-run-choice="contacts">
+            <span class="material-symbols-outlined" aria-hidden="true">radar</span>
+            <span><strong>Aircraft &amp; ships</strong><small>Follow live aircraft, vessels and nearby sites</small></span>
+            <span class="material-symbols-outlined first-run-arrow" aria-hidden="true">arrow_forward</span>
+          </button>
+          <button type="button" data-first-run-choice="space-missions">
+            <span class="material-symbols-outlined" aria-hidden="true">rocket_launch</span>
+            <span><strong>Space missions</strong><small>Launches, spacecraft and orbital context</small></span>
+            <span class="material-symbols-outlined first-run-arrow" aria-hidden="true">arrow_forward</span>
+          </button>
+        </div>
+      </details>
       <button type="button" data-first-run-choice="environmental">
         <span class="material-symbols-outlined" aria-hidden="true">local_fire_department</span>
         <!-- Title text is painted from ENVIRONMENTAL_LABEL_CHOICE at init. -->

@@ -362,6 +362,8 @@ export function initFirstRunExperience({
   const status = root.querySelector('[data-first-run-status]');
   const suppressBox = root.querySelector('[data-first-run-suppress]');
   const dismissButton = root.querySelector('[data-first-run-dismiss]');
+  const category = root.querySelector('[data-first-run-category]');
+  const categoryToggle = category?.querySelector('summary');
   const buttons = [...root.querySelectorAll('[data-first-run-choice]')];
   const defaultStatus = status?.textContent || '';
   let busy = false;
@@ -440,6 +442,7 @@ export function initFirstRunExperience({
     for (const button of buttons)
       button.setAttribute('aria-disabled', String(next));
     dismissButton?.setAttribute('aria-disabled', String(next));
+    categoryToggle?.setAttribute('aria-disabled', String(next));
     if (!status) return;
     if (next)
       status.textContent = FIRST_RUN_MISSIONS[choice]?.busyText || 'Working…';
@@ -523,6 +526,10 @@ export function initFirstRunExperience({
   });
 
   for (const button of buttons) button.addEventListener('click', onChoice);
+  categoryToggle?.addEventListener('click', (event) => {
+    // Keep the running mission and its focused control visible until it finishes.
+    if (busy || closing) event.preventDefault();
+  });
   dismissButton?.addEventListener('click', () => {
     if (busy || closing) return;
     dismiss();
@@ -541,6 +548,7 @@ export function initFirstRunExperience({
     const overflows = choiceList.scrollHeight > choiceList.clientHeight + 1;
     choiceList.dataset.scrollable = String(overflows);
   };
+  category?.addEventListener('toggle', syncScrollAffordance);
 
   let revealed = false;
   const reveal = () => {
@@ -551,7 +559,7 @@ export function initFirstRunExperience({
       if (closing) return;
       root.classList.add('visible');
       syncScrollAffordance();
-      buttons[0]?.focus?.({ preventScroll: true });
+      (categoryToggle || buttons[0])?.focus?.({ preventScroll: true });
     });
   };
 
