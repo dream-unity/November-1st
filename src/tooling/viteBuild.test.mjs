@@ -58,6 +58,39 @@ test('build helper does not discover environment values or construct local provi
   }
 });
 
+test('production keeps Cesium assets and externals without a parser-blocking engine tag', () => {
+  for (const base of ['/', '/preview/']) {
+    const plugin = createBrowserViteConfig().plugins[0];
+    const config = plugin.config({ base }, { command: 'build' });
+    assert.deepEqual(config.build.rollupOptions.external, ['cesium']);
+    assert.equal(typeof plugin.closeBundle, 'function');
+    assert.deepEqual(plugin.transformIndexHtml(), [
+      {
+        tag: 'link',
+        attrs: {
+          rel: 'stylesheet',
+          href: `${base}cesium/Widgets/widgets.css`,
+        },
+      },
+    ]);
+  }
+});
+
+test('development retains the Cesium module base and middleware', () => {
+  const plugin = createBrowserViteConfig().plugins[0];
+  const config = plugin.config({ base: '/' }, { command: 'serve' });
+  assert.equal(config.define.CESIUM_BASE_URL, '"/cesium/"');
+  assert.equal(config.build, undefined);
+  const mounts = [];
+  plugin.configureServer({
+    middlewares: { use: (...args) => mounts.push(args) },
+  });
+  assert.equal(mounts.length, 1);
+  assert.equal(mounts[0][0], '/cesium/');
+  assert.equal(typeof mounts[0][1], 'function');
+  assert.equal(plugin.transformIndexHtml()[0].tag, 'link');
+});
+
 test('root config retains existing named exports and standalone provider order', () => {
   for (const [name, value] of Object.entries(providers))
     assert.equal(compatibility[name], value, name);

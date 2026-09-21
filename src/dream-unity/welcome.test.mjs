@@ -83,6 +83,31 @@ function deferred() {
   return { promise, resolve, reject };
 }
 
+function timerFixture() {
+  const timers = new Map();
+  const cancelled = [];
+  let next = 0;
+  return {
+    timers,
+    cancelled,
+    setTimer(callback, delay) {
+      const id = ++next;
+      timers.set(id, { callback, delay });
+      return id;
+    },
+    clearTimer(id) {
+      cancelled.push(id);
+      timers.delete(id);
+    },
+    expire() {
+      for (const [id, { callback }] of timers) {
+        timers.delete(id);
+        callback();
+      }
+    },
+  };
+}
+
 function assertClosed(nodes) {
   assert.equal(nodes['du-welcome'].hidden, false);
   assert.equal(nodes['du-application'].hidden, true);
@@ -166,10 +191,12 @@ for (const guided of [false, true]) {
   test(`${guided ? 'guide' : 'direct'} Continue loads once and reveals the app before its initializer runs`, async () => {
     const { documentRef, nodes } = fixture();
     const pending = deferred();
+    const clock = timerFixture();
     let loads = 0;
     let starts = 0;
     installWelcome({
       documentRef,
+      ...clock,
       loadApplication: () => {
         loads++;
         return pending.promise;
@@ -180,6 +207,8 @@ for (const guided of [false, true]) {
     await settle();
     assert.equal(loads, 1);
     assert.equal(starts, 0);
+    assert.equal(clock.timers.size, 1);
+    assert.equal([...clock.timers.values()][0].delay, 30_000);
     assertClosed(nodes);
     assert.equal(nodes['du-continue'].disabled, true);
     assert.equal(nodes['du-guide-continue'].disabled, true);
@@ -198,6 +227,8 @@ for (const guided of [false, true]) {
     });
     await settle();
     assert.equal(starts, 1);
+    assert.equal(clock.timers.size, 0);
+    assert.deepEqual(clock.cancelled, [1]);
     assert.equal(nodes['du-welcome'].hidden, true);
     assert.equal(nodes['du-application'].hidden, false);
     assert.equal(nodes['du-application'].inert, false);
@@ -208,13 +239,19 @@ for (const guided of [false, true]) {
   });
 }
 
-test('an import failure keeps the welcome visible, announces recovery and permits one retry', async (t) => {
+test('an import failure keeps welcome and guide usable and Continue reloads without retrying cached modules', async (t) => {
   t.mock.method(console, 'error', () => {});
   const { documentRef, nodes } = fixture();
   let loads = 0;
   let starts = 0;
+  let reloads = 0;
+  const clock = timerFixture();
   installWelcome({
     documentRef,
+    ...clock,
+    reloadApplication: () => {
+      reloads++;
+    },
     loadApplication: async () => {
       loads++;
       if (loads === 1) throw new Error('Chunk could not be fetched');
@@ -229,23 +266,38 @@ test('an import failure keeps the welcome visible, announces recovery and permit
   await settle();
   assert.equal(loads, 1);
   assert.equal(starts, 0);
+  assert.equal(clock.timers.size, 0);
+  assert.deepEqual(clock.cancelled, [1]);
   assertClosed(nodes);
-  assert.ok(nodes['du-welcome-status'].textContent.trim());
+  assert.match(nodes['du-welcome-status'].textContent, /Continue to reload/);
   assert.equal(nodes['du-continue'].disabled, false);
   assert.equal(nodes['du-guide-continue'].disabled, false);
-  nodes['du-continue'].click();
+  assert.equal(nodes['du-welcome'].getAttribute('aria-busy'), 'false');
+  nodes['du-new-user'].click();
+  assert.equal(nodes['du-welcome-guide'].hidden, false);
+  nodes['du-guide-back'].click();
+  assert.equal(nodes['du-welcome-start'].hidden, false);
+  nodes['du-new-user'].click();
+  nodes['du-guide-continue'].click();
+  nodes['du-continue'].dispatchEvent(new Event('click'));
+  nodes['du-guide-continue'].dispatchEvent(new Event('click'));
   await settle();
-  assert.equal(loads, 2);
-  assert.equal(starts, 1);
-  assert.equal(nodes['du-welcome'].hidden, true);
+  assert.equal(loads, 1);
+  assert.equal(starts, 0);
+  assert.equal(reloads, 1);
+  assertClosed(nodes);
 });
 
 test('an initializer that throws restores the gate instead of leaving an empty application visible', async (t) => {
   t.mock.method(console, 'error', () => {});
   const { documentRef, nodes } = fixture();
   let starts = 0;
+  let reloads = 0;
   installWelcome({
     documentRef,
+    reloadApplication: () => {
+      reloads++;
+    },
     loadApplication: async () => ({
       startGodsEye() {
         starts++;
@@ -260,8 +312,143 @@ test('an initializer that throws restores the gate instead of leaving an empty a
   assert.equal(nodes['du-continue'].disabled, false);
   nodes['du-continue'].click();
   await settle();
-  assert.equal(starts, 2);
-  assert.equal(nodes['du-application'].hidden, false);
+  assert.equal(starts, 1);
+  assert.equal(reloads, 1);
+  assertClosed(nodes);
+});
+
+for (const lateResult of ['resolve', 'reject']) {
+  test(`a stalled import times out, restores the guide, and ignores a late ${lateResult}`, async (t) => {
+    t.mock.method(console, 'error', () => {});
+    const { documentRef, nodes } = fixture();
+    const pending = deferred();
+    const clock = timerFixture();
+    let loads = 0;
+    let starts = 0;
+    let reloads = 0;
+    installWelcome({
+      documentRef,
+      ...clock,
+      loadTimeoutMs: 1234,
+      loadApplication: () => {
+        loads++;
+        return pending.promise;
+      },
+      reloadApplication: () => {
+        reloads++;
+      },
+    });
+    nodes['du-new-user'].click();
+    nodes['du-guide-continue'].click();
+    await settle();
+    assert.equal([...clock.timers.values()][0].delay, 1234);
+    assert.equal(nodes['du-welcome'].getAttribute('aria-busy'), 'true');
+    clock.expire();
+    await settle();
+    assertClosed(nodes);
+    assert.equal(nodes['du-welcome-guide'].hidden, false);
+    assert.equal(documentRef.activeElement, nodes['du-guide-continue']);
+    assert.equal(nodes['du-guide-back'].disabled, false);
+    assert.equal(nodes['du-welcome'].getAttribute('aria-busy'), 'false');
+    assert.equal(clock.timers.size, 0);
+    assert.deepEqual(clock.cancelled, [1]);
+    assert.match(nodes['du-welcome-status'].textContent, /Continue to reload/);
+    if (lateResult === 'resolve') {
+      pending.resolve({
+        startGodsEye() {
+          starts++;
+        },
+      });
+    } else {
+      pending.reject(new Error('The abandoned request eventually failed'));
+    }
+    await settle();
+    assertClosed(nodes);
+    assert.equal(starts, 0);
+    nodes['du-guide-back'].click();
+    nodes['du-continue'].click();
+    await settle();
+    assert.equal(reloads, 1);
+    assert.equal(loads, 1);
+    assert.equal(starts, 0);
+  });
+}
+
+test('default recovery reloads the same URL without reading or rebuilding its query and hash', async (t) => {
+  t.mock.method(console, 'error', () => {});
+  const original = Object.getOwnPropertyDescriptor(globalThis, 'location');
+  const currentUrl =
+    'https://november-1st-sable.vercel.app/?feed=radio&name=a%2Bb#camera=1%2C2';
+  let actualUrl = currentUrl;
+  const reloadCalls = [];
+  const location = {
+    reload(...args) {
+      assert.equal(this, location);
+      reloadCalls.push(args);
+    },
+  };
+  for (const key of ['href', 'search', 'hash'])
+    Object.defineProperty(location, key, {
+      get() {
+        throw new Error(`Recovery must not read location.${key}`);
+      },
+      set(value) {
+        actualUrl = value;
+        throw new Error(`Recovery must not set location.${key}`);
+      },
+    });
+  try {
+    Object.defineProperty(globalThis, 'location', {
+      configurable: true,
+      value: location,
+    });
+    const { documentRef, nodes } = fixture();
+    installWelcome({
+      documentRef,
+      loadApplication: () => {
+        throw new Error('The stylesheet preload failed');
+      },
+    });
+    nodes['du-continue'].click();
+    await settle();
+    assert.deepEqual(reloadCalls, []);
+    nodes['du-continue'].click();
+    await settle();
+    assert.deepEqual(reloadCalls, [[]]);
+    assert.equal(actualUrl, currentUrl);
+    assertClosed(nodes);
+  } finally {
+    if (original) Object.defineProperty(globalThis, 'location', original);
+    else delete globalThis.location;
+  }
+});
+
+test('a blocked reload restores the recovery controls and still never retries the runtime in place', async (t) => {
+  t.mock.method(console, 'error', () => {});
+  const { documentRef, nodes } = fixture();
+  let loads = 0;
+  let reloads = 0;
+  installWelcome({
+    documentRef,
+    loadApplication: () => {
+      loads++;
+      throw new Error('Import failed');
+    },
+    reloadApplication: () => {
+      reloads++;
+      throw new Error('Navigation blocked');
+    },
+  });
+  nodes['du-continue'].click();
+  await settle();
+  nodes['du-continue'].click();
+  await settle();
+  assertClosed(nodes);
+  assert.equal(nodes['du-new-user'].disabled, false);
+  assert.equal(nodes['du-continue'].disabled, false);
+  assert.equal(nodes['du-welcome'].getAttribute('aria-busy'), 'false');
+  assert.equal(loads, 1);
+  assert.equal(reloads, 1);
 });
 
 test('URL state and stored preferences cannot bypass welcome and are never read or overwritten', async () => {

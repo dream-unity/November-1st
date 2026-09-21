@@ -2,6 +2,10 @@
 export function installWelcome({
   documentRef = globalThis.document,
   loadApplication,
+  reloadApplication = () => globalThis.location.reload(),
+  loadTimeoutMs = 30_000,
+  setTimer = (callback, delay) => globalThis.setTimeout(callback, delay),
+  clearTimer = (timer) => globalThis.clearTimeout(timer),
 } = {}) {
   const root = documentRef.getElementById('du-welcome');
   const start = documentRef.getElementById('du-welcome-start');
@@ -15,6 +19,7 @@ export function installWelcome({
   const buttons = [newUser, directContinue, guideContinue, back];
   let entering = false;
   let entered = false;
+  let reloadRequired = false;
 
   newUser.addEventListener('click', () => {
     if (entering || entered) return;
@@ -33,6 +38,24 @@ export function installWelcome({
     newUser.focus();
   });
 
+  const recover = (error) => {
+    // Failed imports and stylesheet preloads can remain cached in the current
+    // document. A fresh document is required before another attempt is safe.
+    reloadRequired = true;
+    shell.hidden = true;
+    shell.inert = true;
+    root.hidden = false;
+    status.textContent =
+      'The app could not load. Check your connection, then choose Continue to reload and try again.';
+    buttons.forEach((button) => {
+      button.disabled = false;
+    });
+    entering = false;
+    root.setAttribute('aria-busy', 'false');
+    (guide.hidden ? directContinue : guideContinue).focus();
+    console.error('God’s Eye entry failed:', error);
+  };
+
   const enter = async () => {
     if (entering || entered) return;
     entering = true;
@@ -41,8 +64,29 @@ export function installWelcome({
     });
     status.textContent = 'Opening God’s Eye View…';
     root.setAttribute('aria-busy', 'true');
+    if (reloadRequired) {
+      try {
+        // No URL reconstruction: retain every query parameter and camera hash.
+        reloadApplication();
+        // Keep the duplicate-click guard active until navigation completes.
+      } catch (error) {
+        recover(error);
+      }
+      return;
+    }
+
+    let timer;
     try {
-      const runtime = await loadApplication();
+      const runtime = await Promise.race([
+        Promise.resolve().then(() => loadApplication()),
+        new Promise((_, reject) => {
+          timer = setTimer(
+            () => reject(new Error('Application loading timed out')),
+            loadTimeoutMs,
+          );
+        }),
+      ]).finally(() => clearTimer(timer));
+      // The race is final: a module arriving after the deadline cannot enter.
       // Give Cesium its visible container before constructing the globe.
       shell.hidden = false;
       shell.inert = false;
@@ -55,16 +99,7 @@ export function installWelcome({
       runtime.startGodsEye();
       entered = true;
     } catch (error) {
-      shell.hidden = true;
-      shell.inert = true;
-      root.hidden = false;
-      status.textContent =
-        'The app could not load. Check your connection and choose Continue to try again.';
-      buttons.forEach((button) => {
-        button.disabled = false;
-      });
-      (guide.hidden ? directContinue : guideContinue).focus();
-      console.error('God’s Eye entry failed:', error);
+      recover(error);
     } finally {
       entering = false;
       root.setAttribute('aria-busy', 'false');
