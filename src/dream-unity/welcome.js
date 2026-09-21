@@ -53,7 +53,7 @@ export function installWelcome({
     entering = false;
     root.setAttribute('aria-busy', 'false');
     (guide.hidden ? directContinue : guideContinue).focus();
-    console.error('God’s Eye entry failed:', error);
+    console.error('God’s Earth entry failed:', error);
   };
 
   const enter = async () => {
@@ -62,7 +62,7 @@ export function installWelcome({
     buttons.forEach((button) => {
       button.disabled = true;
     });
-    status.textContent = 'Opening God’s Eye View…';
+    status.textContent = 'Opening God’s Earth View…';
     root.setAttribute('aria-busy', 'true');
     if (reloadRequired) {
       try {

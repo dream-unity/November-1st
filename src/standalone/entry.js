@@ -11,7 +11,7 @@ let application;
 let started = false;
 
 function reportStartupFailure(error) {
-  console.error("God's Eye View initialization failed:", error);
+  console.error("God's Earth View initialization failed:", error);
   showStartupFailure({ message: describeError(error), errors: error?.errors });
 }
 
