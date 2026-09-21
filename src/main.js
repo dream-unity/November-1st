@@ -26,7 +26,7 @@ if (['radio', 'cctv', 'traffic'].includes(initialFeed))
   liveFeeds.open(initialFeed);
 
 application.start().catch((error) => {
-  console.error("God's Eye View initialization failed:", error);
+  console.error("God's Earth View initialization failed:", error);
   showStartupFailure({ message: describeError(error), errors: error?.errors });
 });
 

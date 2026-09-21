@@ -1,4 +1,4 @@
-# November-1st · Dream Unity God’s Eye
+# November-1st · Dream Unity God’s Earth View
 
 [Open from GitHub Pages](https://dream-unity.github.io/November-1st/) · [Direct application](https://november-1st-sable.vercel.app/) · [Verification record](docs/DREAM_UNITY_VERIFICATION.md)
 
