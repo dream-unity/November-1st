@@ -28,12 +28,12 @@ export const STYLES = {
  * default having moved 5 → 3 → 1 as the owner locked final tuning after field trials (2026-08-24). What the quote asked for is the
  * baseline of the day, not the two numbers it happened to name.
  *
- * ONE object, shared by the first-load baseline below, by every military style,
- * AND by the Contacts context mode (which OWNS detection while active and
+ * ONE object, shared by every military style and by the Contacts context mode
+ * (which OWNS detection while active and
  * restores the prior state on exit — see contactsDetectionPolicy.js). Cockpit
  * deliberately does NOT touch detection: entering it with SPARSE selected leaves
- * SPARSE. Declared ahead of GLOBAL_POST_DEFAULTS because that baseline now reads
- * from it.
+ * SPARSE. The general first-load baseline below is quieter; selecting one of
+ * these dedicated views still restores its tactical presentation.
  */
 export const MILITARY_DETECTION_PRESET = Object.freeze({
   mode: 'dense',
@@ -44,21 +44,14 @@ export const MILITARY_DETECTION_PRESET = Object.freeze({
 export const GLOBAL_POST_DEFAULTS = {
   bloom: { enabled: false, intensity: BLOOM_INTENSITY_DEFAULT },
   sharpen: { enabled: true, intensity: 49 },
-  hudVariant: 'tactical',
+  hudVariant: 'minimal',
   hudVisible: true,
-  // Detection is ON for EVERY style on a first run, Normal included (owner
-  // directive 2026-08-22: "detect should also be on by default"). It is the
-  // same preset object the military styles and Contacts already apply, so there
-  // is one tactical look, not several that can drift.
-  //
-  // This is a first-LOAD baseline, not an override: `_applyGlobalPostDefaults`
-  // runs before any share-link restore, so a link's `dm`/`dd` still lands on top
-  // of it. It also deliberately leaves `_detectionUserOverridden` alone — the
-  // flag means the OPERATOR hand-edited detection, and a factory default is not
-  // that. Turning detection off by hand therefore still sets the flag and still
-  // suppresses the military-style auto-enable for the rest of the session.
-  detectionMode: MILITARY_DETECTION_PRESET.mode.toUpperCase(),
-  detectionDensity: MILITARY_DETECTION_PRESET.densityPct,
+  // A quiet first view keeps the location summary and a balanced amount of
+  // map detail. Dedicated tactical styles and Contacts retain their own preset.
+  // This baseline runs before share-link restoration and does not claim a user
+  // override, so explicit settings and later style choices still take priority.
+  detectionMode: 'BALANCED',
+  detectionDensity: 50,
   detectionAllocation: 'ELASTIC',
   detectionFadePct: 7,
   detectionOutsideOpacityPct: 1,

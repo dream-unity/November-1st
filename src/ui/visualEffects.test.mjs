@@ -233,9 +233,11 @@ test('destroying one instance does not remove another pipeline or clock', () => 
   b.effects.destroy();
 });
 
-test('existing baseline and military presets keep one detection default', () => {
-  assert.equal(GLOBAL_POST_DEFAULTS.detectionMode, 'DENSE');
-  assert.equal(GLOBAL_POST_DEFAULTS.detectionDensity, 75);
+test('the quiet baseline preserves dedicated tactical style presets', () => {
+  assert.equal(GLOBAL_POST_DEFAULTS.hudVariant, 'minimal');
+  assert.equal(GLOBAL_POST_DEFAULTS.hudVisible, true);
+  assert.equal(GLOBAL_POST_DEFAULTS.detectionMode, 'BALANCED');
+  assert.equal(GLOBAL_POST_DEFAULTS.detectionDensity, 50);
   assert.equal(GLOBAL_POST_DEFAULTS.sharpen.intensity, 49);
   assert.equal(GLOBAL_POST_DEFAULTS.detectionFadePct, 7);
   assert.equal(GLOBAL_POST_DEFAULTS.detectionOutsideOpacityPct, 1);

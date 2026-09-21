@@ -67,7 +67,7 @@ export function environmentalLabel(choice = ENVIRONMENTAL_LABEL_CHOICE) {
  *                         panel-collapse write is a pref nobody chose.
  *   TOUCHED, SESSION      the camera. Never persisted by anything.
  *   NOT TOUCHED           detection mode + density. The reasonable-defaults
- *                         landing owns the DENSE/75 start, and Contacts owns
+ *                         landing owns the BALANCED/50 start, and Contacts owns
  *                         detection through contactsDetectionPolicy while it is
  *                         active. A mission has no opinion.
  *   NOT TOUCHED           `_detectionUserOverridden`. Setting it would mean "the
@@ -361,6 +361,7 @@ export function initFirstRunExperience({
 
   const status = root.querySelector('[data-first-run-status]');
   const suppressBox = root.querySelector('[data-first-run-suppress]');
+  const dismissButton = root.querySelector('[data-first-run-dismiss]');
   const buttons = [...root.querySelectorAll('[data-first-run-choice]')];
   const defaultStatus = status?.textContent || '';
   let busy = false;
@@ -438,6 +439,7 @@ export function initFirstRunExperience({
     // <body> mid-flight and strands a keyboard visitor outside the launcher.
     for (const button of buttons)
       button.setAttribute('aria-disabled', String(next));
+    dismissButton?.setAttribute('aria-disabled', String(next));
     if (!status) return;
     if (next)
       status.textContent = FIRST_RUN_MISSIONS[choice]?.busyText || 'Working…';
@@ -521,6 +523,10 @@ export function initFirstRunExperience({
   });
 
   for (const button of buttons) button.addEventListener('click', onChoice);
+  dismissButton?.addEventListener('click', () => {
+    if (busy || closing) return;
+    dismiss();
+  });
   suppressBox?.addEventListener('change', onSuppressChange);
   // Capture phase: the app binds its own global hotkeys (including bare letters
   // that cycle detection and styles), and the launcher owns the keyboard first.

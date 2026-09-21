@@ -14,8 +14,8 @@ import { expandApplicationHtml } from '../build/application-html.js';
 //      2026-08-22; the owner revised that to 8% on 2026-08-23 and locked 11%
 //      on 2026-08-24, a soft
 //      edge. The hard crop is still one drag away, and that is pinned too.
-//   3. Detection ON (Dense @ 75%) for EVERY style, Normal included.
-//      Owner: "detect should also be on by default."
+//   3. Detection ON with a balanced 50% first view and minimal HUD.
+//      Dedicated tactical styles and Contacts retain Dense @ 75%.
 //   4. Detection OUTSIDE opacity 1% (owner final lock, 2026-08-24; 3% on 08-23, 5% before), with
 //      the slider's `step` at 1 so the range around it is reachable at all.
 //
@@ -210,28 +210,15 @@ test('an explicit OUTSIDE opacity still wins over the new default', () => {
 // 3. Detection — on for every style on a first run, Normal included
 // ---------------------------------------------------------------------------
 
-test('first run opens with detection on, in every style, using the one tactical preset', () => {
-  // Normal used to start OFF while only CRT/NVG/FLIR auto-applied the preset.
-  // It is now the baseline for all of them, reusing the SAME frozen object, so
-  // "the tactical look" cannot fork into two definitions.
-  assert.match(uiSource, /const MILITARY_DETECTION_PRESET = Object\.freeze\(\{\s*mode: 'dense',\s*densityPct: 75,?\s*\}\);/,
-    'the tactical look is still Dense @ 75%');
+test('first run is readable while dedicated tactical modes retain their full preset', () => {
   const baseline = uiBlock('const GLOBAL_POST_DEFAULTS = {', '\n};');
-  assert.match(baseline, /detectionMode: MILITARY_DETECTION_PRESET\.mode\.toUpperCase\(\),/,
-    'the first-load baseline reads the preset rather than restating it');
-  assert.match(baseline, /detectionDensity: MILITARY_DETECTION_PRESET\.densityPct,/,
-    'density comes from the same object, so the two cannot drift');
-  assert.doesNotMatch(baseline, /detectionMode: 'OFF'/,
-    'the retired OFF baseline is gone, not shadowed');
-
-  // `const` has no hoisted value: the baseline can only READ the preset if the
-  // preset is declared first. Getting this backwards is a startup TDZ crash,
-  // which no other test in the suite would reach.
-  assert.ok(
-    uiSource.indexOf('const MILITARY_DETECTION_PRESET =')
-      < uiSource.indexOf('const GLOBAL_POST_DEFAULTS ='),
-    'MILITARY_DETECTION_PRESET must be declared before the baseline that reads it',
-  );
+  assert.match(baseline, /hudVariant: 'minimal',/);
+  assert.match(baseline, /hudVisible: true,/,
+    'the quiet layout still provides useful location context');
+  assert.match(baseline, /detectionMode: 'BALANCED',/);
+  assert.match(baseline, /detectionDensity: 50,/);
+  assert.match(uiSource, /const MILITARY_DETECTION_PRESET = Object\.freeze\(\{\s*mode: 'dense',\s*densityPct: 75,?\s*\}\);/,
+    'Contacts and military styles keep their distinct Dense @ 75% setting');
 });
 
 test('detection-on-by-default is a default, not an operator override', () => {

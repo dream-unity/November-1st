@@ -3,21 +3,21 @@
 :root {
   color-scheme: light;
   --du-paper: #ebe4d5;
-  --du-panel: #f3eee2;
-  --du-ink: #302b23;
-  --du-bronze: #756044;
+  --du-panel: #faf7ef;
+  --du-ink: #29261f;
+  --du-bronze: #6d5738;
   --du-line: rgba(88, 73, 52, 0.28);
-  --du-shadow: 0 12px 36px rgba(48, 43, 35, 0.16);
+  --du-shadow: 0 6px 20px rgba(48, 43, 35, 0.1);
   --bg-dark: var(--du-paper);
-  --glass-bg: rgba(243, 238, 226, 0.96);
+  --glass-bg: rgba(250, 247, 239, 0.98);
   --glass-border: var(--du-line);
   --glass-border-hover: rgba(88, 73, 52, 0.52);
   --accent: var(--du-bronze);
   --accent-dim: rgba(117, 96, 68, 0.12);
   --accent-glow: rgba(117, 96, 68, 0.12);
   --text-primary: var(--du-ink);
-  --text-secondary: #665e50;
-  --text-dim: #6e6456;
+  --text-secondary: #514b40;
+  --text-dim: #605747;
 }
 
 html,
@@ -46,7 +46,14 @@ textarea {
 
 #title-bar .title-logo,
 .loader-logo {
-  filter: grayscale(1) sepia(0.35) brightness(0.62);
+  filter: none;
+  aspect-ratio: 1;
+}
+
+.brand-logo > img {
+  object-fit: contain;
+  border-radius: 50%;
+  mix-blend-mode: multiply;
 }
 
 /* Surface colours override the original dark component skins. */
@@ -161,12 +168,12 @@ textarea {
 
 /* First view: paper cards, ink labels and a fine bronze rule. */
 #first-run-launcher {
-  background: var(--du-panel) url('/dream-unity-parchment.svg') repeat;
-  background-size: 268px 268px;
-  border-color: rgba(117, 96, 68, 0.45);
-  box-shadow:
-    0 20px 70px rgba(48, 43, 35, 0.22),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+  background: var(--du-panel);
+  border-color: var(--du-line);
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(48, 43, 35, 0.18);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .first-run-scanline {
@@ -198,13 +205,13 @@ textarea {
 .first-run-choices button,
 .first-run-choices button.first-run-explore {
   color: var(--du-ink);
-  background: rgba(255, 252, 245, 0.4);
+  background: #fffdf8;
   border-color: var(--du-line);
 }
 
 .first-run-choices button:hover,
 .first-run-choices button:focus-visible {
-  background: rgba(117, 96, 68, 0.11);
+  background: #efe7d8;
   border-color: var(--du-bronze);
 }
 
@@ -417,4 +424,377 @@ textarea {
 
 .celestial-ring-outline {
   border-color: rgba(88, 73, 52, 0.22);
+}
+
+/* A quiet brand header and one clearly labelled navigation row. */
+#title-bar {
+  top: 24px;
+}
+
+#title-bar h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 25px;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  text-shadow: none;
+  gap: 10px;
+}
+
+#title-bar .title-logo {
+  width: 46px;
+  flex: 0 0 46px;
+}
+
+#title-bar .subtitle {
+  margin-top: 6px;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+}
+
+.du-navigation {
+  margin-top: 14px;
+  font-size: 12px;
+  gap: 6px;
+}
+
+.du-navigation a,
+.du-navigation button {
+  min-height: 38px;
+  padding: 8px 10px;
+  font-weight: 500;
+}
+
+#global-loading-status {
+  top: 140px;
+  font-size: 10px;
+  letter-spacing: 0.6px;
+}
+
+#global-loading-detail {
+  letter-spacing: 0.6px;
+}
+
+#top-center-actions button:hover,
+#top-center-actions button:focus-visible {
+  background: #fffdf8;
+  color: var(--du-ink);
+}
+
+#top-center-actions .share-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+/* Readable labels and larger disclosure targets keep tools easy to scan. */
+.panel-title,
+#pp-toggles .pp-header-label,
+.pp-label,
+.param-panel-title,
+#command-dock .panel-title,
+#command-dock .location-toolbar-label,
+#command-dock #control-panel .panel-title,
+#command-dock #location-bar .location-toolbar-label {
+  color: var(--du-ink);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.pp-slider-mini-label {
+  font-size: 10px;
+  letter-spacing: 0.4px;
+  color: var(--text-secondary);
+}
+
+.panel-collapse-btn {
+  min-width: 30px;
+  min-height: 30px;
+  font-size: 15px;
+}
+
+.panel-collapse-btn:focus-visible,
+.du-navigation :focus-visible,
+.first-run-dismiss:focus-visible,
+.first-run-choices button:focus-visible {
+  outline: 2px solid var(--du-bronze);
+  outline-offset: 3px;
+}
+
+#command-dock .location-inner,
+#command-dock .panel-inner,
+.pp-toggle-group {
+  box-shadow: none;
+}
+
+#command-dock .panel-title::after,
+#command-dock .location-toolbar-label::after {
+  color: var(--du-bronze);
+}
+
+/* Keep the first-view content on clean paper, without texture behind copy. */
+#first-run-launcher h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(23px, 2.4vw, 30px);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.first-run-header {
+  min-height: 34px;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.first-run-dismiss {
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid var(--du-line);
+  border-radius: 8px;
+  color: var(--du-ink);
+  background: #fffdf8;
+  font: 12px var(--font-sans);
+  cursor: pointer;
+}
+
+.first-run-dismiss:hover {
+  background: #efe7d8;
+  border-color: var(--du-bronze);
+}
+
+.first-run-dismiss[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+#first-run-description {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.first-run-choices strong {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.first-run-choices small {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.first-run-choices button {
+  min-height: 64px;
+  border-radius: 9px;
+  padding: 10px 12px;
+}
+
+.first-run-choices button:is(:hover, :focus-visible) {
+  transform: none;
+}
+
+.first-run-footer,
+.first-run-suppress,
+.first-run-note {
+  font-size: 11px;
+  letter-spacing: 0;
+  line-height: 1.5;
+}
+
+/* Compact HUD retains useful location context; detailed layouts stay available. */
+#intel-hud * {
+  text-shadow: none;
+}
+
+#intel-hud[data-variant='minimal'] .hud-top-left {
+  top: 174px;
+}
+
+#intel-hud[data-variant='minimal'] .hud-corner,
+#intel-hud[data-variant='operator'] .hud-corner,
+#intel-hud[data-variant='operator'] .hud-top-bar,
+#intel-hud[data-variant='operator'] .hud-bottom-bar {
+  background: var(--glass-bg);
+  border: 1px solid var(--du-line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-shadow: none;
+}
+
+#intel-hud[data-variant='minimal']
+  :is(.hud-bracket, .hud-mode, .hud-bottom-bar) {
+  display: none;
+}
+
+#intel-hud[data-variant='minimal'] .hud-summary-wrap {
+  margin: 0;
+  max-width: min(280px, calc(100vw - 96px));
+}
+
+#intel-hud[data-variant='minimal'] .hud-summary-label {
+  color: var(--text-secondary);
+  font-size: 10px;
+  letter-spacing: 0.8px;
+  opacity: 1;
+}
+
+#intel-hud[data-variant='minimal'] .hud-summary {
+  color: var(--du-ink);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: normal;
+  opacity: 1;
+}
+
+#intel-hud[data-variant='minimal'] .hud-content {
+  color: var(--du-ink);
+  font-size: 11px;
+  letter-spacing: 0.4px;
+}
+
+/* The welcome card carries the explanation while it is open. */
+body:has(#first-run-launcher.visible:not([hidden])) #intel-hud {
+  opacity: 0;
+  visibility: hidden;
+}
+
+@media (max-width: 1080px) {
+  #top-center-actions {
+    left: auto;
+    right: 28px;
+    transform: none;
+    top: 28px;
+  }
+
+  #style-indicator {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  #title-bar {
+    top: 14px;
+    left: 16px;
+  }
+
+  #title-bar h1 {
+    font-size: 21px;
+  }
+
+  #title-bar .title-logo {
+    width: 38px;
+    flex-basis: 38px;
+  }
+
+  #title-bar .subtitle {
+    display: none;
+  }
+
+  .du-navigation {
+    top: 62px;
+    margin: 0;
+    gap: 5px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 5px;
+    max-width: none;
+  }
+
+  .du-navigation a,
+  .du-navigation button,
+  .du-feed-shortcuts {
+    flex-shrink: 0;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+  }
+
+  #top-center-actions {
+    top: 120px;
+    right: 16px;
+  }
+
+  #global-loading-status {
+    top: 166px;
+    max-width: calc(100vw - 32px);
+  }
+
+  #left-panel-stack {
+    top: 204px;
+  }
+
+  #intel-hud[data-variant='minimal'] .hud-top-left,
+  #intel-hud[data-variant='minimal'] .hud-bottom-left {
+    display: none;
+  }
+
+  #command-dock {
+    --dock-side-compact: min(9rem, calc((100vw - 32px) / 2));
+  }
+
+  #command-dock .panel-title,
+  #command-dock .location-toolbar-label,
+  #command-dock #control-panel .panel-title,
+  #command-dock #location-bar .location-toolbar-label {
+    max-width: none;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+  }
+}
+
+/* Both rails remain scrollable and reachable on a short landscape phone. */
+@media (max-width: 720px) and (max-height: 520px) {
+  #left-panel-stack,
+  #right-context-rail {
+    top: 174px;
+    bottom: calc(2vh + 7.5rem);
+    width: auto;
+  }
+
+  #left-panel-stack {
+    right: calc(50% + 6px);
+  }
+
+  #right-context-rail {
+    left: calc(50% + 6px);
+  }
+
+  #global-loading-status {
+    top: 120px;
+    left: 16px;
+    transform: none;
+    max-width: calc(100vw - 260px);
+    overflow: hidden;
+  }
+}
+
+@media (pointer: coarse) {
+  .panel-collapse-btn,
+  .first-run-dismiss,
+  .du-navigation a,
+  .du-navigation button {
+    min-height: 44px;
+  }
+
+  .panel-collapse-btn {
+    min-width: 44px;
+  }
+}
+
+@media (max-height: 620px) {
+  #first-run-launcher h2 {
+    font-size: 22px;
+  }
+
+  #first-run-description {
+    font-size: 12px;
+  }
+
+  .first-run-choices button {
+    min-height: 54px;
+  }
 }
