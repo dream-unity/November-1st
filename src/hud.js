@@ -29,24 +29,24 @@ import { isHudSummaryUnconfigured } from './hudSummaryResponse.js';
 /** Color palettes keyed by shader mode; applied as CSS custom properties. */
 const HUD_COLORS = {
   surveillance: {
-    main: 'rgba(51, 255, 51, 0.8)',
-    glow: 'rgba(51, 255, 51, 0.5)',
-    border: 'rgba(51, 255, 51, 0.2)',
+    main: 'rgba(54, 85, 50, 0.95)',
+    glow: 'rgba(245, 240, 227, 0.72)',
+    border: 'rgba(54, 85, 50, 0.34)',
   },
   thermal: {
-    main: 'rgba(255, 255, 255, 0.7)',
-    glow: 'rgba(255, 255, 255, 0.4)',
-    border: 'rgba(255, 255, 255, 0.15)',
+    main: 'rgba(52, 51, 47, 0.95)',
+    glow: 'rgba(245, 240, 227, 0.72)',
+    border: 'rgba(52, 51, 47, 0.34)',
   },
   retro: {
-    main: 'rgba(255, 170, 0, 0.8)',
-    glow: 'rgba(255, 170, 0, 0.5)',
-    border: 'rgba(255, 170, 0, 0.2)',
+    main: 'rgba(117, 83, 41, 0.95)',
+    glow: 'rgba(245, 240, 227, 0.72)',
+    border: 'rgba(117, 83, 41, 0.34)',
   },
   _default: {
-    main: 'rgba(0, 255, 255, 0.6)',
-    glow: 'rgba(0, 255, 255, 0.4)',
-    border: 'rgba(0, 255, 255, 0.15)',
+    main: 'rgba(64, 55, 42, 0.92)',
+    glow: 'rgba(245, 240, 227, 0.72)',
+    border: 'rgba(117, 96, 68, 0.34)',
   },
 };
 

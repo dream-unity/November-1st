@@ -6,6 +6,7 @@ import {
 } from '../dream-unity/chrome.js';
 import { installLiveFeeds } from '../dream-unity/liveFeeds.js';
 import { createGlobeFeedActions } from '../dream-unity/globeFeeds.js';
+import '../dream-unity/earth-theme.css';
 
 let application;
 let started = false;
@@ -23,6 +24,7 @@ export function startGodsEye() {
     application = createStandaloneApplication({
       googleApiKey: import.meta.env.GOOGLE_MAPS_API_KEY,
       cesiumToken: import.meta.env.CESIUM_ION_TOKEN,
+      voice: false,
       allowQaRegistration: import.meta.env.DEV,
     });
     const globeFeeds = createGlobeFeedActions(application);

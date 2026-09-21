@@ -118,21 +118,24 @@ export function createApplicationTools({
   defer(() => {
     if (window.__godsEyeView === debug) delete window.__godsEyeView;
   });
-  const voiceCommands = initGevVoiceCommands({
-    ...voice,
-    floorServices: operations.surface.groundFloor,
-    annotationResolver: operations.annotationResolver,
-    searchNavigation: operations.searchAndFlyTo,
-    signal,
-    placeSearch,
-    viewer,
-    styleManager,
-    dataManager,
-    sceneDirector,
-    annotations,
-  });
+  const voiceCommands =
+    voice === false
+      ? null
+      : initGevVoiceCommands({
+          ...voice,
+          floorServices: operations.surface.groundFloor,
+          annotationResolver: operations.annotationResolver,
+          searchNavigation: operations.searchAndFlyTo,
+          signal,
+          placeSearch,
+          viewer,
+          styleManager,
+          dataManager,
+          sceneDirector,
+          annotations,
+        });
   defer(() => {
-    voiceCommands.stop({ removeUi: true });
+    voiceCommands?.stop({ removeUi: true });
     if (window.__gevVoiceCommands === voiceCommands)
       delete window.__gevVoiceCommands;
   });

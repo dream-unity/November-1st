@@ -39,7 +39,7 @@ import { getKeyholeGeometry } from './celestialRing.js';
  */
 
 /** Matches the page background the emergent scope faded into. */
-const SCOPE_OUTSIDE_COLOR = { r: 5, g: 5, b: 8 };
+const SCOPE_OUTSIDE_COLOR = { r: 235, g: 228, b: 213 };
 /**
  * Default edge feather as a fraction of the keyhole radius.
  *

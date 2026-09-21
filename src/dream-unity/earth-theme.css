@@ -1,0 +1,420 @@
+/* Dream Unity's parchment, charcoal and bronze palette.
+   Presentation only: map imagery, sensor modes and data colours retain their meaning. */
+:root {
+  color-scheme: light;
+  --du-paper: #ebe4d5;
+  --du-panel: #f3eee2;
+  --du-ink: #302b23;
+  --du-bronze: #756044;
+  --du-line: rgba(88, 73, 52, 0.28);
+  --du-shadow: 0 12px 36px rgba(48, 43, 35, 0.16);
+  --bg-dark: var(--du-paper);
+  --glass-bg: rgba(243, 238, 226, 0.96);
+  --glass-border: var(--du-line);
+  --glass-border-hover: rgba(88, 73, 52, 0.52);
+  --accent: var(--du-bronze);
+  --accent-dim: rgba(117, 96, 68, 0.12);
+  --accent-glow: rgba(117, 96, 68, 0.12);
+  --text-primary: var(--du-ink);
+  --text-secondary: #665e50;
+  --text-dim: #6e6456;
+}
+
+html,
+body,
+#loading-screen {
+  background: var(--du-paper) url('/dream-unity-parchment.svg') repeat;
+  background-size: 268px 268px;
+}
+
+input,
+select,
+textarea {
+  accent-color: var(--du-bronze);
+}
+
+#title-bar h1,
+#style-indicator .indicator-value,
+#orbit-indicator {
+  text-shadow: 0 1px 2px rgba(243, 238, 226, 0.9);
+}
+
+#title-bar .title-glow,
+.panel-glow {
+  opacity: 0.15;
+}
+
+#title-bar .title-logo,
+.loader-logo {
+  filter: grayscale(1) sepia(0.35) brightness(0.62);
+}
+
+/* Surface colours override the original dark component skins. */
+#global-context-panel,
+#pp-toggles:not(.collapsed),
+#pp-toggles.collapsed .pp-header-row,
+.panel-inner,
+.data-panel-inner,
+.cctv-panel-inner,
+.scene-panel-inner,
+.location-inner,
+.pp-toggle-group,
+#command-dock > #location-bar,
+#command-dock > #control-panel {
+  background: var(--glass-bg);
+  border-color: var(--du-line);
+  box-shadow:
+    var(--du-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+#command-dock .dock-popover-content,
+#command-dock .dock-pin-btn,
+#command-dock #location-bar .dock-popover-content,
+#command-dock #control-panel .dock-popover-content {
+  background: var(--du-panel);
+  color: var(--du-ink);
+  border-color: var(--du-line);
+  box-shadow: var(--du-shadow);
+}
+
+#command-dock .panel-title,
+#command-dock .location-toolbar-label,
+#command-dock #control-panel .panel-title,
+#command-dock #location-bar .location-toolbar-label {
+  color: var(--text-secondary);
+}
+
+#command-dock .dock-label-icon {
+  background: var(--text-secondary);
+}
+
+#command-dock :is(#location-bar, #control-panel):hover .dock-label-icon,
+#command-dock :is(#location-bar, #control-panel).dock-pinned .dock-label-icon {
+  background: var(--du-bronze);
+  filter: none;
+}
+
+#command-dock > :is(#location-bar, #control-panel).dock-pinned {
+  border-color: var(--du-bronze);
+  box-shadow: var(--du-shadow);
+}
+
+#command-dock #location-bar .location-toolbar::after {
+  background: linear-gradient(90deg, var(--du-line), transparent);
+}
+
+#command-dock #control-panel .panel-header::after {
+  background: linear-gradient(90deg, transparent, var(--du-line));
+}
+
+.pp-select,
+#location-search,
+#scene-select,
+.search-results,
+.location-pill,
+.poi-pill,
+.style-btn,
+.scene-btn,
+.scene-shot-row,
+.pp-mode-btn,
+.panel-collapse-btn {
+  background-color: rgba(117, 96, 68, 0.045);
+  color: var(--du-ink);
+  border-color: var(--du-line);
+}
+
+.pp-select option,
+#scene-select option {
+  background: var(--du-panel);
+  color: var(--du-ink);
+}
+
+.style-btn.active,
+.location-pill.active,
+.poi-pill.active,
+.pp-toggle-btn.active,
+.scene-shot-row.active,
+.pp-mode-btn.active {
+  background: var(--accent-dim);
+  color: var(--du-ink);
+  border-color: var(--du-bronze);
+  box-shadow: inset 0 0 0 1px rgba(117, 96, 68, 0.1);
+}
+
+#detection-toggle:is(.active, .panoptic, .god) {
+  background: rgba(103, 108, 76, 0.12);
+  border-color: #6e7151;
+  box-shadow: none;
+  animation: none;
+}
+
+#detection-toggle.active :is(.pp-label, .pp-icon) {
+  color: #515739;
+  text-shadow: none;
+}
+
+.pp-slider,
+.param-slider {
+  background: rgba(88, 73, 52, 0.2);
+}
+
+/* First view: paper cards, ink labels and a fine bronze rule. */
+#first-run-launcher {
+  background: var(--du-panel) url('/dream-unity-parchment.svg') repeat;
+  background-size: 268px 268px;
+  border-color: rgba(117, 96, 68, 0.45);
+  box-shadow:
+    0 20px 70px rgba(48, 43, 35, 0.22),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.first-run-scanline {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(117, 96, 68, 0.65),
+    transparent
+  );
+  box-shadow: none;
+}
+
+.first-run-kicker,
+.first-run-choices button > .material-symbols-outlined:first-child,
+.first-run-arrow,
+.first-run-choices button:is(:hover, :focus-visible) .first-run-arrow {
+  color: var(--du-bronze);
+}
+
+#first-run-description,
+.first-run-header,
+.first-run-footer,
+.first-run-suppress,
+.first-run-note,
+.first-run-choices small {
+  color: var(--text-secondary);
+}
+
+.first-run-choices button,
+.first-run-choices button.first-run-explore {
+  color: var(--du-ink);
+  background: rgba(255, 252, 245, 0.4);
+  border-color: var(--du-line);
+}
+
+.first-run-choices button:hover,
+.first-run-choices button:focus-visible {
+  background: rgba(117, 96, 68, 0.11);
+  border-color: var(--du-bronze);
+}
+
+.first-run-choices {
+  scrollbar-color: rgba(117, 96, 68, 0.5) transparent;
+}
+
+.first-run-choices::-webkit-scrollbar-thumb {
+  background: rgba(117, 96, 68, 0.5);
+}
+
+.first-run-suppress input {
+  accent-color: var(--du-bronze);
+}
+
+.first-run-suppress:hover {
+  color: var(--du-ink);
+}
+
+#first-run-launcher[data-state='loading'] .first-run-note {
+  color: var(--du-bronze);
+}
+
+.map-source-heading,
+.map-stack-chip-req {
+  color: var(--text-secondary);
+}
+
+.map-stack-chip.active {
+  box-shadow: inset 0 0 0 1px rgba(117, 96, 68, 0.12);
+}
+
+.map-stack-chip.unavailable,
+.map-stack-chip[aria-disabled='true'] {
+  color: #80786a;
+  border-color: rgba(88, 73, 52, 0.18);
+  background: rgba(117, 96, 68, 0.025);
+}
+
+#left-panel-stack > [data-panel-id]:not(.collapsed) .panel-divider,
+#right-context-rail [data-panel-id]:not(.collapsed) .panel-divider,
+#param-slider-panel:not(.collapsed) .param-panel-divider {
+  background: linear-gradient(90deg, var(--du-line), transparent);
+}
+
+.gev-quantitative-slider::-webkit-slider-runnable-track {
+  background: rgba(88, 73, 52, 0.2);
+}
+
+.gev-quantitative-slider::-moz-range-track,
+.gev-quantitative-slider::-moz-range-progress {
+  background: rgba(88, 73, 52, 0.2);
+}
+
+/* Header actions, source status and live-feed dialogs use the same paper. */
+.du-navigation a,
+.du-navigation button,
+.du-dialog button,
+.du-recovery-actions a,
+.du-recovery-actions button,
+.du-feeds button,
+.du-feeds select,
+.du-feeds input[type='search'] {
+  background: var(--glass-bg);
+  border-color: var(--du-line);
+  color: var(--du-ink);
+}
+
+.du-navigation a:hover,
+.du-navigation button:hover,
+.du-dialog button:hover,
+.du-feeds button:hover {
+  background: #e6ddcb;
+  border-color: var(--du-bronze);
+}
+
+.du-dialog,
+.du-feeds,
+.du-feed-detail,
+.du-feed-toast {
+  color: var(--du-ink);
+  background: var(--du-panel);
+  border-color: var(--du-line);
+  box-shadow: var(--du-shadow);
+}
+
+.du-dialog::backdrop,
+.du-feeds::backdrop {
+  background: rgba(48, 43, 35, 0.35);
+}
+
+.du-source-explanation,
+.du-provider dd,
+.du-recovery p,
+.du-recovery details,
+.du-feeds-intro,
+.du-feeds-note,
+.du-feeds-count,
+.du-feed-subtitle {
+  color: var(--text-secondary);
+}
+
+.du-service-state,
+.du-provider-status,
+.du-dialog-footer a,
+.du-feeds-status,
+.du-feed-media-kind,
+.du-feed-detail a,
+.du-feeds a {
+  color: #685333;
+}
+
+.du-provider {
+  border-color: var(--du-line);
+}
+
+.du-feeds-tabs [aria-selected='true'],
+.du-feeds-list button[aria-pressed='true'] {
+  background: #e3d8c3;
+  border-color: var(--du-bronze);
+}
+
+.du-feeds :focus-visible {
+  outline-color: var(--du-ink);
+}
+
+.du-navigation button[data-connection='connected']::before {
+  background: #63734e;
+}
+
+.du-navigation button[data-connection='unavailable']::before {
+  background: #a27635;
+}
+
+#global-loading-status,
+#traffic-sync-chip,
+#cctv-sync-chip,
+#clean-view-exit {
+  background: var(--glass-bg);
+  color: var(--text-secondary);
+  border-color: var(--du-line);
+  box-shadow: 0 4px 16px rgba(48, 43, 35, 0.12);
+}
+
+#global-loading-label,
+#traffic-sync-label,
+#cctv-sync-label {
+  color: var(--text-secondary);
+}
+
+#global-loading-detail,
+#traffic-sync-progress,
+#cctv-sync-progress {
+  color: var(--du-bronze);
+}
+
+#global-loading-status[data-state='acquiring'] {
+  border-color: var(--du-bronze);
+  box-shadow: 0 4px 16px rgba(48, 43, 35, 0.12);
+}
+
+#global-loading-status[data-state='error'],
+#global-loading-status[data-state='error'] #global-loading-label {
+  color: #913e32;
+  border-color: #a25748;
+}
+
+#global-loading-status:is([data-state='retry'], [data-state='cancelled']),
+#global-loading-status:is([data-state='retry'], [data-state='cancelled'])
+  :is(#global-loading-label, #global-loading-detail) {
+  color: #825d27;
+  border-color: #9a7a42;
+}
+
+#intel-hud {
+  --hud-color: rgba(64, 55, 42, 0.92);
+  --hud-glow: rgba(245, 240, 227, 0.72);
+  --hud-border: rgba(117, 96, 68, 0.34);
+}
+
+.hud-top-bar,
+.hud-bottom-bar {
+  background: rgba(243, 238, 226, 0.88);
+}
+
+#tilt-map-view[aria-pressed='true'] {
+  background: var(--du-panel);
+  box-shadow: inset 0 0 0 1px rgba(117, 96, 68, 0.2);
+}
+
+/* Attribution remains legible on both the paper surround and map imagery. */
+#cesium-credits {
+  color: var(--text-secondary);
+  background: rgba(243, 238, 226, 0.88);
+  text-shadow: none;
+  border-radius: 4px;
+}
+
+#cesium-credits a,
+#cesium-credits .cesium-credit-text,
+#cesium-credits .cesium-credit-expand-link {
+  color: var(--text-secondary);
+}
+
+/* Provider logos retain their original artwork and sufficient contrast. */
+#cesium-credits .cesium-credit-logoContainer {
+  background: #302b23;
+  border-radius: 3px;
+}
+
+.celestial-ring-outline {
+  border-color: rgba(88, 73, 52, 0.22);
+}

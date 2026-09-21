@@ -1,4 +1,9 @@
 /* ── Slide-up command trays ──────────────────── */
+/* Keep the two navigation trays centred when voice is disabled. */
+#command-dock:not(:has(> #gev-voice-control)) {
+  --dock-voice-width: 0px;
+}
+
 #command-dock,
 #command-dock:has(#location-bar:not(.collapsed)),
 #command-dock:has(#control-panel:not(.collapsed)) {

@@ -343,11 +343,11 @@ test('the hard-crop (feather 0) path honors the same terminus alpha', () => {
     // The globe-scale seed paint is legitimately in the history, so assert on
     // the LAST fill: what the hard crop is painting right now, zoomed in.
     const beforeDescent = dom.fillStyles().at(-1);
-    assert.equal(beforeDescent, `rgba(5,5,8,${SCOPE_OUTSIDE_ALPHA})`,
+    assert.equal(beforeDescent, `rgba(235,228,213,${SCOPE_OUTSIDE_ALPHA})`,
       'at globe scale the hard crop is still the translucent terminus');
 
     updateScopeTerminusForHeight(SCOPE_TERMINUS_NEAR_M);
-    assert.equal(dom.fillStyles().at(-1), 'rgba(5,5,8,1)',
+    assert.equal(dom.fillStyles().at(-1), 'rgba(235,228,213,1)',
       'a zoomed-in hard crop must paint fully opaque, not the globe-scale 0.94');
   } finally {
     setScopeMaskFeather(SCOPE_FEATHER_RATIO_DEFAULT);
