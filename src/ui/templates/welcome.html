@@ -1,58 +1,58 @@
-  <!-- Explicit mission choice on a fresh session. Live feeds are not auto-enabled
-       until the visitor asks; shared links skip this surface entirely. It returns
-       every session until "Don't show this again" is ticked — see
-       src/firstRunExperience.js for the full show policy. -->
-  <aside id="first-run-launcher" role="dialog" aria-labelledby="first-run-title" aria-describedby="first-run-description" hidden>
-    <div class="first-run-scanline" aria-hidden="true"></div>
+  <!-- Choose one clear starting point. Mission actions stay in their own view;
+       no live feeds run until requested. Shared links skip this menu. -->
+  <aside id="first-run-launcher" class="first-run-menu" role="dialog" aria-labelledby="first-run-title" aria-describedby="first-run-description" data-view="home" hidden>
     <header class="first-run-header">
-      <span class="first-run-kicker">DREAM UNITY · GET STARTED</span>
+      <span class="first-run-brand"><img src="/dream-unity-symbol.webp" alt="" width="32" height="32" /><span>Dream Unity</span></span>
       <button type="button" class="first-run-dismiss" data-first-run-dismiss aria-label="Close welcome and explore the map">Close</button>
     </header>
-    <h2 id="first-run-title">Explore God's Earth</h2>
-    <p id="first-run-description">Choose live activity to follow, or explore the map at your own pace.</p>
+    <div class="first-run-intro">
+      <p class="first-run-kicker">GOD’S EARTH VIEW</p>
+      <h2 id="first-run-title">Where would you like to start?</h2>
+      <p id="first-run-description">Explore the globe, follow journeys or see what is happening in nature.</p>
+    </div>
+    <button type="button" class="first-run-back" data-first-run-back hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m5-5-5 5 5 5"/></svg><span>Back to all options</span></button>
     <div class="first-run-choices">
-      <div class="first-run-category" data-first-run-category>
-        <button type="button" data-first-run-category-toggle aria-expanded="false" aria-controls="first-run-air-sea-space">
-          <span class="material-symbols-outlined" aria-hidden="true">radar</span>
-          <span><strong>Air, Sea &amp; Space</strong><small>Aircraft, ships, satellites and launches</small></span>
-          <span class="material-symbols-outlined first-run-category-arrow" aria-hidden="true">arrow_drop_down</span>
-        </button>
-        <div id="first-run-air-sea-space" class="first-run-category-choices" hidden>
-          <button type="button" data-first-run-choice="contacts">
-            <span class="material-symbols-outlined" aria-hidden="true">radar</span>
-            <span><strong>Aircraft &amp; ships</strong><small>Follow live aircraft, vessels and nearby sites</small></span>
-            <span class="material-symbols-outlined first-run-arrow" aria-hidden="true">arrow_forward</span>
+      <section class="first-run-home" data-first-run-home aria-label="Ways to explore">
+          <button type="button" class="first-run-card first-run-explore" data-first-run-choice="explore">
+            <span class="first-run-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a17 17 0 0 1 0 18 17 17 0 0 1 0-18Z"/></svg></span>
+            <span class="first-run-card-copy"><span class="first-run-eyebrow">A good place to start</span><strong>Explore the map</strong><small>Find a place and look around the globe.</small></span>
+            <span class="first-run-action">Open map<span class="first-run-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></span></span>
           </button>
-          <button type="button" data-first-run-choice="space-missions">
-            <span class="material-symbols-outlined" aria-hidden="true">rocket_launch</span>
-            <span><strong>Space missions</strong><small>Launches, spacecraft and orbital context</small></span>
-            <span class="material-symbols-outlined first-run-arrow" aria-hidden="true">arrow_forward</span>
+        <p class="first-run-section-label">Or choose what to follow</p>
+        <div class="first-run-category-grid">
+          <button type="button" class="first-run-card " data-first-run-category-open aria-controls="first-run-air-sea-space">
+            <span class="first-run-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="11" ry="5" transform="rotate(-35 12 12)"/><path d="M9 3a9 9 0 0 1 11 12M15 21A9 9 0 0 1 4 9"/></svg></span>
+            <span class="first-run-card-copy"><strong>Air, Sea &amp; Space</strong><small>Aircraft, ships, satellites and launches.</small></span>
+            <span class="first-run-action">Choose a view<span class="first-run-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></span></span>
+          </button>
+          <button type="button" class="first-run-card " data-first-run-choice="environmental">
+            <span class="first-run-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 3C11 3 4 6 4 13a7 7 0 0 0 7 7c7 0 9-8 9-17Z"/><path d="m4 21 12-12M8 17v-5M11 14h5"/></svg></span>
+            <span class="first-run-card-copy"><strong data-first-run-environmental-title>Nature &amp; events</strong><small>See recent earthquakes and active fires.</small></span>
+            <span class="first-run-action">View events<span class="first-run-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></span></span>
           </button>
         </div>
-      </div>
-      <button type="button" data-first-run-choice="environmental">
-        <span class="material-symbols-outlined" aria-hidden="true">local_fire_department</span>
-        <!-- Title text is painted from ENVIRONMENTAL_LABEL_CHOICE at init. -->
-        <!-- Subcopy names BOTH feeds this tile turns on, because the launcher
-             optimizes for the fully configured experience (owner ruling,
-             2026-08-23) — see the mission table in src/firstRunExperience.js. -->
-        <span><strong data-first-run-environmental-title>Environment</strong><small>Live earthquakes and active fires, from USGS and NASA</small></span>
-        <span class="material-symbols-outlined first-run-arrow" aria-hidden="true">arrow_forward</span>
-      </button>
-      <button type="button" class="first-run-explore" data-first-run-choice="explore">
-        <span class="material-symbols-outlined" aria-hidden="true">public</span>
-        <span><strong>Explore the map</strong><small>Search for a place or move around the globe</small></span>
-        <span class="material-symbols-outlined first-run-arrow" aria-hidden="true">arrow_forward</span>
-      </button>
+      </section>
+      <section id="first-run-air-sea-space" class="first-run-category-view" data-first-run-category-view aria-label="Air, Sea and Space views" hidden>
+        <p class="first-run-section-label">Choose your view</p>
+          <button type="button" class="first-run-card first-run-mission" data-first-run-choice="contacts">
+            <span class="first-run-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 3-6 18-4-8-8-4 18-6ZM11 13 21 3"/></svg></span>
+            <span class="first-run-card-copy"><strong>Aircraft &amp; ships</strong><small>Follow aircraft, vessels and nearby places on the map.</small></span>
+            <span class="first-run-action">Open tracking<span class="first-run-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></span></span>
+          </button>
+          <button type="button" class="first-run-card first-run-mission" data-first-run-choice="space-missions">
+            <span class="first-run-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 5c3-3 7-2 7-2s1 4-2 7l-7 7-5-5 7-7ZM7 12H3l4-6 5 1M12 17v4l6-4-1-5M7 17l-3 3M5 16l-2 2M8 19l-2 2"/><circle cx="16" cy="8" r="1.5"/></svg></span>
+            <span class="first-run-card-copy"><strong>Space missions</strong><small>Discover launches, spacecraft and their orbits.</small></span>
+            <span class="first-run-action">Open missions<span class="first-run-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></span></span>
+          </button>
+        <p class="first-run-context-note">You can switch between these views in the map’s activity panel.</p>
+      </section>
     </div>
-    <div class="first-run-footer">
+    <footer class="first-run-footer">
       <label class="first-run-suppress">
         <input type="checkbox" data-first-run-suppress />
         <span>Don't show this again</span>
       </label>
-      <span>ESC to dismiss</span>
-    </div>
-    <!-- Kept out of the footer row: it swaps to mission progress and errors, and
-         a live region that also holds layout makes the row jump as it speaks. -->
-    <p class="first-run-note" data-first-run-status role="status" aria-live="polite">Search for a place with Location in the bottom toolbar.</p>
+      <span class="first-run-keyboard-hint">Esc to close</span>
+    </footer>
+    <p class="first-run-note" data-first-run-status role="status" aria-live="polite">You can change your view at any time.</p>
   </aside>

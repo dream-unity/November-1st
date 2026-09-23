@@ -1,262 +1,370 @@
-/* ── First-run mission launcher ───────────────────────────────────
-   Compact and non-modal: it gives a new visitor a meaningful starting
-   choice without blocking manual map interaction or spending API quota. */
+/* First-run navigation: a clear starting point and two focused categories.
+   The map remains available behind this non-modal dialog. Only the choice
+   region scrolls, so close, back, preferences and progress stay reachable. */
 #first-run-launcher {
   position: fixed;
   z-index: 175;
   top: 50%;
   left: 50%;
-  width: min(34rem, calc(100vw - 2rem));
-  /* Five tiles do not fit a short landscape phone (667 x 390), where the card
-     would otherwise render past BOTH ends of the viewport. Cap it to the
-     viewport and let the mission list scroll inside — the heading, the checkbox
-     and the status line must stay reachable at every height. */
-  max-height: calc(100vh - 1.5rem);
-  max-height: calc(100dvh - 1.5rem);
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px);
   display: flex;
   flex-direction: column;
-  padding: 1.15rem;
+  padding: 24px;
   overflow: hidden;
   color: var(--text-primary);
-  background:
-    linear-gradient(145deg, rgba(10, 27, 37, 0.97), rgba(7, 13, 22, 0.95)),
-    rgba(7, 17, 25, 0.96);
-  border: 1px solid rgba(54, 220, 255, 0.42);
-  border-radius: 0.65rem;
-  box-shadow:
-    0 1.4rem 4.5rem rgba(0, 0, 0, 0.72),
-    0 0 2.5rem rgba(0, 212, 255, 0.09),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.025);
-  backdrop-filter: blur(28px) saturate(1.25);
-  -webkit-backdrop-filter: blur(28px) saturate(1.25);
+  background: var(--bg-dark);
+  border: 1px solid var(--glass-border);
+  border-radius: 22px;
+  box-shadow: 0 20px 64px rgba(0, 0, 0, 0.2);
   opacity: 0;
-  transform: translate(-50%, calc(-50% + 0.8rem)) scale(0.985);
-  transition:
-    opacity 220ms ease,
-    transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  /* Inert until revealed AND again while fading out, so a click during the
-     dismiss animation cannot launch a second mission behind the fade. */
+  transform: translate(-50%, calc(-50% + 12px));
+  transition: opacity 180ms ease, transform 220ms ease;
   pointer-events: none;
+  font-family: var(--font-sans);
 }
 
-/* An AUTHOR `display` on this id beats the UA's `[hidden] { display: none }` in
-   the cascade, so the flex above would otherwise leave the card in the
-   accessibility tree from page parse until it is revealed — or, on a share
-   link, until it is removed. Restore the attribute's meaning explicitly. */
+/* Restore the hidden attribute when an author display rule is present. */
 #first-run-launcher[hidden] {
   display: none;
 }
 
 #first-run-launcher.visible {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
+  transform: translate(-50%, -50%);
   pointer-events: auto;
 }
 
-.first-run-scanline {
-  position: absolute;
-  inset: 0 0 auto;
-  height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(54, 220, 255, 0.8),
-    transparent
-  );
-  box-shadow: 0 0 1rem rgba(54, 220, 255, 0.45);
-  pointer-events: none;
-}
-
-.first-run-header,
-.first-run-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  color: rgba(171, 210, 220, 0.6);
-  font-family: var(--font-mono);
-  font-size: 0.58rem;
-  letter-spacing: 0.1rem;
-  text-transform: uppercase;
-}
-
-.first-run-kicker {
-  color: rgba(54, 220, 255, 0.86);
-}
-
-#first-run-launcher h2 {
-  margin-top: 0.6rem;
-  font-family: var(--font-mono);
-  font-size: clamp(1.25rem, 2.4vw, 1.75rem);
-  font-weight: 500;
-  letter-spacing: -0.045rem;
-}
-
-#first-run-description {
-  max-width: 29rem;
-  margin-top: 0.3rem;
-  color: rgba(215, 231, 235, 0.66);
-  font-size: 0.78rem;
-  line-height: 1.5;
-}
-
-.first-run-choices {
-  display: grid;
-  gap: 0.42rem;
-  margin-top: 1rem;
-  /* The one part of the card allowed to scroll when the viewport is too short.
-     min-height:0 is what actually lets this flex child shrink below its content. */
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scroll-behavior: smooth;
-  /* A visible, non-overlaying affordance that the list continues. */
-  scrollbar-width: thin;
-  scrollbar-color: rgba(54, 220, 255, 0.45) transparent;
-  scrollbar-gutter: stable;
-}
-
-/* Keep child missions hidden even when a theme gives their panel a display. */
-.first-run-category-choices[hidden] {
+#first-run-launcher [data-first-run-home][hidden],
+#first-run-launcher [data-first-run-category-view][hidden],
+#first-run-launcher [data-first-run-back][hidden] {
   display: none;
 }
 
-.first-run-choices::-webkit-scrollbar {
-  width: 6px;
+.first-run-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+  min-height: 40px;
 }
+
+.first-run-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 19px;
+  line-height: 1.2;
+}
+
+.first-run-brand img {
+  display: block;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.first-run-dismiss,
+.first-run-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex-shrink: 0;
+  min-height: 40px;
+  padding: 8px 13px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  color: inherit;
+  background: transparent;
+  font: 13px/1.3 var(--font-sans);
+  cursor: pointer;
+}
+
+.first-run-dismiss[aria-disabled='true'],
+.first-run-back[aria-disabled='true'] {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.first-run-intro {
+  flex-shrink: 0;
+  margin-top: 22px;
+}
+
+.first-run-kicker,
+.first-run-section-label,
+.first-run-eyebrow {
+  display: block;
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: 1.25px;
+  text-transform: uppercase;
+}
+
+#first-run-launcher h2 {
+  margin: 7px 0 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(26px, 3vw, 33px);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.16;
+}
+
+#first-run-description {
+  max-width: 520px;
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.first-run-back {
+  align-self: flex-start;
+  margin-top: 18px;
+  min-height: 38px;
+  padding-left: 10px;
+}
+
+.first-run-back svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+
+.first-run-choices {
+  min-height: 0;
+  margin: 20px -3px 0;
+  padding: 3px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--glass-border-hover) transparent;
+  scrollbar-gutter: stable;
+}
+
+.first-run-choices::-webkit-scrollbar {
+  width: 5px;
+}
+
 .first-run-choices::-webkit-scrollbar-thumb {
-  background: rgba(54, 220, 255, 0.45);
-  border-radius: 3px;
+  background: var(--glass-border-hover);
+  border-radius: 5px;
+}
+
+.first-run-home,
+.first-run-category-view {
+  display: grid;
+  gap: 12px;
+}
+
+.first-run-section-label {
+  margin: 9px 0 0;
+  font-size: 10px;
+  letter-spacing: 1.1px;
+}
+
+.first-run-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .first-run-choices button {
-  display: grid;
-  grid-template-columns: 1.7rem 1fr 1.3rem;
-  align-items: center;
-  gap: 0.7rem;
   width: 100%;
-  min-height: 3.55rem;
-  padding: 0.6rem 0.7rem;
-  color: rgba(225, 244, 248, 0.92);
+  min-width: 0;
+  min-height: 104px;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  color: inherit;
+  background: transparent;
   text-align: left;
-  background: rgba(29, 69, 81, 0.18);
-  border: 1px solid rgba(100, 200, 220, 0.18);
-  border-radius: 0.42rem;
+  font: inherit;
   cursor: pointer;
-  transition:
-    background var(--transition-fast),
-    border-color var(--transition-fast),
-    transform var(--transition-fast);
+  transition: background 150ms ease, border-color 150ms ease;
 }
 
-.first-run-choices button:hover,
-.first-run-choices button:focus-visible {
-  background: rgba(25, 151, 178, 0.16);
-  border-color: rgba(54, 220, 255, 0.62);
-  outline: none;
-  transform: translateX(2px);
+.first-run-choices button:focus-visible,
+.first-run-dismiss:focus-visible,
+.first-run-back:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
-/* aria-disabled, not :disabled — the JS keeps the buttons focusable while a
-   mission runs so the keyboard is never dumped out of the launcher mid-flight. */
+/* Keep running choices focusable; their handlers reject additional launches. */
 .first-run-choices button[aria-disabled='true'] {
   cursor: wait;
-  opacity: 0.48;
-  transform: none;
+  opacity: 0.5;
   pointer-events: none;
 }
 
-.first-run-choices button > .material-symbols-outlined:first-child {
-  color: #55dff5;
-  font-size: 1.35rem;
+.first-run-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--glass-border);
+  border-radius: 50%;
 }
 
-.first-run-choices button > span:nth-child(2) {
+.first-run-icon svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+.first-run-card-copy {
   display: flex;
+  min-width: 0;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 6px;
 }
 
 .first-run-choices strong {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
+  display: block;
+  font-size: 17px;
+  line-height: 1.25;
   font-weight: 600;
-  letter-spacing: 0.08rem;
+  letter-spacing: -0.015em;
 }
 
 .first-run-choices small {
-  color: rgba(198, 220, 226, 0.55);
-  font-size: 0.66rem;
+  display: block;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.first-run-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .first-run-arrow {
-  color: rgba(54, 220, 255, 0.4);
-  font-size: 1rem;
-  transition:
-    transform var(--transition-fast),
-    color var(--transition-fast);
+  display: inline-flex;
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
 }
 
-.first-run-choices button:hover .first-run-arrow,
-.first-run-choices button:focus-visible .first-run-arrow {
-  color: rgba(54, 220, 255, 0.9);
-  transform: translateX(2px);
+.first-run-arrow svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-/* Ordered after the shared button rule rather than shouting !important at it. */
 .first-run-choices button.first-run-explore {
-  background: rgba(255, 255, 255, 0.025);
+  min-height: 124px;
+}
+
+.first-run-explore .first-run-icon {
+  width: 46px;
+  height: 46px;
+}
+
+.first-run-explore .first-run-action {
+  padding: 10px 12px;
+  border-radius: 9px;
+}
+
+.first-run-category-grid .first-run-card {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 13px;
+  min-height: 198px;
+}
+
+.first-run-category-grid .first-run-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+}
+
+.first-run-category-grid .first-run-icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.first-run-category-grid .first-run-action {
+  margin-top: auto;
+}
+
+.first-run-category-view .first-run-section-label {
+  margin: 0 0 2px;
+}
+
+.first-run-context-note {
+  margin: 1px 2px 0;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .first-run-footer {
-  margin-top: 0.85rem;
-  font-size: 0.48rem;
-  letter-spacing: 0.055rem;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--glass-border);
 }
 
 .first-run-suppress {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  color: rgba(199, 225, 231, 0.66);
-  text-transform: none;
-  font-size: 0.62rem;
-  letter-spacing: 0.02rem;
+  gap: 8px;
+  min-height: 24px;
+  font-size: 12px;
+  line-height: 1.4;
   cursor: pointer;
 }
 
 .first-run-suppress input {
-  width: 0.82rem;
-  height: 0.82rem;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
   margin: 0;
-  accent-color: #36dcff;
+  accent-color: var(--accent);
   cursor: pointer;
 }
 
-.first-run-suppress:hover {
-  color: rgba(225, 244, 248, 0.92);
+.first-run-keyboard-hint {
+  font-size: 11px;
+  white-space: nowrap;
 }
 
-/* The live region carries mission progress and failures, so it owns a full row
-   and reserves its height — otherwise the card resizes as it speaks. */
 .first-run-note {
-  min-height: 1.1rem;
-  margin-top: 0.5rem;
-  color: rgba(199, 225, 231, 0.62);
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  line-height: 1.35;
+  flex-shrink: 0;
+  min-height: 0;
+  margin-top: 0;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
-#first-run-launcher[data-state='loading'] .first-run-note {
-  color: rgba(54, 220, 255, 0.85);
+.first-run-note:not(:empty) {
+  margin-top: 10px;
 }
 
-/* Every surface that claims the screen hides the launcher. This list is the CSS
-   half of the ESC arbitration: src/firstRunExperience.js watches these same
-   classes and makes the launcher step aside, so a hidden card is never left
-   holding a keyboard handler. Keep the two lists in step —
-   EXCLUSIVE_SURFACE_CLASSES pins them together. */
+/* Match the exclusive surfaces watched by firstRunExperience.js. */
 body.ui-clean-view #first-run-launcher,
 body.recording-mode #first-run-launcher,
 body.cockpit-mode #first-run-launcher,
@@ -264,102 +372,145 @@ body.scene-playback-mode #first-run-launcher {
   display: none;
 }
 
-@media (max-width: 620px) {
+@media (max-width: 560px) {
   #first-run-launcher {
-    top: auto;
-    bottom: 5.8rem;
-    padding: 0.9rem;
-    transform: translate(-50%, 0.8rem) scale(0.985);
+    width: calc(100vw - 24px);
+    padding: 20px;
+    border-radius: 18px;
   }
 
-  #first-run-launcher.visible {
-    transform: translate(-50%, 0) scale(1);
+  .first-run-intro {
+    margin-top: 18px;
   }
-  /* Five tiles have to clear the dock on a 375 x 812 phone, so the rows tighten
-     and the redundant "ESC to dismiss" hint (no ESC key on a phone) drops. */
-  #first-run-launcher h2 {
-    margin-top: 0.45rem;
+
+  .first-run-category-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
   }
-  #first-run-description {
-    margin-top: 0.25rem;
-    font-size: 0.72rem;
+
+  .first-run-choices button,
+  .first-run-category-grid .first-run-card {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    min-height: 112px;
+    padding: 15px;
+    gap: 7px 12px;
   }
-  .first-run-choices {
-    margin-top: 0.75rem;
+
+  .first-run-icon,
+  .first-run-explore .first-run-icon {
+    width: 38px;
+    height: 38px;
+    grid-row: 1 / 3;
+    align-self: start;
   }
-  .first-run-choices button {
-    min-height: 3rem;
-    padding: 0.45rem 0.6rem;
+
+  .first-run-action {
+    grid-column: 2;
+    justify-self: start;
   }
+
+  .first-run-explore .first-run-action {
+    padding: 7px 10px;
+    margin-top: 3px;
+  }
+
+  .first-run-choices button.first-run-explore {
+    min-height: 154px;
+  }
+
+  .first-run-choices strong {
+    font-size: 16px;
+  }
+
   .first-run-choices small {
-    font-size: 0.62rem;
+    font-size: 12px;
   }
-  .first-run-footer > span:last-child {
+
+  .first-run-footer {
+    margin-top: 16px;
+    padding-top: 12px;
+  }
+
+  .first-run-keyboard-hint {
     display: none;
   }
 }
 
-/* Short viewports — landscape phones, small laptop windows. The chrome tightens
-   so the mission list keeps a usable share of the height. The intro line STAYS:
-   it is the only copy that says what this thing is, and with four tiles it
-   fits. (It was dropped here while there were five; the tile that went is
-   exactly why it can come back.) */
+/* Compact fixed chrome preserves a useful scrollable menu on short screens. */
 @media (max-height: 620px) {
   #first-run-launcher {
-    padding: 0.75rem 0.85rem;
+    padding: 14px 18px;
   }
+
+  .first-run-header {
+    min-height: 34px;
+  }
+
+  .first-run-brand {
+    font-size: 17px;
+  }
+
+  .first-run-brand img {
+    width: 30px;
+    height: 30px;
+  }
+
+  .first-run-dismiss {
+    min-height: 34px;
+    padding: 6px 11px;
+  }
+
+  .first-run-intro {
+    margin-top: 12px;
+  }
+
   #first-run-launcher h2 {
-    margin-top: 0.3rem;
-    font-size: 1.1rem;
+    margin-top: 4px;
+    font-size: 25px;
   }
+
   #first-run-description {
-    margin-top: 0.2rem;
-    font-size: 0.7rem;
-    line-height: 1.4;
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.45;
   }
+
+  .first-run-back {
+    margin-top: 10px;
+    min-height: 34px;
+  }
+
   .first-run-choices {
-    margin-top: 0.55rem;
+    margin-top: 12px;
   }
-  .first-run-choices button {
-    min-height: 2.7rem;
-    padding: 0.36rem 0.6rem;
+
+  .first-run-choices button,
+  .first-run-choices button.first-run-explore {
+    min-height: 90px;
+    padding: 13px;
   }
-  .first-run-choices strong {
-    font-size: 0.68rem;
+
+  .first-run-category-grid .first-run-card {
+    min-height: 174px;
   }
-  .first-run-choices small {
-    font-size: 0.6rem;
-  }
+
   .first-run-footer {
-    margin-top: 0.5rem;
+    margin-top: 12px;
+    padding-top: 9px;
   }
-  .first-run-note {
-    margin-top: 0.3rem;
-    min-height: 0;
+
+  .first-run-note:not(:empty) {
+    margin-top: 6px;
   }
 }
 
-/* A soft edge on the list, so a tile cut by the fold reads as "more below"
-   rather than as a rendering seam. Gated on `data-scrollable`, which the JS sets
-   only when the list ACTUALLY overflows — a fade on a list that fits would
-   promise content that is not there, which is the opposite of the affordance
-   it is meant to be. Decorative only: the list scrolls under it. */
+/* Fade only when there really are more choices below the fold. */
 .first-run-choices[data-scrollable='true'] {
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    #000 calc(100% - 1.4rem),
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    #000 calc(100% - 1.4rem),
-    transparent 100%
-  );
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 12px), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 12px), transparent 100%);
 }
 
-/* Scrolled to the end, there is nothing left to promise, so the fade lifts.
-   Browsers without scroll-driven animations keep the static fade, which is
-   still honest — there IS more list, it is just above rather than below. */
 @supports (animation-timeline: scroll(self block)) {
   .first-run-choices[data-scrollable='true'] {
     animation: first-run-scroll-fade linear both;
@@ -377,11 +528,10 @@ body.scene-playback-mode #first-run-launcher {
 
 @media (prefers-reduced-motion: reduce) {
   #first-run-launcher,
-  .first-run-choices button,
-  .first-run-arrow {
+  .first-run-choices button {
     transition: none;
   }
-  /* Scrolling a tile into view must not animate either. */
+
   .first-run-choices {
     scroll-behavior: auto;
   }

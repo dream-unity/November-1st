@@ -497,6 +497,7 @@ test('a failed Context mission reports the layers the facade named', async () =>
 });
 
 test('the fires/quakes tile name is switchable from one constant', () => {
+  assert.equal(environmentalLabel('NATURE_EVENTS').title, 'Nature & events');
   assert.equal(environmentalLabel('ENVIRONMENTAL').title, 'ENVIRONMENTAL');
   assert.equal(environmentalLabel('EARTH_WATCH').title, 'EARTH WATCH');
   assert.equal(environmentalLabel('ACTIVE_EVENTS').title, 'ACTIVE EVENTS');
@@ -556,7 +557,7 @@ test('markup, startup ordering and accessibility remain pinned', () => {
   const startup = fs.readFileSync(new URL('./app/startupChrome.js', import.meta.url), 'utf8');
   const css = readStylesheet(new URL('../style.css', import.meta.url));
 
-  assert.match(html, /id="first-run-launcher" role="dialog"[^>]*aria-labelledby="first-run-title"[^>]*hidden/);
+  assert.match(html, /id="first-run-launcher"[^>]*role="dialog"[^>]*aria-labelledby="first-run-title"[^>]*hidden/);
   assert.equal((html.match(/data-first-run-choice=/g) || []).length, 4);
   assert.match(html, /data-first-run-status[^>]*role="status"[^>]*aria-live="polite"/);
   assert.match(html, /<input type="checkbox" data-first-run-suppress \/>/);
@@ -571,11 +572,12 @@ test('markup, startup ordering and accessibility remain pinned', () => {
 
   assert.match(html, /<button type="button"[^>]*data-first-run-dismiss[^>]*aria-label="Close welcome and explore the map"[^>]*>Close<\/button>/,
     'touch visitors have an explicit way to dismiss the welcome card');
-  assert.match(html, /<p id="first-run-description">Choose live activity to follow, or explore the map at your own pace\.<\/p>/);
+  assert.match(html, /<p id="first-run-description">[^<]+<\/p>/,
+    'the first-view choices retain a short description');
 
-  // Menu order is the owner's, read straight off the markup.
+  // Primary map exploration precedes the focused mission view.
   const order = [...html.matchAll(/data-first-run-choice="([a-z-]+)"/g)].map((match) => match[1]);
-  assert.deepEqual(order, ['contacts', 'space-missions', 'environmental', 'explore']);
+  assert.deepEqual(order, ['explore', 'environmental', 'contacts', 'space-missions']);
   assert.doesNotMatch(html, /data-first-run-choice="infrastructure"/,
     'the removed tile must leave no markup behind');
 
@@ -651,8 +653,8 @@ test('the DISPLAY rail starts collapsed on a first run, and a stored choice wins
 });
 
 
-// Exercise category disclosure through the real welcome controller. The fixture
-// supplies only DOM behavior; it does not implement disclosure or mission policy.
+// Exercise home/category navigation through the real welcome controller. The
+// fixture supplies DOM behavior, never view transitions or mission policy.
 function categoryFixture(t, { setContextMode = async () => ({ ok: false }) } = {}) {
   const events = new Map();
   const documentRef = {
@@ -711,43 +713,48 @@ function categoryFixture(t, { setContextMode = async () => ({ ok: false }) } = {
   const opener = node();
   const root = node();
   root.hidden = true;
-  const category = node(root);
-  const toggle = node(category);
-  // Simulate a restored DOM state. Init must make the closed first view explicit.
-  toggle.setAttribute('aria-expanded', 'true');
-  toggle.setAttribute('aria-controls', 'first-run-air-sea-space');
-  const group = node(category);
-  group.id = 'first-run-air-sea-space';
-  const contacts = node(group);
+  const home = node(root);
+  home.hidden = true;
+  const categoryView = node(root);
+  const categoryOpen = node(home);
+  const back = node(root);
+  const title = node(root);
+  title.textContent = "Explore God's Earth";
+  const description = node(root);
+  description.textContent = 'Choose how to explore.';
+  const contacts = node(categoryView);
   contacts.dataset.firstRunChoice = 'contacts';
-  const space = node(group);
+  const space = node(categoryView);
   space.dataset.firstRunChoice = 'space-missions';
-  const environment = node(root);
+  const environment = node(home);
   environment.dataset.firstRunChoice = 'environmental';
-  const explore = node(root);
+  const explore = node(home);
   explore.dataset.firstRunChoice = 'explore';
   const dismiss = node(root);
   const suppress = node(root);
   const status = node(root);
   const list = node(root);
   list.clientHeight = 250;
-  Object.defineProperty(list, 'scrollHeight', { get: () => group.hidden ? 200 : 400 });
-  const choices = [contacts, space, environment, explore];
-  const controls = [dismiss, toggle, ...choices, suppress];
+  Object.defineProperty(list, 'scrollHeight', { get: () => categoryView.hidden ? 200 : 400 });
+  const choices = [explore, environment, contacts, space];
+  const controls = [dismiss, back, explore, categoryOpen, environment, contacts, space, suppress];
   const lookup = new Map([
-    ['[data-first-run-category]', category],
-    ['[data-first-run-category-toggle]', toggle],
-    ['#first-run-air-sea-space', group],
-    ['.first-run-category-choices', group],
+    ['[data-first-run-home]', home],
+    ['[data-first-run-category-view]', categoryView],
+    ['[data-first-run-category-open]', categoryOpen],
+    ['[data-first-run-back]', back],
+    ['[data-first-run-choice="explore"]', explore],
+    ['#first-run-title', title],
+    ['#first-run-description', description],
     ['[data-first-run-status]', status],
     ['[data-first-run-suppress]', suppress],
     ['[data-first-run-dismiss]', dismiss],
     ['.first-run-choices', list],
   ]);
-  root.querySelector = category.querySelector = (selector) => lookup.get(selector) || null;
+  root.querySelector = (selector) => lookup.get(selector) || null;
   root.querySelectorAll = (selector) => selector === '[data-first-run-choice]' ? choices : controls;
   documentRef.body = node();
-  documentRef.getElementById = (id) => id === 'first-run-launcher' ? root : id === group.id ? group : null;
+  documentRef.getElementById = (id) => id === 'first-run-launcher' ? root : null;
   documentRef.activeElement = opener;
   const originalFrame = Object.getOwnPropertyDescriptor(globalThis, 'requestAnimationFrame');
   const frames = [];
@@ -765,56 +772,102 @@ function categoryFixture(t, { setContextMode = async () => ({ ok: false }) } = {
     if (originalFrame) Object.defineProperty(globalThis, 'requestAnimationFrame', originalFrame);
     else delete globalThis.requestAnimationFrame;
   });
-  return { documentRef, root, toggle, group, contacts, space, list, events, opener };
+  const key = (value) => {
+    const event = {
+      key: value, defaultPrevented: false,
+      preventDefault() { this.defaultPrevented = true; },
+      stopPropagation() {},
+    };
+    for (const listener of events.get('keydown') || []) listener(event);
+    return event;
+  };
+  return { documentRef, root, home, categoryView, categoryOpen, back, title, description,
+    contacts, space, explore, list, key, opener };
 }
 
-test('the grouped category starts closed and focuses its visible entry control', (t) => {
+test('welcome starts on the simple home view and focuses the recommended map choice', (t) => {
   const f = categoryFixture(t);
-  assert.equal(f.group.hidden, true);
-  assert.equal(f.toggle.getAttribute('aria-expanded'), 'false');
-  assert.equal(f.documentRef.activeElement, f.toggle);
+  assert.equal(f.root.dataset.view, 'home');
+  assert.equal(f.home.hidden, false);
+  assert.equal(f.categoryView.hidden, true);
+  assert.equal(f.back.hidden, true);
+  assert.equal(f.documentRef.activeElement, f.explore);
   assert.equal(f.contacts.getClientRects().length, 0);
   assert.equal(f.space.getClientRects().length, 0);
-  assert.equal(f.list.dataset.scrollable, 'false');
 });
 
-test('category disclosure reveals both original missions and updates overflow on each toggle', async (t) => {
+test('Air, Sea & Space opens a separate view with both missions and an obvious return path', async (t) => {
   const f = categoryFixture(t);
-  await f.toggle.emit('click');
-  assert.equal(f.group.hidden, false);
-  assert.equal(f.toggle.getAttribute('aria-expanded'), 'true');
+  await f.categoryOpen.emit('click');
+  assert.equal(f.root.dataset.view, 'air-sea-space');
+  assert.equal(f.home.hidden, true);
+  assert.equal(f.categoryView.hidden, false);
+  assert.equal(f.back.hidden, false);
+  assert.equal(f.documentRef.activeElement, f.back);
+  assert.equal(f.title.textContent, 'Air, Sea & Space');
   assert.equal(f.contacts.getClientRects().length, 1);
   assert.equal(f.space.getClientRects().length, 1);
   assert.equal(f.list.dataset.scrollable, 'true');
-  await f.toggle.emit('click');
-  assert.equal(f.group.hidden, true);
-  assert.equal(f.toggle.getAttribute('aria-expanded'), 'false');
+});
+
+test('Back restores the home view and focus to the category that opened it', async (t) => {
+  const f = categoryFixture(t);
+  const homeTitle = f.title.textContent;
+  const homeDescription = f.description.textContent;
+  await f.categoryOpen.emit('click');
+  await f.back.emit('click');
+  assert.equal(f.root.dataset.view, 'home');
+  assert.equal(f.home.hidden, false);
+  assert.equal(f.categoryView.hidden, true);
+  assert.equal(f.back.hidden, true);
+  assert.equal(f.documentRef.activeElement, f.categoryOpen);
+  assert.equal(f.title.textContent, homeTitle);
+  assert.equal(f.description.textContent, homeDescription);
   assert.equal(f.list.dataset.scrollable, 'false');
 });
 
-test('a running grouped mission stays visible, then allows retry or collapse after failure', async (t) => {
+test('a running mission blocks view changes and duplicate launches until failure allows retry', async (t) => {
   const request = Promise.withResolvers();
   const calls = [];
   const f = categoryFixture(t, { setContextMode: (mode) => {
     calls.push(mode);
     return request.promise;
   } });
-  await f.toggle.emit('click');
+  await f.categoryOpen.emit('click');
   f.contacts.focus();
   const pending = f.contacts.emit('click');
   assert.equal(f.root.getAttribute('aria-busy'), 'true');
-  assert.equal(f.toggle.getAttribute('aria-disabled'), 'true');
-  await f.toggle.emit('click');
+  assert.equal(f.back.getAttribute('aria-disabled'), 'true');
+  await f.back.emit('click');
+  await f.categoryOpen.emit('click');
   await f.space.emit('click');
-  assert.equal(f.group.hidden, false);
+  assert.equal(f.key('Escape').defaultPrevented, true);
+  assert.equal(f.root.dataset.view, 'air-sea-space');
+  assert.equal(f.categoryView.hidden, false);
+  assert.equal(f.root.classList.contains('visible'), true);
   assert.equal(f.documentRef.activeElement, f.contacts);
   assert.deepEqual(calls, ['contacts'], 'busy clicks cannot start a second mission');
   request.resolve({ ok: false });
   await pending;
   assert.equal(f.root.getAttribute('aria-busy'), 'false');
-  assert.equal(f.toggle.getAttribute('aria-disabled'), 'false');
-  await f.toggle.emit('click');
-  assert.equal(f.group.hidden, true);
+  assert.equal(f.back.getAttribute('aria-disabled'), 'false');
+  await f.space.emit('click');
+  assert.deepEqual(calls, ['contacts', 'space-missions'],
+    'both category buttons retain their original mission actions');
+  await f.back.emit('click');
+  assert.equal(f.root.dataset.view, 'home');
+});
+
+test('Escape returns from the category, then dismisses only from home', async (t) => {
+  const f = categoryFixture(t);
+  await f.categoryOpen.emit('click');
+  assert.equal(f.key('Escape').defaultPrevented, true);
+  assert.equal(f.root.dataset.view, 'home');
+  assert.equal(f.root.classList.contains('visible'), true);
+  assert.equal(f.documentRef.activeElement, f.categoryOpen);
+  f.key('Escape');
+  assert.equal(f.root.classList.contains('visible'), false);
+  assert.equal(f.documentRef.activeElement, f.opener);
 });
 
 // ── Voice: instruction-only, tool schema unchanged ─────────────────────

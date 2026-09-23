@@ -30,11 +30,12 @@ export const FIRST_RUN_SESSION_KEY = 'gev:first-run-mission-session:v1';
  * Owner-selectable name for the fires/quakes mission. Flip this ONE constant to
  * re-label the tile; the alternates are pre-written so the choice is a taste
  * call at review time, not an edit.
- * @type {'ENVIRONMENTAL'|'EARTH_WATCH'|'ACTIVE_EVENTS'}
+ * @type {'NATURE_EVENTS'|'ENVIRONMENTAL'|'EARTH_WATCH'|'ACTIVE_EVENTS'}
  */
-export const ENVIRONMENTAL_LABEL_CHOICE = 'ENVIRONMENTAL';
+export const ENVIRONMENTAL_LABEL_CHOICE = 'NATURE_EVENTS';
 
 const ENVIRONMENTAL_LABELS = Object.freeze({
+  NATURE_EVENTS: Object.freeze({ title: 'Nature & events' }),
   ENVIRONMENTAL: Object.freeze({ title: 'ENVIRONMENTAL' }),
   EARTH_WATCH: Object.freeze({ title: 'EARTH WATCH' }),
   ACTIVE_EVENTS: Object.freeze({ title: 'ACTIVE EVENTS' }),
@@ -92,7 +93,7 @@ export const FIRST_RUN_MISSIONS = Object.freeze({
   contacts: Object.freeze({
     kind: 'context',
     contextMode: 'contacts',
-    busyText: 'Starting live contacts…',
+    busyText: 'Opening aircraft and ship tracking…',
   }),
   'space-missions': Object.freeze({
     kind: 'context',
@@ -115,7 +116,7 @@ export const FIRST_RUN_MISSIONS = Object.freeze({
     // before a launch. LEDGERED post-launch. Until it lands, keyless visitors
     // are judged on the layer row, which tells them the truth.
     layerIds: Object.freeze(['earthquakes', 'local-firms']),
-    busyText: 'Scanning active events…',
+    busyText: 'Loading earthquakes and active fires…',
   }),
   explore: Object.freeze({ kind: 'none' }),
 });
@@ -362,12 +363,20 @@ export function initFirstRunExperience({
   const status = root.querySelector('[data-first-run-status]');
   const suppressBox = root.querySelector('[data-first-run-suppress]');
   const dismissButton = root.querySelector('[data-first-run-dismiss]');
-  const category = root.querySelector('[data-first-run-category]');
-  const categoryToggle = category?.querySelector('[data-first-run-category-toggle]');
-  const categoryChoices = category?.querySelector('.first-run-category-choices');
-  // Every fresh launcher starts with one category; its missions appear on demand.
-  if (categoryChoices) categoryChoices.hidden = true;
-  categoryToggle?.setAttribute('aria-expanded', 'false');
+  const homeView = root.querySelector('[data-first-run-home]');
+  const categoryView = root.querySelector('[data-first-run-category-view]');
+  const categoryOpen = root.querySelector('[data-first-run-category-open]');
+  const backButton = root.querySelector('[data-first-run-back]');
+  const exploreButton = root.querySelector('[data-first-run-choice="explore"]');
+  const title = root.querySelector('#first-run-title');
+  const description = root.querySelector('#first-run-description');
+  const homeTitle = title?.textContent || '';
+  const homeDescription = description?.textContent || '';
+  const keyboardHint = root.querySelector('.first-run-keyboard-hint');
+  if (homeView) homeView.hidden = false;
+  if (categoryView) categoryView.hidden = true;
+  if (backButton) backButton.hidden = true;
+  root.dataset.view = 'home';
   const buttons = [...root.querySelectorAll('[data-first-run-choice]')];
   const defaultStatus = status?.textContent || '';
   let busy = false;
@@ -446,7 +455,8 @@ export function initFirstRunExperience({
     for (const button of buttons)
       button.setAttribute('aria-disabled', String(next));
     dismissButton?.setAttribute('aria-disabled', String(next));
-    categoryToggle?.setAttribute('aria-disabled', String(next));
+    categoryOpen?.setAttribute('aria-disabled', String(next));
+    backButton?.setAttribute('aria-disabled', String(next));
     if (!status) return;
     if (next)
       status.textContent = FIRST_RUN_MISSIONS[choice]?.busyText || 'Working…';
@@ -499,7 +509,7 @@ export function initFirstRunExperience({
       Array.isArray(failed) && failed.length ? ` (${failed.join(', ')})` : '';
     if (status) {
       status.dataset.sticky = 'true';
-      status.textContent = `Could not open that mission${detail}. Retry or explore manually.`;
+      status.textContent = `That view could not open${detail}. Please try again, or choose another option.`;
     }
     setBusy(false);
   };
@@ -525,18 +535,38 @@ export function initFirstRunExperience({
     // A measurable card may still be hidden by another surface. Check on the
     // key itself, before the observer has had a chance to process that change.
     isActive: () => !closing && isTopmost(),
-    onEscape: () => dismiss(),
+    onEscape: () => {
+      if (busy) return;
+      if (root.dataset.view === 'air-sea-space') showView('home');
+      else dismiss();
+    },
     fallbackFocus: () => documentRef.body,
   });
 
   for (const button of buttons) button.addEventListener('click', onChoice);
-  categoryToggle?.addEventListener('click', () => {
-    // Keep the running mission and its focused control visible until it finishes.
-    if (busy || closing || !categoryChoices) return;
-    categoryChoices.hidden = !categoryChoices.hidden;
-    categoryToggle.setAttribute('aria-expanded', String(!categoryChoices.hidden));
+  const showView = (view) => {
+    if (busy || closing || !homeView || !categoryView) return;
+    const inCategory = view === 'air-sea-space';
+    homeView.hidden = inCategory;
+    categoryView.hidden = !inCategory;
+    if (backButton) backButton.hidden = !inCategory;
+    root.dataset.view = inCategory ? 'air-sea-space' : 'home';
+    if (title) title.textContent = inCategory ? 'Air, Sea & Space' : homeTitle;
+    if (description) description.textContent = inCategory
+      ? 'Follow movement across the planet and beyond. Choose one view to begin.'
+      : homeDescription;
+    if (keyboardHint) keyboardHint.textContent = inCategory ? 'Esc to go back' : 'Esc to close';
+    // A failed mission belongs to its previous view, not to the next menu page.
+    if (status) {
+      delete status.dataset.sticky;
+      status.textContent = defaultStatus;
+    }
+    if (choiceList) choiceList.scrollTop = 0;
     syncScrollAffordance();
-  });
+    (inCategory ? backButton : categoryOpen)?.focus?.({ preventScroll: true });
+  };
+  categoryOpen?.addEventListener('click', () => showView('air-sea-space'));
+  backButton?.addEventListener('click', () => showView('home'));
   dismissButton?.addEventListener('click', () => {
     if (busy || closing) return;
     dismiss();
@@ -546,9 +576,7 @@ export function initFirstRunExperience({
   // that cycle detection and styles), and the launcher owns the keyboard first.
   keyboard.activate();
 
-  // The scroll fade is an affordance, so it may only appear when the list really
-  // overflows. On a viewport where all five tiles fit, a faded bottom edge would
-  // promise a sixth mission that does not exist.
+  // Only advertise scrolling when the current menu page actually overflows.
   const choiceList = root.querySelector('.first-run-choices');
   const syncScrollAffordance = () => {
     if (!choiceList) return;
@@ -565,7 +593,7 @@ export function initFirstRunExperience({
       if (closing) return;
       root.classList.add('visible');
       syncScrollAffordance();
-      (categoryToggle || buttons[0])?.focus?.({ preventScroll: true });
+      (exploreButton || buttons[0])?.focus?.({ preventScroll: true });
     });
   };
 
