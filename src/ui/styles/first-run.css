@@ -116,6 +116,11 @@
   scrollbar-gutter: stable;
 }
 
+/* Keep child missions hidden even when a theme gives their panel a display. */
+.first-run-category-choices[hidden] {
+  display: none;
+}
+
 .first-run-choices::-webkit-scrollbar {
   width: 6px;
 }
@@ -124,7 +129,7 @@
   border-radius: 3px;
 }
 
-.first-run-choices :is(button, summary) {
+.first-run-choices button {
   display: grid;
   grid-template-columns: 1.7rem 1fr 1.3rem;
   align-items: center;
@@ -144,8 +149,8 @@
     transform var(--transition-fast);
 }
 
-.first-run-choices :is(button, summary):hover,
-.first-run-choices :is(button, summary):focus-visible {
+.first-run-choices button:hover,
+.first-run-choices button:focus-visible {
   background: rgba(25, 151, 178, 0.16);
   border-color: rgba(54, 220, 255, 0.62);
   outline: none;
@@ -154,19 +159,19 @@
 
 /* aria-disabled, not :disabled — the JS keeps the buttons focusable while a
    mission runs so the keyboard is never dumped out of the launcher mid-flight. */
-.first-run-choices :is(button, summary)[aria-disabled='true'] {
+.first-run-choices button[aria-disabled='true'] {
   cursor: wait;
   opacity: 0.48;
   transform: none;
   pointer-events: none;
 }
 
-.first-run-choices :is(button, summary) > .material-symbols-outlined:first-child {
+.first-run-choices button > .material-symbols-outlined:first-child {
   color: #55dff5;
   font-size: 1.35rem;
 }
 
-.first-run-choices :is(button, summary) > span:nth-child(2) {
+.first-run-choices button > span:nth-child(2) {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
@@ -192,14 +197,14 @@
     color var(--transition-fast);
 }
 
-.first-run-choices :is(button, summary):hover .first-run-arrow,
-.first-run-choices :is(button, summary):focus-visible .first-run-arrow {
+.first-run-choices button:hover .first-run-arrow,
+.first-run-choices button:focus-visible .first-run-arrow {
   color: rgba(54, 220, 255, 0.9);
   transform: translateX(2px);
 }
 
 /* Ordered after the shared button rule rather than shouting !important at it. */
-.first-run-choices :is(button, summary).first-run-explore {
+.first-run-choices button.first-run-explore {
   background: rgba(255, 255, 255, 0.025);
 }
 
@@ -282,7 +287,7 @@ body.scene-playback-mode #first-run-launcher {
   .first-run-choices {
     margin-top: 0.75rem;
   }
-  .first-run-choices :is(button, summary) {
+  .first-run-choices button {
     min-height: 3rem;
     padding: 0.45rem 0.6rem;
   }
@@ -315,7 +320,7 @@ body.scene-playback-mode #first-run-launcher {
   .first-run-choices {
     margin-top: 0.55rem;
   }
-  .first-run-choices :is(button, summary) {
+  .first-run-choices button {
     min-height: 2.7rem;
     padding: 0.36rem 0.6rem;
   }
@@ -372,7 +377,7 @@ body.scene-playback-mode #first-run-launcher {
 
 @media (prefers-reduced-motion: reduce) {
   #first-run-launcher,
-  .first-run-choices :is(button, summary),
+  .first-run-choices button,
   .first-run-arrow {
     transition: none;
   }

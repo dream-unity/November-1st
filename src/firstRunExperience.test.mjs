@@ -13,6 +13,7 @@ import {
   FIRST_RUN_STORAGE_KEY,
   environmentalLabel,
   exclusiveSurfaceActive,
+  initFirstRunExperience,
   rememberFirstRunSessionDismissed,
   runFirstRunChoice,
   setFirstRunSuppressed,
@@ -647,6 +648,173 @@ test('the DISPLAY rail starts collapsed on a first run, and a stored choice wins
     guard.indexOf("stored === '0'") < guard.indexOf('pp-toggles'),
     'the stored-state reads must come before the first-run default',
   );
+});
+
+
+// Exercise category disclosure through the real welcome controller. The fixture
+// supplies only DOM behavior; it does not implement disclosure or mission policy.
+function categoryFixture(t, { setContextMode = async () => ({ ok: false }) } = {}) {
+  const events = new Map();
+  const documentRef = {
+    activeElement: null,
+    addEventListener(type, listener) {
+      const handlers = events.get(type) || new Set();
+      handlers.add(listener);
+      events.set(type, handlers);
+    },
+    removeEventListener(type, listener) { events.get(type)?.delete(listener); },
+  };
+  const node = (parentElement = null) => {
+    const attributes = new Map();
+    const listeners = new Map();
+    const classes = new Set();
+    return {
+      parentElement, dataset: {}, hidden: false, isConnected: true, textContent: '',
+      classList: {
+        add: (...values) => values.forEach((value) => classes.add(value)),
+        remove: (...values) => values.forEach((value) => classes.delete(value)),
+        contains: (value) => classes.has(value),
+        toggle(value, force = !classes.has(value)) {
+          if (force) classes.add(value); else classes.delete(value);
+          return force;
+        },
+      },
+      setAttribute(name, value) { attributes.set(name, String(value)); },
+      getAttribute(name) { return attributes.get(name) ?? null; },
+      hasAttribute(name) { return attributes.has(name); },
+      removeAttribute(name) { attributes.delete(name); },
+      addEventListener(type, listener) {
+        const handlers = listeners.get(type) || new Set();
+        handlers.add(listener);
+        listeners.set(type, handlers);
+      },
+      removeEventListener(type, listener) { listeners.get(type)?.delete(listener); },
+      async emit(type) {
+        const event = { currentTarget: this, preventDefault() {} };
+        for (const listener of listeners.get(type) || []) await listener(event);
+      },
+      getClientRects() {
+        for (let current = this; current; current = current.parentElement)
+          if (current.hidden || !current.isConnected) return [];
+        return [{}];
+      },
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 500, height: 400 }),
+      focus() { if (this.getClientRects().length) documentRef.activeElement = this; },
+      remove() { this.isConnected = false; },
+      contains(target) {
+        for (let current = target; current; current = current.parentElement)
+          if (current === this) return true;
+        return false;
+      },
+    };
+  };
+  const opener = node();
+  const root = node();
+  root.hidden = true;
+  const category = node(root);
+  const toggle = node(category);
+  // Simulate a restored DOM state. Init must make the closed first view explicit.
+  toggle.setAttribute('aria-expanded', 'true');
+  toggle.setAttribute('aria-controls', 'first-run-air-sea-space');
+  const group = node(category);
+  group.id = 'first-run-air-sea-space';
+  const contacts = node(group);
+  contacts.dataset.firstRunChoice = 'contacts';
+  const space = node(group);
+  space.dataset.firstRunChoice = 'space-missions';
+  const environment = node(root);
+  environment.dataset.firstRunChoice = 'environmental';
+  const explore = node(root);
+  explore.dataset.firstRunChoice = 'explore';
+  const dismiss = node(root);
+  const suppress = node(root);
+  const status = node(root);
+  const list = node(root);
+  list.clientHeight = 250;
+  Object.defineProperty(list, 'scrollHeight', { get: () => group.hidden ? 200 : 400 });
+  const choices = [contacts, space, environment, explore];
+  const controls = [dismiss, toggle, ...choices, suppress];
+  const lookup = new Map([
+    ['[data-first-run-category]', category],
+    ['[data-first-run-category-toggle]', toggle],
+    ['#first-run-air-sea-space', group],
+    ['.first-run-category-choices', group],
+    ['[data-first-run-status]', status],
+    ['[data-first-run-suppress]', suppress],
+    ['[data-first-run-dismiss]', dismiss],
+    ['.first-run-choices', list],
+  ]);
+  root.querySelector = category.querySelector = (selector) => lookup.get(selector) || null;
+  root.querySelectorAll = (selector) => selector === '[data-first-run-choice]' ? choices : controls;
+  documentRef.body = node();
+  documentRef.getElementById = (id) => id === 'first-run-launcher' ? root : id === group.id ? group : null;
+  documentRef.activeElement = opener;
+  const originalFrame = Object.getOwnPropertyDescriptor(globalThis, 'requestAnimationFrame');
+  const frames = [];
+  Object.defineProperty(globalThis, 'requestAnimationFrame', {
+    configurable: true, writable: true, value: (callback) => frames.push(callback),
+  });
+  const controller = initFirstRunExperience({
+    documentRef,
+    styleManager: { setContextMode, setPanelCollapsed() {} },
+    ...fresh(),
+  });
+  for (const callback of frames) callback();
+  t.after(() => {
+    controller?.destroy();
+    if (originalFrame) Object.defineProperty(globalThis, 'requestAnimationFrame', originalFrame);
+    else delete globalThis.requestAnimationFrame;
+  });
+  return { documentRef, root, toggle, group, contacts, space, list, events, opener };
+}
+
+test('the grouped category starts closed and focuses its visible entry control', (t) => {
+  const f = categoryFixture(t);
+  assert.equal(f.group.hidden, true);
+  assert.equal(f.toggle.getAttribute('aria-expanded'), 'false');
+  assert.equal(f.documentRef.activeElement, f.toggle);
+  assert.equal(f.contacts.getClientRects().length, 0);
+  assert.equal(f.space.getClientRects().length, 0);
+  assert.equal(f.list.dataset.scrollable, 'false');
+});
+
+test('category disclosure reveals both original missions and updates overflow on each toggle', async (t) => {
+  const f = categoryFixture(t);
+  await f.toggle.emit('click');
+  assert.equal(f.group.hidden, false);
+  assert.equal(f.toggle.getAttribute('aria-expanded'), 'true');
+  assert.equal(f.contacts.getClientRects().length, 1);
+  assert.equal(f.space.getClientRects().length, 1);
+  assert.equal(f.list.dataset.scrollable, 'true');
+  await f.toggle.emit('click');
+  assert.equal(f.group.hidden, true);
+  assert.equal(f.toggle.getAttribute('aria-expanded'), 'false');
+  assert.equal(f.list.dataset.scrollable, 'false');
+});
+
+test('a running grouped mission stays visible, then allows retry or collapse after failure', async (t) => {
+  const request = Promise.withResolvers();
+  const calls = [];
+  const f = categoryFixture(t, { setContextMode: (mode) => {
+    calls.push(mode);
+    return request.promise;
+  } });
+  await f.toggle.emit('click');
+  f.contacts.focus();
+  const pending = f.contacts.emit('click');
+  assert.equal(f.root.getAttribute('aria-busy'), 'true');
+  assert.equal(f.toggle.getAttribute('aria-disabled'), 'true');
+  await f.toggle.emit('click');
+  await f.space.emit('click');
+  assert.equal(f.group.hidden, false);
+  assert.equal(f.documentRef.activeElement, f.contacts);
+  assert.deepEqual(calls, ['contacts'], 'busy clicks cannot start a second mission');
+  request.resolve({ ok: false });
+  await pending;
+  assert.equal(f.root.getAttribute('aria-busy'), 'false');
+  assert.equal(f.toggle.getAttribute('aria-disabled'), 'false');
+  await f.toggle.emit('click');
+  assert.equal(f.group.hidden, true);
 });
 
 // ── Voice: instruction-only, tool schema unchanged ─────────────────────
