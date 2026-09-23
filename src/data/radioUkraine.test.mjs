@@ -131,7 +131,7 @@ test('merged directory prefers verified URLs and deduplicates identity, URL and 
     normalize(directoryRow({ name: 'Public Radio (AAC)', url_resolved: 'https://other.example.org/live' })),
     normalize(directoryRow({ stationuuid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', name: 'Same stream alternate name', url_resolved: curated[0].streamUrl })),
     normalize(directoryRow({ stationuuid: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', name: 'Public Radio Jazz' })),
-    normalize(directoryRow({ stationuuid: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', name: 'Foreign station', countrycode: 'DE' })),
+    normalize(directoryRow({ stationuuid: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', name: 'Foreign station', countrycode: 'DE', country: 'Germany', url_resolved: 'https://radio.example.org/germany.mp3' })),
   ];
   const selected = mergeUkraineRadioStations(curated, rows);
   assert.equal(selected.length, 2);

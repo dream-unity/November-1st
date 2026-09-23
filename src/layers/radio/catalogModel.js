@@ -58,7 +58,10 @@ export function createCatalogModel({
     }
   }
 
-  function isValidRadioDirectoryStation(station) {
+  function isValidRadioDirectoryStation(
+    station,
+    { allowUnlocated = false } = {},
+  ) {
     const cleanText = (value, maxLength, { allowEmpty = true } = {}) =>
       typeof value === 'string' &&
       value.length <= maxLength &&
@@ -104,12 +107,16 @@ export function createCatalogModel({
       station &&
       RADIO_UUID_RE.test(station.id) &&
       cleanText(station.name, 140, { allowEmpty: false }) &&
-      Number.isFinite(station.lat) &&
-      station.lat >= -90 &&
-      station.lat <= 90 &&
-      Number.isFinite(station.lon) &&
-      station.lon >= -180 &&
-      station.lon <= 180 &&
+      ((Number.isFinite(station.lat) &&
+        station.lat >= -90 &&
+        station.lat <= 90 &&
+        Number.isFinite(station.lon) &&
+        station.lon >= -180 &&
+        station.lon <= 180) ||
+        (allowUnlocated &&
+          station.lat === null &&
+          station.lon === null &&
+          ['verified', 'conflicting'].includes(station.countryStatus))) &&
       isSafeRadioHttpsUrl(station.streamUrl) &&
       (station.homepage === null || isSafeRadioHttpsUrl(station.homepage)) &&
       textArray(station.tags, 24, 80) &&

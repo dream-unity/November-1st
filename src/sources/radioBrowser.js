@@ -1,4 +1,4 @@
-import { normalizeRadioCountryInput } from '../data/radioCountry.js';
+import { applyRadioIdentity } from './radioIdentity.js';
 
 export const RADIO_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -127,14 +127,8 @@ export function normalizeRadioBrowserStation(
     .map((language) => cleanRadioText(language, 40))
     .filter(Boolean)
     .slice(0, 8);
-  const rawCountryCode = cleanRadioText(raw?.countrycode, 2).toUpperCase();
-  const normalizedCode = normalizeRadioCountryInput(rawCountryCode);
-  const normalizedCountry =
-    normalizedCode.valid && !normalizedCode.empty
-      ? normalizedCode
-      : normalizeRadioCountryInput(cleanRadioText(raw?.country, 80));
   const bitrate = Number(raw?.bitrate);
-  return {
+  return applyRadioIdentity({
     id,
     name,
     lat,
@@ -144,11 +138,8 @@ export function normalizeRadioBrowserStation(
     tags,
     languages,
     state: cleanRadioText(raw?.state, 80),
-    country:
-      normalizedCountry.valid && !normalizedCountry.empty
-        ? normalizedCountry.name
-        : cleanRadioText(raw?.country, 80),
-    countryCode: normalizedCountry.valid ? normalizedCountry.code : '',
+    country: cleanRadioText(raw?.country, 80),
+    countryCode: cleanRadioText(raw?.countrycode, 80),
     metadataTrust: 'untrusted-community',
     codec,
     bitrate:
@@ -156,7 +147,7 @@ export function normalizeRadioBrowserStation(
         ? bitrate
         : null,
     clickCount: Math.max(0, Math.min(10_000_000, Number(raw?.clickcount) || 0)),
-  };
+  });
 }
 
 export function publicRadioStation(station) {
@@ -175,5 +166,10 @@ export function publicRadioStation(station) {
     metadataTrust: station.metadataTrust,
     codec: station.codec,
     bitrate: station.bitrate,
+    ...Object.fromEntries(
+      ['countryStatus', 'identitySource', 'identityCheckedAt']
+        .filter((key) => station[key] !== undefined)
+        .map((key) => [key, station[key]]),
+    ),
   };
 }

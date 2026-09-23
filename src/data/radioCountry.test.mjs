@@ -8,6 +8,9 @@ test('Radio country normalization maps ISO codes and bounded common names', () =
     ['fr', 'FR'],
     [' France ', 'FR'],
     ['United States of America', 'US'],
+    ['The United States Of America', 'US'],
+    ['The United Kingdom Of Great Britain And Northern Ireland', 'GB'],
+    ['Islamic Republic Of Iran', 'IR'],
     ['UK', 'GB'],
     ['South Korea', 'KR'],
   ]) {

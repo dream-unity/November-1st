@@ -178,7 +178,7 @@ test('Melbourne HTTP view shares AU cache and click identities while complete AU
         return Response.json([{ name: 'de1.api.radio-browser.info' }]);
       const country = new URL(url).searchParams.get('countrycode');
       queried.push(country);
-      return Response.json([row(1, { countrycode: country })]);
+      return Response.json([row(1, { countrycode: country, country: country === 'UA' ? 'Ukraine' : 'Australia' })]);
     },
   });
   const [cityResponse, countryResponse] = await Promise.all([

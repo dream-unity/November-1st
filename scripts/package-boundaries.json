@@ -189,6 +189,7 @@
       "server/providers/cctv/ukraineSources.js",
       "server/providers/cctv/australiaSources.js",
       "src/sources/radioBrowser.js",
+      "src/sources/radioIdentity.js",
       "src/data/radioCountry.js",
       "server/providers/cctv/embedStatus.js"
     ],
@@ -210,6 +211,7 @@
       "src/data/radioCountry.js",
       "server/providers/common/http.js",
       "src/sources/radioBrowser.js",
+      "src/sources/radioIdentity.js",
       "src/sources/httpBody.js"
     ],
     "external": []
@@ -1125,6 +1127,7 @@
       "src/ui/radioTunerModel.js",
       "src/data/inputOwnership.js",
       "src/sources/radioBrowser.js",
+      "src/sources/radioIdentity.js",
       "src/layers/radio/hlsPlayback.js",
       "src/sources/httpBody.js"
     ],
@@ -1860,6 +1863,7 @@
       "src/ui/sceneSharing.js",
       "src/sources/cctvVideoPlayback.js",
       "src/sources/radioBrowser.js",
+      "src/sources/radioIdentity.js",
       "src/sources/cctvTypes.js",
       "src/sources/cctvEmbedPlayback.js",
       "src/layers/radio/hlsPlayback.js"
@@ -2261,6 +2265,7 @@
       "src/sources/overpassRoads.js",
       "src/sources/cctvVideoPlayback.js",
       "src/sources/radioBrowser.js",
+      "src/sources/radioIdentity.js",
       "src/sources/cctvTypes.js",
       "src/sources/cctvEmbedPlayback.js",
       "src/layers/radio/hlsPlayback.js"
@@ -2456,7 +2461,11 @@
   },
   "radio-browser-source": {
     "exports": ["./sources/radio-browser"],
-    "modules": ["src/sources/radioBrowser.js", "src/data/radioCountry.js"],
+    "modules": [
+      "src/sources/radioBrowser.js",
+      "src/sources/radioIdentity.js",
+      "src/data/radioCountry.js"
+    ],
     "external": []
   },
   "cctv-types-source": {

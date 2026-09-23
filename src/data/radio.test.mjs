@@ -620,6 +620,136 @@ test('late media errors after replacement or Pause cannot mutate the active stat
   }
 });
 
+test('directory refresh retires changed or removed audio without interrupting metadata corrections', async () => {
+  const originalAudio = globalThis.Audio;
+  const originalFetch = globalThis.fetch;
+  const audioInstances = [];
+  globalThis.Audio = class FakeAudio {
+    constructor() {
+      this.volume = 0.8;
+      this.src = '';
+      this.currentSrc = '';
+      this.listeners = new Map();
+      this.playCalls = 0;
+      audioInstances.push(this);
+    }
+
+    addEventListener(type, listener) { this.listeners.set(type, listener); }
+    pause() {}
+    play() {
+      this.playCalls += 1;
+      this.currentSrc = this.src;
+      return Promise.resolve();
+    }
+    removeAttribute(name) { if (name === 'src') this.src = ''; }
+    load() {}
+  };
+  let station = {
+    id: '00000000-0000-4000-8000-000000000031',
+    name: 'Community station',
+    lat: 30,
+    lon: -97,
+    streamUrl: 'https://radio.example.com/initial.mp3',
+    homepage: null,
+    tags: ['news'],
+    languages: ['English'],
+    state: 'Texas',
+    country: 'United States',
+    countryCode: 'US',
+    metadataTrust: 'untrusted-community',
+    codec: 'MP3',
+    bitrate: 128,
+  };
+  const otherStation = {
+    ...station,
+    id: '00000000-0000-4000-8000-000000000032',
+    name: 'Another station',
+    streamUrl: 'https://radio.example.com/other.mp3',
+  };
+  let stationRows = [station, otherStation];
+  let acceptedGeneration = 1;
+  globalThis.fetch = async (url) => String(url).startsWith('/api/radio/click/')
+    ? { ok: true }
+    : {
+      ok: true,
+      json: async () => ({
+        stations: stationRows,
+        updatedAt: new Date().toISOString(),
+        stale: false,
+        degraded: false,
+        acceptedGeneration,
+        catalogInstance: 'qa-refresh-audio',
+      }),
+    };
+  const viewer = {
+    camera: { positionWC: { x: 7_000_000, y: 0, z: 0 } },
+    scene: { canvas: { disableRootEvents: true, onwheel: null, addEventListener() {}, removeEventListener() {} } },
+    dataSources: { add() {}, remove() {} },
+    entities: { add(entity) { return entity; }, remove() {} },
+  };
+  const refresh = async (rows) => {
+    stationRows = rows;
+    acceptedGeneration += 1;
+    await radioLayer.update();
+    assert.equal(radioLayer.getUIState().error, null);
+  };
+  radioLayer.destroy();
+  try {
+    radioLayer.init(viewer);
+    radioLayer.enable();
+    await radioLayer.update();
+    radioLayer.setLifecyclePresentation({
+      lifecycleState: 'enabled', enabled: true, uncertain: false,
+    });
+    assert.equal(radioLayer.selectStation(station.id, { autoplay: false }), true);
+    assert.equal(await radioLayer.togglePlayback({ origin: 'user' }), true);
+    const originalStream = audioInstances.at(-1);
+
+    station = { ...station, name: 'Corrected station name', state: '' };
+    await refresh([station, otherStation]);
+    assert.equal(radioLayer.getUIState().selected.name, station.name);
+    assert.equal(radioLayer.getUIState().audioState, 'playing');
+    assert.equal(originalStream.src, station.streamUrl);
+    assert.equal(audioInstances.at(-1), originalStream);
+
+    for (const [key, value] of Object.entries({
+      streamUrl: 'https://radio.example.com/replacement.mp3',
+      streamFormat: 'progressive',
+      liveOnly: false,
+      playbackKind: 'live',
+      sourceKind: 'radio-browser',
+    })) {
+      const activeAudio = audioInstances.at(-1);
+      const playsBefore = audioInstances.reduce((sum, audio) => sum + audio.playCalls, 0);
+      station = { ...station, [key]: value };
+      await refresh([station, otherStation]);
+      assert.equal(radioLayer.getUIState().audioState, 'stopped', key);
+      assert.equal(radioLayer.getUIState().playingStationId, null, key);
+      assert.equal(radioLayer.getUIState().selected.id, station.id, key);
+      assert.equal(activeAudio.src, '', key);
+      assert.equal(audioInstances.reduce((sum, audio) => sum + audio.playCalls, 0), playsBefore,
+        `${key}: refresh must not automatically play replacement audio`);
+      activeAudio.listeners.get('playing')?.();
+      assert.equal(radioLayer.getUIState().audioState, 'stopped', `${key}: late media event`);
+      assert.equal(await radioLayer.togglePlayback({ origin: 'user' }), true);
+      assert.equal(audioInstances.at(-1).src, station.streamUrl);
+    }
+
+    const removedAudio = audioInstances.at(-1);
+    assert.equal(radioLayer.selectStation(otherStation.id, { autoplay: false }), true);
+    await refresh([otherStation]);
+    assert.equal(radioLayer.getUIState().selected.id, otherStation.id);
+    assert.equal(radioLayer.getUIState().audioState, 'stopped');
+    assert.equal(radioLayer.getUIState().playingStationId, null);
+    assert.equal(removedAudio.src, '');
+  } finally {
+    radioLayer.destroy();
+    globalThis.fetch = originalFetch;
+    if (originalAudio === undefined) delete globalThis.Audio;
+    else globalThis.Audio = originalAudio;
+  }
+});
+
 test('unusable directory responses preserve warm client state atomically', async () => {
   const originalFetch = globalThis.fetch;
   const now = new Date().toISOString();

@@ -2,6 +2,10 @@ import {
   RADIO_DIRECTORY_STALE_MS,
   RADIO_DIRECTORY_FUTURE_SKEW_MS,
 } from './policy.js';
+import {
+  applyRadioIdentity,
+  reconcileRadioIdentities,
+} from '../../sources/radioIdentity.js';
 
 export function createIngestion({
   state: layerState,
@@ -50,17 +54,29 @@ export function createIngestion({
           typeof body.degraded !== 'boolean'
         )
           throw new Error('Radio directory freshness metadata was malformed');
-        const rows = body.stations;
-        const acceptedRows = rows.filter(
-          parts.catalogModel.isValidRadioDirectoryStation,
-        );
-        if (!acceptedRows.length)
+        const rows = body.stations.map(applyRadioIdentity);
+        if (!rows.length)
           throw new Error('Radio directory returned no usable stations');
-        if (acceptedRows.length !== rows.length) {
+        // Validate every identity-resolved row before deduplication: otherwise
+        // a valid listing could conceal a malformed duplicate of its stream.
+        if (
+          !rows.every((station) =>
+            parts.catalogModel.isValidRadioDirectoryStation(station, {
+              allowUnlocated: true,
+            }),
+          )
+        ) {
           throw new Error(
             'Radio directory response contained malformed stations',
           );
         }
+        // Corrected and disputed streams remain playable in the audio directory
+        // but cannot have globe pins. An entirely unlocated healthy response is
+        // valid and must clear any formerly accepted, incorrect map locations.
+        const acceptedRows = reconcileRadioIdentities(rows).filter(
+          (station) =>
+            Number.isFinite(station.lat) && Number.isFinite(station.lon),
+        );
         const acceptedGeneration = body.acceptedGeneration;
         if (
           acceptedGeneration !== null &&

@@ -8,6 +8,8 @@ import {
   interleaveCameraCountries,
   readFeedDirectory,
   readCctvSnapshot,
+  radioCountryLabel,
+  feedCoordinates,
 } from './liveFeedsModel.js';
 
 const station = {
@@ -127,6 +129,65 @@ test('radio keeps playable stations without a map location and never invents coo
   }
 });
 
+test('legacy CNN country labels are corrected by exact stream identity before searching or filtering', () => {
+  const { items } = normalizeFeedDirectory('radio', {
+    stations: [
+      {
+        ...station,
+        name: 'CNN UK',
+        city: 'London',
+        streamUrl: 'https://tunein.cdnstream1.com/2868_96.mp3',
+      },
+    ],
+  });
+  assert.equal(items[0].name, 'CNN (US)');
+  assert.equal(items[0].country, 'United States');
+  assert.equal(items[0].countryCode, 'US');
+  assert.equal(items[0].countryStatus, 'verified');
+  assert.equal(items[0].identitySource, 'https://tunein.com/cnn/');
+  assert.equal(items[0].identityCheckedAt, '2026-09-23');
+  assert.equal(feedCoordinates(items[0]), false);
+  assert.equal(items[0].city, '');
+  assert.equal(items[0].state, '');
+  assert.equal(filterFeedDirectory(items, '', 'United Kingdom').length, 0);
+  assert.equal(filterFeedDirectory(items, 'cnn', 'United States').length, 1);
+});
+
+test('conflicting stream country listings remain playable without a country filter or map location', () => {
+  for (const id of [station.id, '12345678-1234-1234-1234-123456789013']) {
+    const { items } = normalizeFeedDirectory('radio', {
+      stations: [
+        station,
+        {
+          ...station,
+          id,
+          country: 'United States',
+          countryCode: 'US',
+        },
+      ],
+    });
+    assert.equal(items.length, 1);
+    assert.equal(items[0].countryStatus, 'conflicting');
+    assert.equal(radioCountryLabel(items[0]), 'Country unconfirmed');
+    assert.equal(items[0].streamUrl, station.streamUrl);
+    assert.equal(feedCoordinates(items[0]), false);
+    for (const country of ['United Kingdom', 'United States'])
+      assert.equal(filterFeedDirectory(items, '', country).length, 0);
+  }
+});
+
+test('unknown radio countries are not inferred from a station name or a truncated code', () => {
+  const { items } = normalizeFeedDirectory('radio', {
+    stations: [
+      { ...station, name: 'London radio', country: '', countryCode: 'USA' },
+    ],
+  });
+  assert.equal(items[0].countryStatus, 'unknown');
+  assert.equal(items[0].countryCode, '');
+  assert.equal(radioCountryLabel(items[0]), 'Country unconfirmed');
+  assert.equal(filterFeedDirectory(items, '', 'United States').length, 0);
+});
+
 test('Ukrainian searches match country names, Cyrillic case, equivalent letters and apostrophes', () => {
   const ukrainian = {
     ...station,
@@ -228,6 +289,7 @@ test('radio location-match labels admit only recognized Australian provenance va
       stations: [
         {
           ...station,
+          country: 'Australia',
           countryCode: 'AU',
           metroMatch,
         },

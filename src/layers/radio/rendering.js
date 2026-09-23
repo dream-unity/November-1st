@@ -284,6 +284,9 @@ export function createRendering({
   }
 
   function reconcileStations(stations) {
+    const previousAudioStation = layerState._stationById.get(
+      layerState._audioStationId,
+    );
     if (!layerState._tuningActive)
       layerState._cancelledTuningPresentationStation = null;
     layerState._clusterOverlayIdentities =
@@ -311,9 +314,27 @@ export function createRendering({
       layerState._selectedId &&
       !layerState._stationById.has(layerState._selectedId)
     ) {
-      if (layerState._audioStationId === layerState._selectedId)
-        parts.playback.stopRadioPlayback();
       layerState._selectedId = null;
+    }
+    if (layerState._audioStationId) {
+      const nextAudioStation = layerState._stationById.get(
+        layerState._audioStationId,
+      );
+      // A UUID can keep its identity while its media source changes. Retire the
+      // old stream before presenting the replacement; another play needs a tap.
+      // Browsing a different selection must not hide a removed playing station.
+      if (
+        !previousAudioStation ||
+        !nextAudioStation ||
+        [
+          'streamUrl',
+          'streamFormat',
+          'liveOnly',
+          'playbackKind',
+          'sourceKind',
+        ].some((key) => previousAudioStation[key] !== nextAudioStation[key])
+      )
+        parts.playback.stopRadioPlayback();
     }
 
     if (layerState._dataSource) layerState._dataSource.entities.removeAll();

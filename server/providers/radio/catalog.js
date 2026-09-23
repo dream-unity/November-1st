@@ -18,6 +18,7 @@ import {
   publicRadioStation,
   cleanRadioText,
 } from './stations.js';
+import { reconcileRadioIdentities } from '../../../src/sources/radioIdentity.js';
 import {
   radioMirrorOrigin,
   radioProxyDestination,
@@ -249,6 +250,10 @@ export function createRadioProxyMiddleware({
   ]);
 
   async function collectCatalog(signal) {
+    const eligible = (station) =>
+      station &&
+      ((Number.isFinite(station.lat) && Number.isFinite(station.lon)) ||
+        ['verified', 'conflicting'].includes(station.countryStatus));
     // Documented finite recordings must stay excluded when a user returns to
     // the global directory as well as when browsing the relevant country.
     const excludedIds = new Set();
@@ -309,7 +314,9 @@ export function createRadioProxyMiddleware({
               'Radio Browser catalog contained a malformed station row',
             );
           const stations = rows
-            .map(normalizeRadioBrowserStation)
+            .map((row) =>
+              normalizeRadioBrowserStation(row, { requireGeo: false }),
+            )
             .filter(
               (station) =>
                 station &&
@@ -323,18 +330,20 @@ export function createRadioProxyMiddleware({
             .trim();
           const requestedTagCovered =
             !requestedTag ||
-            stations.some((station) =>
-              station.tags.some(
-                (stationTag) =>
-                  stationTag === requestedTag ||
-                  stationTag.includes(requestedTag),
-              ),
+            stations.some(
+              (station) =>
+                eligible(station) &&
+                station.tags.some(
+                  (stationTag) =>
+                    stationTag === requestedTag ||
+                    stationTag.includes(requestedTag),
+                ),
             );
           return {
             // Query coverage is based on accepted rows, not merely a payload that
             // happens to match the upstream schema. Specialist responses must
             // also contain an accepted station tagged for the requested category.
-            succeeded: stations.length > 0 && requestedTagCovered,
+            succeeded: stations.some(eligible) && requestedTagCovered,
             stations,
           };
         } catch {
@@ -344,11 +353,22 @@ export function createRadioProxyMiddleware({
     );
     const resultSets = outcomes.map((outcome) => outcome.stations);
 
+    // Reconcile the complete response pool before popularity or category limits.
+    // A duplicate beyond the displayed cutoff can contradict a displayed pin.
+    const reconciled = reconcileRadioIdentities(resultSets.flat());
+    const byStream = new Map(
+      reconciled.map((station) => [station.streamUrl, station]),
+    );
+    const candidates = resultSets.map((rows) =>
+      rows.map((station) => byStream.get(station.streamUrl)),
+    );
+
     const selected = [];
     const seen = new Set();
     const take = (station) => {
       if (
         !station ||
+        !eligible(station) ||
         seen.has(station.id) ||
         selected.length >= RADIO_DIRECTORY_LIMIT
       )
@@ -358,8 +378,8 @@ export function createRadioProxyMiddleware({
     };
     // Seed specialist station-tag queries before popularity fill so operational
     // categories remain represented even when global click charts skew musical.
-    for (const rows of resultSets.slice(1)) rows.slice(0, 45).forEach(take);
-    resultSets
+    for (const rows of candidates.slice(1)) rows.slice(0, 45).forEach(take);
+    candidates
       .flat()
       .sort(
         (a, b) => b.clickCount - a.clickCount || a.name.localeCompare(b.name),

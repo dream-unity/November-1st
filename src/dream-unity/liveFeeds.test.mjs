@@ -848,6 +848,166 @@ test('a refreshed directory retires changed station URLs so retry cannot replay 
   }
 });
 
+test('the radio player shows the verified CNN stream identity from an older mislabelled directory', async () => {
+  const streamUrl = 'https://tunein.cdnstream1.com/2868_96.mp3';
+  const f = fixture(async () =>
+    Response.json({
+      stations: [
+        {
+          ...station,
+          name: 'CNN UK',
+          country: 'United Kingdom',
+          countryCode: 'GB',
+          state: 'London',
+          streamUrl,
+        },
+      ],
+    }),
+  );
+  const feeds = installLiveFeeds({
+    openOnGlobe() {
+      assert.fail('CNN has no verified map location');
+    },
+  });
+  try {
+    feeds.open('radio');
+    await flush();
+    const list = find(f.doc, (node) => node.className === 'du-feeds-list');
+    assert.match(list.textContent, /CNN \(US\).*United States/);
+    assert.doesNotMatch(list.textContent, /CNN UK|London|United Kingdom/);
+    click(
+      find(f.doc, (node) => node.dataset.feedId === station.id),
+      list,
+    );
+    await flush();
+    const detail = find(f.doc, (node) => node.className === 'du-feed-detail');
+    assert.match(
+      detail.textContent,
+      /Broadcaster identity and country checked/,
+    );
+    assert.equal(
+      find(f.doc, (node) => node.textContent === 'View station identity source')
+        .href,
+      'https://tunein.com/cnn/',
+    );
+    assert.equal(f.audio[0].src, streamUrl);
+    assert.equal(
+      find(f.doc, (node) => node.textContent === 'Globe location unavailable')
+        .disabled,
+      true,
+    );
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('conflicting radio listings show an unconfirmed country and no country choice while preserving playback', async () => {
+  const f = fixture(async () =>
+    Response.json({
+      stations: [
+        { ...station, country: 'United Kingdom', countryCode: 'GB' },
+        {
+          ...station,
+          id: '12345678-1234-1234-1234-123456789013',
+          country: 'United States',
+          countryCode: 'US',
+        },
+      ],
+    }),
+  );
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('radio');
+    await flush();
+    const list = find(f.doc, (node) => node.className === 'du-feeds-list');
+    assert.equal(list.children.length, 1);
+    assert.match(list.textContent, /Country unconfirmed/);
+    const country = find(
+      f.doc,
+      (node) => node.getAttribute('aria-label') === 'Filter by country',
+    );
+    assert.ok(
+      !country.options.some((option) =>
+        ['United Kingdom', 'United States'].includes(option.value),
+      ),
+    );
+    click(
+      find(f.doc, (node) => node.dataset.feedId === station.id),
+      list,
+    );
+    await flush();
+    const detail = find(f.doc, (node) => node.className === 'du-feed-detail');
+    assert.match(detail.textContent, /Country unconfirmed/);
+    assert.match(detail.textContent, /Directory listings disagree/);
+    assert.equal(f.audio[0].src, station.streamUrl);
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
+test('a metadata-only station correction replaces stale country details without autoplay or taking refresh focus', async () => {
+  let refreshed = false;
+  const f = fixture(async () =>
+    Response.json({
+      stations: [
+        {
+          ...station,
+          // An unrecognised stream exercises a later directory correction; known CNN
+          // streams are already corrected at the client boundary on the first load.
+          streamUrl: 'https://radio.example/cnn',
+          name: refreshed ? 'CNN (US)' : 'CNN UK',
+          country: refreshed ? 'United States' : 'United Kingdom',
+          countryCode: refreshed ? 'US' : 'GB',
+          state: refreshed ? '' : 'London',
+        },
+      ],
+    }),
+  );
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('radio');
+    await flush();
+    const list = find(f.doc, (node) => node.className === 'du-feeds-list');
+    click(
+      find(f.doc, (node) => node.dataset.feedId === station.id),
+      list,
+    );
+    await flush();
+    const refresh = find(
+      f.doc,
+      (node) => node.textContent === 'Refresh directory',
+    );
+    refresh.focus();
+    refreshed = true;
+    click(refresh);
+    await flush();
+    const detail = find(f.doc, (node) => node.className === 'du-feed-detail');
+    assert.match(detail.textContent, /CNN \(US\).*United States/);
+    assert.doesNotMatch(f.doc.body.textContent, /CNN UK|United Kingdom|London/);
+    assert.equal(f.doc.activeElement, refresh);
+    assert.equal(f.audio.length, 1, 'a correction must not start a new player');
+    assert.equal(f.audio[0].paused, true);
+    assert.equal(f.audio[0].src, '');
+    assert.match(detail.textContent, /Ready to play/);
+    click(find(f.doc, (node) => node.textContent === 'Play / retry'));
+    await flush();
+    assert.equal(f.audio[1].src, 'https://radio.example/cnn');
+    click(refresh);
+    await flush();
+    assert.equal(f.audio.length, 2);
+    assert.equal(
+      f.audio[1].paused,
+      false,
+      'unchanged metadata preserves playback',
+    );
+  } finally {
+    feeds.destroy();
+    f.restore();
+  }
+});
+
 test('a camera country deep link selects only a supported country and leaves live-only filtering enabled', async () => {
   const f = fixture(async () =>
     Response.json({

@@ -7,6 +7,7 @@ import {
   publicRadioHttpsUrl,
   publicRadioStation,
 } from './stations.js';
+import { reconcileRadioIdentities } from '../../../src/sources/radioIdentity.js';
 import {
   RADIO_DIRECTORY_CACHE_MS,
   RADIO_DIRECTORY_STALE_MS,
@@ -212,7 +213,7 @@ export function mergeCountryRadioStations(
   const ids = new Set();
   const streams = new Set();
   const programmes = new Set();
-  for (const station of [...curated, ...directory]) {
+  for (const station of reconcileRadioIdentities([...curated, ...directory])) {
     if (!station || station.countryCode !== countryCode) continue;
     const programmeKeys = stationNameKeys(station);
     if (
@@ -318,15 +319,16 @@ export function createCountryRadioDirectory({
         );
         if (!Array.isArray(rows))
           throw new Error(`${countryName} radio directory is malformed`);
-        directory = rows
-          .map((row) =>
-            normalizeRadioBrowserStation(row, { requireGeo: false }),
-          )
-          .filter(
-            (station) =>
-              station?.countryCode === countryCode && isIncluded(station),
-          );
-        directoryHealthy = directory.length > 0;
+        directory = reconcileRadioIdentities(
+          rows
+            .map((row) =>
+              normalizeRadioBrowserStation(row, { requireGeo: false }),
+            )
+            .filter(Boolean),
+        ).filter(isIncluded);
+        directoryHealthy = directory.some(
+          (station) => station.countryCode === countryCode,
+        );
       } catch {
         /* Serve a verified editorial or previously healthy directory during an outage. */
       }

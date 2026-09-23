@@ -1,5 +1,6 @@
 import * as Cesium from 'cesium';
 import { normalizeRadioCountryInput } from '../../data/radioCountry.js';
+import { applyRadioIdentity } from '../../sources/radioIdentity.js';
 
 export function createQueries({ state: layerState, services, parts, source }) {
   function radioAngularDistance(station, anchor) {
@@ -55,15 +56,10 @@ export function createQueries({ state: layerState, services, parts, source }) {
     let matches = parts.categories.filterRadioStations(stations, categoryId);
     if (countryFilter.code || countryFilter.name) {
       matches = matches.filter((station) => {
-        const stationCode = String(station?.countryCode || '')
-          .trim()
-          .toUpperCase();
-        const stationCountry = normalizeRadioCountryInput(station?.country);
+        const identity = applyRadioIdentity(station);
         return (
-          (countryFilter.code && stationCode === countryFilter.code) ||
-          (countryFilter.code &&
-            stationCountry.valid &&
-            stationCountry.code === countryFilter.code)
+          identity?.countryCode === countryFilter.code &&
+          !['conflicting', 'unknown'].includes(identity.countryStatus)
         );
       });
     }

@@ -11,6 +11,7 @@ import {
   readFeedDirectory,
   readCctvSnapshot,
   feedCoordinates,
+  radioCountryLabel,
   RADIO_COUNTRY_DIRECTORIES,
 } from './liveFeedsModel.js';
 import './liveFeeds.css';
@@ -26,6 +27,38 @@ const radioCountryCode = (name) =>
   Object.entries(RADIO_COUNTRY_DIRECTORIES).find(
     ([, value]) => value === name,
   )?.[0] || '';
+
+function sameRadioDetails(previous, next) {
+  return (
+    [
+      'name',
+      'country',
+      'countryCode',
+      'countryStatus',
+      'state',
+      'city',
+      'locality',
+      'region',
+      'lat',
+      'lon',
+      'locationPrecision',
+      'homepage',
+      'sourcePage',
+      'sourceKind',
+      'identitySource',
+      'identityCheckedAt',
+      'metroArea',
+      'metroMatch',
+      'geographicScope',
+      'geographySourcePage',
+    ].every((key) => previous[key] === next[key]) &&
+    ['tags', 'languages'].every(
+      (key) =>
+        previous[key].length === next[key].length &&
+        previous[key].every((value, index) => value === next[key][index]),
+    )
+  );
+}
 function element(tag, text = '', className = '') {
   const node = document.createElement(tag);
   node.textContent = text;
@@ -394,7 +427,7 @@ export function installLiveFeeds({
       disposeMedia();
       disposeMedia = () => {};
     }
-    function selection(item) {
+    function selection(item, { autoplay = true, focus = true } = {}) {
       stopMedia();
       selected = item;
       mediaLifetime = new AbortController();
@@ -407,9 +440,12 @@ export function installLiveFeeds({
         kind === 'radio'
           ? [
               ...new Set(
-                [item.locality, item.city, item.state, item.country].filter(
-                  Boolean,
-                ),
+                [
+                  item.locality,
+                  item.city,
+                  item.state,
+                  radioCountryLabel(item),
+                ].filter(Boolean),
               ),
             ].join(', ')
           : [
@@ -512,13 +548,32 @@ export function installLiveFeeds({
               'du-feeds-note',
             ),
           );
+        const originNote =
+          item.countryStatus === 'verified'
+            ? 'Broadcaster identity and country checked against its published station information.'
+            : item.countryStatus === 'conflicting'
+              ? 'Directory listings disagree about this stream’s country. Its location is unconfirmed.'
+              : item.countryStatus === 'unknown'
+                ? 'This station’s country has not been confirmed.'
+                : ['curated-ukraine', 'curated-australia'].includes(
+                      item.sourceKind,
+                    )
+                  ? 'This stream was listed from its broadcaster’s published source.'
+                  : 'Station and country details come from Radio Browser community listings and have not been independently verified.';
         detail.append(
           element(
             'p',
-            `${['curated-ukraine', 'curated-australia'].includes(item.sourceKind) ? 'This stream was listed from its broadcaster’s published source.' : 'Station metadata is supplied by the Radio Browser community.'} Broadcaster geographic restrictions may apply. An entry in the directory does not guarantee that its stream is currently online.`,
+            `${originNote} Broadcaster geographic restrictions may apply. An entry in the directory does not guarantee that its stream is currently online.`,
             'du-feeds-note',
           ),
         );
+        if (item.countryStatus === 'verified' && item.identitySource) {
+          const identityLink = element('a', 'View station identity source');
+          identityLink.href = item.identitySource;
+          identityLink.target = '_blank';
+          identityLink.rel = 'noopener noreferrer';
+          detail.append(identityLink);
+        }
         if (item.metroMatch === 'community-metadata')
           detail.append(
             element(
@@ -535,7 +590,7 @@ export function installLiveFeeds({
           detail.append(sourceLink);
         }
         disposeMedia = () => player.destroy();
-        start();
+        if (autoplay) start();
       } else {
         const attribution = element(
           'p',
@@ -750,8 +805,10 @@ export function installLiveFeeds({
           detail.append(sourceLink);
         }
       }
-      name.focus({ preventScroll: true });
-      detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (focus) {
+        name.focus({ preventScroll: true });
+        detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
       renderList();
     }
     function renderList() {
@@ -852,7 +909,7 @@ export function installLiveFeeds({
           kind === 'radio'
             ? [
                 item.locality || item.city || item.state,
-                item.country,
+                radioCountryLabel(item),
                 item.metroMatch === 'community-metadata'
                   ? 'Melbourne match from community listing'
                   : '',
@@ -974,10 +1031,21 @@ export function installLiveFeeds({
         : items;
       const names = new Set(
         regionalItems
-          .map((item) => (kind === 'radio' ? item.country : item.city))
+          .map((item) =>
+            kind === 'radio'
+              ? ['unknown', 'conflicting'].includes(item.countryStatus)
+                ? ''
+                : item.country
+              : item.city,
+          )
           .filter(Boolean),
       );
       if (kind === 'radio') {
+        if (radioCatalogKey === ':') {
+          radioCountryNames.clear();
+          for (const name of Object.values(RADIO_COUNTRY_DIRECTORIES))
+            radioCountryNames.add(name);
+        }
         for (const name of names) radioCountryNames.add(name);
         for (const name of radioCountryNames) names.add(name);
       }
@@ -1028,6 +1096,7 @@ export function installLiveFeeds({
             replacement.streamFormat !== selected.streamFormat ||
             replacement.liveOnly !== selected.liveOnly ||
             replacement.playbackKind !== selected.playbackKind ||
+            replacement.sourceKind !== selected.sourceKind ||
             replacement.embedUrl !== selected.embedUrl
           ) {
             stopMedia();
@@ -1038,7 +1107,12 @@ export function installLiveFeeds({
                 'The selected source changed or is no longer in this directory. Choose an entry to play its current stream.',
               ),
             );
-          }
+          } else if (
+            kind === 'radio' &&
+            !sameRadioDetails(selected, replacement)
+          ) {
+            selection(replacement, { autoplay: false, focus: false });
+          } else selected = replacement;
         } else if (kind === 'radio') {
           detail.replaceChildren(element('p', 'Choose a station to listen.'));
         }

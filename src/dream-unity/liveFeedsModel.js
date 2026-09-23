@@ -1,4 +1,5 @@
 import { publicRadioHttpsUrl, RADIO_UUID_RE } from '../sources/radioBrowser.js';
+import { reconcileRadioIdentities } from '../sources/radioIdentity.js';
 import {
   normalizeFeedType,
   cameraMediaKind,
@@ -30,6 +31,12 @@ const coordinate = (value, limit) =>
 
 export function feedCoordinates(item) {
   return coordinate(item?.lat, 90) && coordinate(item?.lon, 180);
+}
+
+export function radioCountryLabel(item) {
+  return ['unknown', 'conflicting'].includes(item?.countryStatus)
+    ? 'Country unconfirmed'
+    : text(item?.country, 80) || 'Country unconfirmed';
 }
 
 /** Country comes from source metadata, never a coordinate guess. */
@@ -102,7 +109,7 @@ export function normalizeFeedDirectory(kind, payload) {
     if (kind === 'cctv' && !feedCoordinates(raw)) continue;
     const id = text(raw.id, 200);
     const name = text(raw.name);
-    if (!id || !name || seen.has(id)) continue;
+    if (!id || !name || (kind !== 'radio' && seen.has(id))) continue;
     if (kind === 'radio') {
       const streamUrl = publicRadioHttpsUrl(raw.streamUrl);
       if (!RADIO_UUID_RE.test(id) || !streamUrl) continue;
@@ -123,7 +130,7 @@ export function normalizeFeedDirectory(kind, payload) {
           ? text(raw.locationPrecision, 40) || 'directory'
           : 'unknown',
         country: text(raw.country, 80),
-        countryCode: text(raw.countryCode, 2),
+        countryCode: text(raw.countryCode, 80),
         state: text(raw.state, 80),
         city: text(raw.city, 100),
         locality: text(raw.locality, 100),
@@ -189,13 +196,21 @@ export function normalizeFeedDirectory(kind, payload) {
   }
   if (input.length && !items.length)
     throw new Error('The directory contained no usable entries.');
+  seen.clear();
+  const acceptedItems = (
+    kind === 'radio' ? reconcileRadioIdentities(items) : items
+  ).filter((item) => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
   return {
-    items,
+    items: acceptedItems,
     publisherSources:
       kind === 'cctv'
         ? normalizePublisherCameras(payload?.publisherSources)
         : [],
-    rejected: input.length - items.length,
+    rejected: input.length - acceptedItems.length,
     stale: payload?.stale === true,
     degraded: payload?.degraded === true,
     updatedAt:
@@ -275,6 +290,12 @@ export function filterFeedDirectory(
     )
       return false;
     const itemRegion = item.feedType ? item.city : item.country;
+    if (
+      !item.feedType &&
+      (region || country) &&
+      ['unknown', 'conflicting'].includes(item.countryStatus)
+    )
+      return false;
     if (region && (itemRegion || '') !== region) return false;
     if (country && cameraCountry(item).value !== country) return false;
     if (metroArea && item.metroArea !== metroArea) return false;

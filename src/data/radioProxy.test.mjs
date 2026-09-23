@@ -54,6 +54,7 @@ function catalogRows(prefix, tags = 'news,jazz', count = 400) {
   return Array.from({ length: count }, (_, index) => station({
     stationuuid: `${prefix}-0000-4000-8000-${index.toString(16).padStart(12, '0')}`,
     name: `${prefix} Station ${index}`,
+    url_resolved: `https://stream.example.org/${prefix}/${index}.mp3`,
     tags,
     clickcount: 1000 - index,
   }));
@@ -85,7 +86,7 @@ test('normalization keeps only healthy geolocated public HTTPS MP3/AAC streams',
   assert.equal(franceByName.country, 'France');
   assert.equal(franceByName.countryCode, 'FR');
   const invalidCountryCode = normalizeRadioBrowserStation(station({ country: 'Atlantis', countrycode: 'ZZ' }));
-  assert.equal(invalidCountryCode.country, 'Atlantis');
+  assert.equal(invalidCountryCode.country, '');
   assert.equal(invalidCountryCode.countryCode, '');
   assert.equal('favicon' in normalized, false);
   assert.equal(normalizeRadioBrowserStation(station({ url_resolved: 'http://stream.example.org/live.mp3' })), null);
@@ -104,7 +105,7 @@ test('catalog endpoint stations are reconstructed from the public field allowlis
   const publicStation = publicRadioStation(stationRecord);
   assert.deepEqual(Object.keys(publicStation), [
     'id', 'name', 'lat', 'lon', 'streamUrl', 'homepage', 'tags', 'languages',
-    'state', 'country', 'countryCode', 'metadataTrust', 'codec', 'bitrate',
+    'state', 'country', 'countryCode', 'metadataTrust', 'codec', 'bitrate', 'countryStatus',
   ]);
   assert.equal('clickCount' in publicStation, false);
   assert.equal('internalExtension' in publicStation, false);
@@ -378,6 +379,7 @@ test('catalog response is hard-capped at 750 normalized stations', async () => {
   const rows = Array.from({ length: 810 }, (_, index) => station({
     stationuuid: `00000000-0000-4000-8000-${index.toString(16).padStart(12, '0')}`,
     name: `Station ${index}`,
+    url_resolved: `https://stream.example.org/capped/${index}.mp3`,
     geo_lat: -70 + (index % 140),
     geo_long: -175 + (index % 350),
     clickcount: 1000 - index,
@@ -390,6 +392,66 @@ test('catalog response is hard-capped at 750 normalized stations', async () => {
   const result = await invoke(middleware, '/stations');
   assert.equal(result.status, 200);
   assert.equal(JSON.parse(result.body).stations.length, 750);
+});
+
+test('global identities reconcile beyond the cutoff and retain corrected audio without false map pins', async () => {
+  const rows = catalogRows('90000000', 'news,talk,weather,emergency,scanner,aviation,marine,traffic', 810);
+  rows[0] = station({
+    name: 'CNN UK', country: 'United Kingdom', countrycode: 'GB',
+    url_resolved: 'https://tunein.cdnstream1.com/2868_96.mp3',
+  });
+  rows[1] = { ...rows[1], country: 'United Kingdom', countrycode: 'GB', url_resolved: 'https://radio.example.org/shared' };
+  rows.push(station({
+    stationuuid: '90000000-1111-4111-8111-111111111111',
+    name: 'Duplicate CNN Australia', country: 'Australia', countrycode: 'AU',
+    url_resolved: 'https://tunein.cdnstream1.com/2868_96.mp3#player',
+    geo_lat: null, geo_long: null,
+  }));
+  rows.push(station({
+    stationuuid: '90000000-2222-4222-8222-222222222222',
+    name: 'Conflicting duplicate after cutoff', country: 'France', countrycode: 'FR',
+    url_resolved: 'https://radio.example.org/shared#player', clickcount: 0,
+  }));
+  rows.push(station({
+    stationuuid: '90000000-3333-4333-8333-333333333333',
+    name: 'Ordinary unlocated row', url_resolved: 'https://radio.example.org/unlocated',
+    geo_lat: null, geo_long: null, clickcount: 10_000_000,
+  }));
+  const middleware = createProxy({
+    fetchImpl: async (url) => String(url).includes('/json/servers')
+      ? responseJson([{ name: 'de1.api.radio-browser.info' }])
+      : responseJson(rows),
+  });
+  const result = await invoke(middleware, '/stations');
+  assert.equal(result.status, 200);
+  const { stations } = JSON.parse(result.body);
+  assert.equal(stations.length, 750);
+  assert.equal(new Set(stations.map((row) => row.streamUrl)).size, 750);
+  const cnn = stations.find((row) => row.name === 'CNN (US)');
+  assert.equal(cnn.countryCode, 'US');
+  assert.equal(cnn.countryStatus, 'verified');
+  assert.equal(cnn.lat, null);
+  assert.equal(cnn.lon, null);
+  const conflict = stations.find((row) => row.streamUrl === 'https://radio.example.org/shared');
+  assert.equal(conflict.countryStatus, 'conflicting');
+  assert.equal(conflict.countryCode, '');
+  assert.equal(conflict.lat, null);
+  assert.equal(conflict.lon, null);
+  assert.equal(stations.some((row) => row.name === 'Ordinary unlocated row'), false);
+});
+
+test('global stream dedup retains specialist categories from repeated query results', async () => {
+  const middleware = createProxy({
+    fetchImpl: async (url) => String(url).includes('/json/servers')
+      ? responseJson([{ name: 'de1.api.radio-browser.info' }])
+      : responseJson(catalogRows('91000000', queryTag(url) || 'music')),
+  });
+  const result = JSON.parse((await invoke(middleware, '/stations')).body);
+  assert.equal(result.degraded, false);
+  assert.equal(result.stations.length, 400);
+  assert.ok(result.stations[0].tags.includes('music'));
+  assert.ok(result.stations[0].tags.includes('news'));
+  assert.ok(result.stations[0].tags.includes('marine'));
 });
 
 test('resolved Radio Browser addresses reject local, private, link-local, metadata, and IPv6-local forms', () => {

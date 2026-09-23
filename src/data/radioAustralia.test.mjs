@@ -142,6 +142,21 @@ test('Australian country discovery includes unlocated audio, excludes foreign ro
   assert.deepEqual(a, b);
 });
 
+test('country discovery corrects foreign streams and reconciles conflicting copies before filtering', async () => {
+  const curated = normalizeAustraliaRadioSources([source({ streamUrl: 'https://radio.example.org/shared', lat: -37.8, lon: 145 })]);
+  const directory = createAustraliaRadioDirectory({
+    loadSources: () => curated,
+    fetchPath: async () => [
+      row({ name: 'CNN Australia', url_resolved: 'https://tunein.cdnstream1.com/2868_96.mp3' }),
+      row({ stationuuid: '00000000-1111-4111-8111-111111111111', name: 'Foreign copy of shared feed', countrycode: 'GB', country: 'United Kingdom', url_resolved: 'https://radio.example.org/shared' }),
+      row({ stationuuid: '00000000-2222-4222-8222-222222222222', name: 'Local Australian radio', url_resolved: 'https://radio.example.org/local' }),
+    ],
+  });
+  const catalog = await directory.getCatalog();
+  assert.deepEqual(catalog.stations.map((station) => station.name), ['Local Australian radio']);
+  assert.ok(catalog.stations.every((station) => station.countryCode === 'AU'));
+});
+
 test('AU and UA routes cache independently and never submit editorial identities as upstream votes', async () => {
   const au = normalizeAustraliaRadioSources([source()]);
   const ua = normalizeUkraineRadioSources([
