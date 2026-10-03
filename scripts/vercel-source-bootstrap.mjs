@@ -28,15 +28,15 @@ const payloadFiles = [
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Vercel can rewrite JSON formatting before running installation. Preserve
-// every configuration value and array position while ignoring object order.
+// Vercel can rewrite JSON formatting before running installation. Compare
+// configuration values and array positions while ignoring object order.
 function canonicalJson(value) {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
   return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(',')}}`;
 }
 
-function verifyVercelConfiguration(suppliedBytes, pinnedBytes) {
+export function verifyVercelConfiguration(suppliedBytes, pinnedBytes) {
   let supplied;
   let pinned;
   try {
@@ -50,9 +50,19 @@ function verifyVercelConfiguration(suppliedBytes, pinnedBytes) {
       Array.isArray(supplied) || Array.isArray(pinned)) {
     throw new Error('Initial deployment payload differs from pinned source: vercel.json (expected JSON objects).');
   }
+  // Drop-to-Deploy replaces the legacy project name with the chosen project.
+  // Only that existing top-level metadata value may change. Both names must
+  // remain bounded lowercase slugs; all executable and security settings stay pinned.
+  for (const configuration of [supplied, pinned]) {
+    if (Object.hasOwn(configuration, 'name') &&
+        (typeof configuration.name !== 'string' ||
+         !/^[a-z0-9](?:[a-z0-9-]{0,98}[a-z0-9])?$/.test(configuration.name))) {
+      throw new Error('Initial deployment payload differs from pinned source: vercel.json (invalid project name metadata).');
+    }
+  }
   const added = Object.keys(supplied).filter((key) => !Object.hasOwn(pinned, key)).sort();
   const removed = Object.keys(pinned).filter((key) => !Object.hasOwn(supplied, key)).sort();
-  const changed = Object.keys(pinned).filter((key) => Object.hasOwn(supplied, key) &&
+  const changed = Object.keys(pinned).filter((key) => key !== 'name' && Object.hasOwn(supplied, key) &&
     canonicalJson(supplied[key]) !== canonicalJson(pinned[key])).sort();
   if (added.length || removed.length || changed.length) {
     throw new Error(`Initial deployment payload differs from pinned source: vercel.json (added: ${JSON.stringify(added)}; removed: ${JSON.stringify(removed)}; changed: ${JSON.stringify(changed)}).`);
@@ -273,7 +283,9 @@ async function main() {
   finally { await rm(lockPath, { recursive: true, force: true }); }
 }
 
-main().catch((error) => {
-  console.error(`[source] ${error.message}`);
-  process.exitCode = 1;
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(`[source] ${error.message}`);
+    process.exitCode = 1;
+  });
+}

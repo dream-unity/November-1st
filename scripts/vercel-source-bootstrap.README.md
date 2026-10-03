@@ -35,6 +35,17 @@ payload for discovery. Hydration compares those initial files with the archive
 and fails on a mismatch. It never executes scripts taken from the archive.
 The subsequent, explicit `npm ci` and build run the application's normal code.
 
+Vercel Drop-to-Deploy rewrites the legacy top-level `vercel.json.name` to the
+chosen project name (for example, `november-1st` becomes `dream-unity-runtime`).
+The comparison permits this metadata replacement only when both names are
+1–100 lowercase ASCII letters, digits or hyphens, with an alphanumeric first
+and last character. Adding or removing the `name` field still fails. JSON
+whitespace and object-key order may differ; every other value and all array
+ordering must match the pinned source, including installation, build, function,
+header and rewrite settings. Nested `name` fields receive no exception.
+The archive SHA-256 and all other payload file hashes remain exact. Hydration
+then writes the pinned archive files, including its original `vercel.json`.
+
 Commit this package lifecycle script before computing the source pin:
 
 ```json
