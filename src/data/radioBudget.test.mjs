@@ -5,11 +5,15 @@ import { createRadioProxyMiddleware } from '../../server/providers/radio/catalog
 const publicLookup = async () => [{ address: '93.184.216.34', family: 4 }];
 const json = (value) => new Response(JSON.stringify(value));
 const never = () => new Promise(() => {});
+// Drain resolved DNS/body/query work without spending catalogue deadline time.
+const settle = () => new Promise((resolve) => setImmediate(resolve));
 const rows = (url) =>
   Array.from({ length: 400 }, (_, index) => ({
     stationuuid: `30000000-0000-4000-8000-${index.toString(16).padStart(12, '0')}`,
     name: `Station ${index}`,
-    url_resolved: 'https://stream.example.org/live.mp3',
+    // Unique stations need unique streams: the catalogue deliberately merges
+    // competing identities for the same stream before applying health policy.
+    url_resolved: `https://stream.example.org/live-${index}.mp3`,
     homepage: 'https://station.example.org/',
     tags: new URL(url).searchParams.get('tag') || 'news',
     language: 'English',
@@ -51,9 +55,10 @@ function create(options) {
 test(
   'one catalogue deadline bounds DNS that never resolves',
   { timeout: 2000 },
-  async () => {
+  async (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
     let fetches = 0;
-    const result = await invoke(
+    const pending = invoke(
       create({
         lookupImpl: never,
         fetchImpl: async () => {
@@ -62,6 +67,19 @@ test(
         },
       }),
     );
+    let finished = false;
+    void pending.then(() => {
+      finished = true;
+    });
+    t.mock.timers.tick(44);
+    await settle();
+    assert.equal(
+      finished,
+      false,
+      'the catalogue remains pending before its deadline',
+    );
+    t.mock.timers.tick(1);
+    const result = await pending;
     assert.equal(result.status, 503);
     assert.equal(fetches, 0);
   },
@@ -70,7 +88,8 @@ test(
 test(
   'one catalogue budget cancels non-cooperative fetches without walking every discovered mirror',
   { timeout: 2000 },
-  async () => {
+  async (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
     const signals = [];
     const middleware = create({
       fetchImpl: async (url, { signal }) => {
@@ -84,7 +103,14 @@ test(
         return never();
       },
     });
-    const result = await invoke(middleware);
+    const pending = invoke(middleware);
+    await settle();
+    assert.equal(signals.length, 3);
+    t.mock.timers.tick(44);
+    await settle();
+    assert.ok(signals.every((signal) => !signal.aborted));
+    t.mock.timers.tick(1);
+    const result = await pending;
     assert.equal(result.status, 503);
     assert.equal(
       signals.length,
@@ -98,9 +124,10 @@ test(
 test(
   'completed cold rows survive hung body timeouts as explicitly degraded data',
   { timeout: 2000 },
-  async () => {
+  async (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
     let cancellations = 0;
-    const result = await invoke(
+    const pending = invoke(
       create({
         fetchImpl: async (url) => {
           if (url.includes('/json/servers'))
@@ -116,6 +143,10 @@ test(
         },
       }),
     );
+    await settle();
+    assert.equal(cancellations, 0);
+    t.mock.timers.tick(45);
+    const result = await pending;
     assert.equal(result.status, 200);
     assert.equal(result.body.stations.length, 400);
     assert.equal(result.body.degraded, true);
@@ -132,7 +163,8 @@ test(
 test(
   'a timed-out refresh retains the last healthy generation and recovers on the next request',
   { timeout: 2000 },
-  async () => {
+  async (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
     let clock = Date.now();
     let failed = false;
     const middleware = create({
@@ -147,7 +179,10 @@ test(
     assert.equal(first.body.degraded, false);
     clock += 46 * 60_000;
     failed = true;
-    const retained = await invoke(middleware);
+    const pending = invoke(middleware);
+    await settle();
+    t.mock.timers.tick(45);
+    const retained = await pending;
     assert.equal(retained.status, 200);
     assert.equal(retained.body.stale, true);
     assert.equal(retained.body.degraded, true);
@@ -170,7 +205,8 @@ test(
 test(
   'an empty discovery response is cached while known mirrors serve the complete catalogue',
   { timeout: 2000 },
-  async () => {
+  async (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
     let discoveries = 0;
     const middleware = create({
       fetchImpl: async (url) => {

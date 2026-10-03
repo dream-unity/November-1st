@@ -15,13 +15,16 @@ const stable = (value) =>
         )
       : value;
 
-test('the complete Realtime tool payload retains its pre-extraction contract and wording', () => {
+test('the complete Realtime tool payload retains its contract and Dream Unity release wording', () => {
+  // The only wording change from upstream is "God's Eye View" to "God's Earth
+  // View" in fly_to_location, set_layer_visibility and set_visual_style.
+  // Reversing those three names reproduces the pre-extraction digest exactly.
   const digest = createHash('sha256')
     .update(JSON.stringify(stable(GEV_REALTIME_TOOLS)))
     .digest('hex');
   assert.equal(
     digest,
-    '956381c3456d3644ed7c9cda72910dc68a34d9191e0b3e414ee200c348245214',
+    '9826456bbf3a789e841f376bbd56cee2bcbc2a581ee2aefc1e6ffe59e1a1c8b3',
   );
 });
 

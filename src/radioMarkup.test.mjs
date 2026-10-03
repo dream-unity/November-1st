@@ -187,8 +187,10 @@ test('no unchanged Realtime tool definition drifts silently', () => {
     .update(JSON.stringify(unchanged))
     .digest('hex')
     .slice(0, 16);
-  // ALPR intentionally extends the two layer enums; retain the complete pin.
-  assert.equal(digest, '6963175a0c9a76de', 'an unchanged Realtime tool definition drifted');
+  // ALPR extends the two layer enums. The Dream Unity release also renames
+  // "God's Eye View" to "God's Earth View" in set_layer_visibility and
+  // set_visual_style; reversing only that branding reproduces the upstream pin.
+  assert.equal(digest, '4a9bc7aa1ad5dc4d', 'an unchanged Realtime tool definition drifted');
 });
 
 test('Radio volume and mission speed share the Sharpen slider visual language', () => {

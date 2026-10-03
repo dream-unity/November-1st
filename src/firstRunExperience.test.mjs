@@ -875,13 +875,15 @@ test('Escape returns from the category, then dismisses only from home', async (t
 test('the voice TOOL SCHEMA matches the pinned release — the mission mapping is instructions only', () => {
   // ALPR deliberately adds its ID to the two layer menus and visibility aliases.
   // Canonical serialization pins every tool name, description, property and
-  // ordering while allowing source formatting. Derived from the unchanged
-  // release schema before formatting (the previous source-byte pin passed).
+  // ordering while allowing source formatting. The Dream Unity release changes
+  // "God's Eye View" to "God's Earth View" in fly_to_location,
+  // set_layer_visibility and set_visual_style (six added characters). Reversing
+  // only those three names reproduces the upstream length and digest exactly.
   const block = JSON.stringify(GEV_REALTIME_TOOLS);
-  assert.equal(block.length, 26208, 'serialized tool schema length drifted');
+  assert.equal(block.length, 26214, 'serialized tool schema length drifted');
   assert.equal(
     crypto.createHash('sha256').update(block).digest('hex'),
-    '135d4ec66239777da34a8476cdf8348574421d7afd2e981cc3490909a5bc8686',
+    '63e4afb0b608ca42859730a4344739ab5b77e1e8aee0cd173ff6265243c12334',
     'the first-run missions must ride EXISTING tools: no schema edit, no cache bust',
   );
   const instructions = fs.readFileSync(new URL('../server/providers/openai/instructions.js', import.meta.url), 'utf8');
