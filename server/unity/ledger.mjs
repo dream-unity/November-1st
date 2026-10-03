@@ -35,6 +35,8 @@ export function createRedisLedger({
         body: JSON.stringify(parts),
         signal: AbortSignal.timeout(5000),
       });
+      if ([401, 403].includes(response.status))
+        throw serviceError('ADMISSION_CONFIGURATION_ERROR', 503);
       if (!response.ok) throw new Error();
       const reader = response.body.getReader();
       const responseParts = [];
@@ -53,8 +55,9 @@ export function createRedisLedger({
       const body = JSON.parse(Buffer.concat(responseParts).toString('utf8'));
       if (body.error || !Object.hasOwn(body, 'result')) throw new Error();
       return body.result;
-    } catch {
-      throw serviceError('SERVICE_NOT_READY', 503, true);
+    } catch (failure) {
+      if (failure?.code === 'ADMISSION_CONFIGURATION_ERROR') throw failure;
+      throw serviceError('ADMISSION_UNAVAILABLE', 503, true);
     }
   }
   const evalScript = (script, keys, args) =>

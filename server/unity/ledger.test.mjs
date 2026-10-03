@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRedisLedger } from './ledger.mjs';
+import { serviceMessage } from './http.mjs';
 
 test('Redis calls use authenticated server POST bodies and one atomic admission script', async () => {
   const seen = [];
@@ -58,12 +59,12 @@ test('failed Redis admission cannot degrade to local unlimited behavior', async 
       ),
   });
   await assert.rejects(ledger.get('anything'), {
-    code: 'SERVICE_NOT_READY',
+    code: 'ADMISSION_UNAVAILABLE',
     status: 503,
   });
   await assert.rejects(
     ledger.rateLimit({ key: 'owner', limit: 6, windowSeconds: 60 }),
-    { code: 'SERVICE_NOT_READY' },
+    { code: 'ADMISSION_UNAVAILABLE' },
   );
 });
 
@@ -90,4 +91,37 @@ test('continuation compare-and-swap executes a version check and update in one c
   assert.match(command[1], /obj.version/);
   assert.equal(command[4], '7');
   assert.equal(JSON.parse(command[5]).version, 8);
+});
+
+test('admission credential rejection and runtime outage have distinct, private recovery messages', async () => {
+  for (const [status, expected, retryable] of [
+    [401, 'ADMISSION_CONFIGURATION_ERROR', false],
+    [403, 'ADMISSION_CONFIGURATION_ERROR', false],
+    [429, 'ADMISSION_UNAVAILABLE', true],
+    [503, 'ADMISSION_UNAVAILABLE', true],
+  ]) {
+    const ledger = createRedisLedger({
+      url: 'https://redis.test.invalid',
+      token: 'test-private-token',
+      fetchImpl: async () =>
+        Response.json(
+          { error: 'secret provider diagnostic test-private-token' },
+          { status },
+        ),
+    });
+    await assert.rejects(ledger.get('anything'), (failure) => {
+      assert.equal(failure.code, expected);
+      assert.equal(failure.status, 503);
+      assert.equal(failure.retryable, retryable);
+      assert.doesNotMatch(
+        serviceMessage(failure.code),
+        /test-private-token|secret provider diagnostic/,
+      );
+      assert.match(
+        serviceMessage(failure.code),
+        status < 429 ? /credentials/ : /temporarily unavailable/,
+      );
+      return true;
+    });
+  }
 });

@@ -4,6 +4,10 @@ import { serviceError } from './config.mjs';
 const ERROR_MESSAGES = Object.freeze({
   SERVICE_NOT_READY:
     'AI conversation is awaiting private service configuration. You can continue exploring the views and your notes.',
+  ADMISSION_CONFIGURATION_ERROR:
+    'The conversation access service rejected this deployment’s credentials. The site owner needs to check the private access service configuration.',
+  ADMISSION_UNAVAILABLE:
+    'Conversation is temporarily unavailable because its access service could not confirm the request. Wait briefly before trying again.',
   ACCESS_DENIED:
     'This private invitation or session access is invalid, expired, or revoked. Enter your invitation again.',
   ACCESS_RATE_LIMITED:
