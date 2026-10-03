@@ -26,6 +26,8 @@ function fixture({
   quiet = async () => ({ quiet: true, blockedPlayerCount: 0 }),
   destroy = async () => {},
   readyPort = async () => ready,
+  beforeConstruct = async () => {},
+  destroyMedia = async () => {},
 } = {}) {
   const sent = [],
     listeners = new Map();
@@ -48,8 +50,9 @@ function fixture({
     randomUUID: () => id(++count + 100),
     commandTimeoutMs: 100,
     mediaTimeoutMs: 100,
-    runtimeFactory: async () => {
+    runtimeFactory: async (options) => {
       starts++;
+      await beforeConstruct(options);
       return {
         ready: readyPort,
         command,
@@ -63,7 +66,7 @@ function fixture({
     },
     mediaFactory: (options) => {
       media = options;
-      return { mediaPreflight: true, quiet, destroy() {} };
+      return { mediaPreflight: true, quiet, destroy: destroyMedia };
     },
   });
   async function send(
@@ -420,4 +423,59 @@ test('quiet duplicates replay the same receipt and late quiet cannot cross an ep
   await f.send('QUIET_REQUEST', {}, { epoch: 1, requestId: freshId });
   assert.deepEqual(f.sent.at(-1).message, first);
   await f.bridge.destroy();
+});
+
+test('destroy revokes pending construction and keeps the media guard until its late runtime is disposed', async () => {
+  let release, startupSignal;
+  const events = [];
+  const f = fixture({
+    beforeConstruct: ({ signal }) => {
+      startupSignal = signal;
+      return new Promise((resolve) => {
+        release = resolve;
+      });
+    },
+    destroy: async () => {
+      events.push('runtime-destroyed');
+    },
+    destroyMedia: async () => {
+      events.push('media-destroyed');
+    },
+  });
+  await f.send('INIT');
+  await f.send('START', { restore: null });
+  let finished = false;
+  const destruction = f.bridge.destroy().then(() => {
+    finished = true;
+  });
+  await flush();
+  assert.equal(finished, false, 'late construction still belongs to teardown');
+  assert.equal(startupSignal.aborted, true);
+  assert.deepEqual(events, []);
+  release();
+  await destruction;
+  assert.deepEqual(events, ['runtime-destroyed', 'media-destroyed']);
+  assert.equal(
+    f.sent.some((item) => item.message.kind === 'READY'),
+    false,
+  );
+  await f.bridge.destroy();
+  assert.equal(f.destroys(), 1);
+});
+
+test('a failed media cleanup does not skip runtime disposal or media owner destruction', async () => {
+  let mediaDestroyed = false;
+  const f = fixture({
+    quiet: async () => {
+      throw new Error('Native player teardown failed');
+    },
+    destroyMedia: async () => {
+      mediaDestroyed = true;
+    },
+  });
+  await f.send('INIT');
+  await f.send('START', { restore: null });
+  await assert.rejects(f.bridge.destroy());
+  assert.equal(f.destroys(), 1);
+  assert.equal(mediaDestroyed, true);
 });

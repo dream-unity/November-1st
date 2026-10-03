@@ -21,7 +21,9 @@ export function installEarthBridge({
   let runtime = null,
     starting = null,
     lastSnapshot = null,
-    runtimeDisposal = null;
+    runtimeDisposal = null,
+    startupController = null,
+    destruction = null;
   let readiness = {
     app: 'waiting',
     globe: 'not-started',
@@ -233,6 +235,7 @@ export function installEarthBridge({
     if (request.kind === 'SUSPEND') {
       inflight.set(key, {});
       active = false;
+      startupController?.abort('Earth view suspended');
       cancelWork();
       snapshot();
       const suspendEpoch = epoch;
@@ -295,6 +298,7 @@ export function installEarthBridge({
         providers: [],
       };
       const startEpoch = epoch;
+      startupController = new AbortController();
       send('STATUS', readiness);
       starting = (async () => {
         try {
@@ -304,6 +308,7 @@ export function installEarthBridge({
               if (active) send('REQUEST_HOME', {});
             },
             media,
+            signal: startupController.signal,
           });
           if (!active || epoch !== startEpoch) {
             await disposeRuntime();
@@ -436,14 +441,34 @@ export function installEarthBridge({
   windowRef.addEventListener('message', handler);
   return {
     getState: () => ({ bridgeId, epoch, active, readiness }),
-    async destroy() {
+    destroy() {
+      if (destruction) return destruction;
       disposed = true;
       active = false;
+      startupController?.abort('Earth document closed');
       cancelWork();
       windowRef.removeEventListener('message', handler);
-      await media.quiet();
-      await media.destroy();
-      await disposeRuntime();
+      destruction = (async () => {
+        const failures = new Set();
+        const attempt = async (operation) => {
+          try {
+            await operation();
+          } catch (error) {
+            failures.add(error);
+          }
+        };
+        // Keep embedded playback fail-closed until all delayed construction and
+        // application owners are gone. One failed owner cannot skip the rest.
+        await attempt(() => media.quiet());
+        await attempt(disposeRuntime);
+        await attempt(() => starting);
+        await attempt(disposeRuntime);
+        await attempt(() => media.quiet());
+        await attempt(() => media.destroy());
+        if (failures.size)
+          throw new AggregateError([...failures], 'Earth teardown failed');
+      })();
+      return destruction;
     },
   };
 }

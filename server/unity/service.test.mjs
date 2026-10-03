@@ -2,10 +2,210 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
+import { Readable } from 'node:stream';
+import { EventEmitter } from 'node:events';
 import { createUnityService } from './service.mjs';
 import { hash } from './config.mjs';
 import { CANON_VERSION, lookupKnowledge } from './knowledge.mjs';
-import { encryptContext, decryptContext } from './crypto.mjs';
+import { encryptContext, decryptContext, signCapability } from './crypto.mjs';
+
+const cancel = (turnId) => ({
+  version: 1,
+  kind: 'cancel',
+  requestId: randomUUID(),
+  turnId,
+});
+
+test('cancel before start leaves a tombstone and never admits delayed provider work', async (t) => {
+  let calls = 0;
+  const f = await fixture(t, {
+    provider: {
+      async text() {
+        calls++;
+        return completed();
+      },
+    },
+  });
+  const request = start();
+  assert.equal(
+    (await f.request('/turns', cancel(request.turnId), f.auth.accessToken))
+      .status,
+    200,
+  );
+  const response = await f.request('/turns', request, f.auth.accessToken);
+  assert.equal(response.status, 409);
+  assert.equal(calls, 0);
+  assert.equal(
+    (await f.ledger.get(`turn:owner:${request.turnId}`)).status,
+    'cancelled',
+  );
+});
+
+test('cancel retries a concurrent turn transition and erases its encrypted context', async (t) => {
+  const ledger = memoryLedger();
+  const request = start();
+  const name = `turn:owner:${request.turnId}`;
+  await ledger.put(name, {
+    version: 2,
+    status: 'running',
+    encrypted: { data: 'private-context' },
+  });
+  const compareAndSwap = ledger.compareAndSwap.bind(ledger);
+  let raced = false;
+  ledger.compareAndSwap = async (key, version, value) => {
+    if (key === name && value.status === 'cancelled' && !raced) {
+      raced = true;
+      await ledger.put(name, {
+        version: 3,
+        status: 'waiting',
+        encrypted: { data: 'private-context' },
+      });
+    }
+    return compareAndSwap(key, version, value);
+  };
+  const f = await fixture(t, { ledger });
+  assert.equal(
+    (await f.request('/turns', cancel(request.turnId), f.auth.accessToken))
+      .status,
+    200,
+  );
+  const record = await ledger.get(name);
+  assert.equal(raced, true);
+  assert.equal(record.status, 'cancelled');
+  assert.equal(record.encrypted, undefined);
+});
+
+test('new cancellation tombstones are rate-limited without blocking owned context erasure', async (t) => {
+  const ledger = memoryLedger();
+  const f = await fixture(t, { ledger });
+  ledger.rateLimit = async () => false;
+  const missing = randomUUID();
+  assert.equal(
+    (await f.request('/turns', cancel(missing), f.auth.accessToken)).status,
+    429,
+  );
+  assert.equal(await ledger.get(`turn:owner:${missing}`), null);
+  const existing = randomUUID();
+  await ledger.put(`turn:owner:${existing}`, {
+    version: 2,
+    status: 'running',
+    encrypted: { data: 'private' },
+  });
+  assert.equal(
+    (await f.request('/turns', cancel(existing), f.auth.accessToken)).status,
+    200,
+  );
+  assert.deepEqual(await ledger.get(`turn:owner:${existing}`), {
+    version: 3,
+    status: 'cancelled',
+  });
+});
+
+test('completion losing the shared turn commit never emits turn.complete', async (t) => {
+  const ledger = memoryLedger();
+  const compareAndSwap = ledger.compareAndSwap.bind(ledger);
+  ledger.compareAndSwap = async (key, version, value) => {
+    if (value.status === 'complete') {
+      await ledger.put(key, { version: version + 1, status: 'cancelled' });
+      return false;
+    }
+    return compareAndSwap(key, version, value);
+  };
+  const f = await fixture(t, { ledger });
+  const output = events(
+    await (await f.request('/turns', start(), f.auth.accessToken)).text(),
+  );
+  assert.equal(
+    output.some((event) => event.name === 'turn.complete'),
+    false,
+  );
+  assert.equal(output.at(-1).name, 'turn.error');
+  assert.equal(output.at(-1).data.code, 'TURN_SUPERSEDED');
+});
+
+test('close retry releases a quota slot after a prior confirmed hangup and ledger failure', async (t) => {
+  const ledger = memoryLedger();
+  const releaseVoice = ledger.releaseVoice.bind(ledger);
+  let releases = 0;
+  ledger.releaseVoice = async (args) => {
+    if (++releases === 1) throw new Error('temporary ledger failure');
+    return releaseVoice(args);
+  };
+  const f = await fixture(t, { ledger });
+  const created = await (
+    await f.request('/realtime', rtc(), f.auth.accessToken)
+  ).json();
+  const body = {
+    version: 1,
+    sessionId: created.sessionId,
+    closeToken: created.closeToken,
+    reason: 'stop',
+  };
+  const first = await f.request('/sessions/close', body);
+  assert.equal(first.status, 202);
+  assert.equal(ledger.active.size, 1);
+  const retry = await f.request('/sessions/close', body);
+  assert.equal(retry.status, 200);
+  assert.equal(ledger.active.size, 0);
+  assert.deepEqual(f.hangups, ['rtc_owned_test']);
+});
+
+test('a disconnected Realtime creation cannot replay the SDP of its cleaned-up call', async (t) => {
+  const ledger = memoryLedger();
+  const body = rtc();
+  const res = Object.assign(new EventEmitter(), { destroyed: false });
+  const hangups = [];
+  let creates = 0;
+  const provider = {
+    async createRealtime() {
+      creates++;
+      res.destroyed = true;
+      return { callId: 'rtc_disconnected', sdp: 'v=0\nanswer' };
+    },
+    async hangup(id) {
+      hangups.push(id);
+    },
+  };
+  const origin = 'https://dreamunity.one';
+  const accessToken = signCapability(
+    {
+      kind: 'access',
+      iss: 'dream-unity',
+      aud: 'unity-preview',
+      origin,
+      exp: Date.now() + 60000,
+      inviteId: 'owner',
+      jti: randomUUID(),
+      scopes: ['unity:voice:create'],
+    },
+    ENV.UNITY_SIGNING_KEY,
+  );
+  const req = Object.assign(
+    Readable.from([Buffer.from(JSON.stringify(body))]),
+    {
+      url: '/realtime',
+      method: 'POST',
+      headers: {
+        origin,
+        'content-type': 'application/json',
+        authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+  await createUnityService({ env: ENV, ledger, provider })(req, res);
+  assert.deepEqual(hangups, ['rtc_disconnected']);
+  assert.equal(ledger.active.size, 0);
+  const f = await fixture(t, { ledger, provider });
+  assert.equal(
+    (await f.request('/realtime', body, f.auth.accessToken)).status,
+    409,
+  );
+  assert.equal(creates, 1);
+  assert.equal(
+    (await ledger.get(`attempt:owner:${body.attemptId}`)).status,
+    'closed',
+  );
+});
 
 const INVITE = 'test-invite-fixture-never-deploy';
 const ENV = {

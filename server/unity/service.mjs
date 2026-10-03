@@ -154,6 +154,24 @@ export function createUnityService({
     return { ...claim, origin };
   }
   const safetyId = (inviteId) => hash(`unity:${inviteId}`);
+  async function closeOwnedVoice(record) {
+    if (record.status !== 'closed')
+      await provider.hangup(record.callId, AbortSignal.timeout(10000));
+    const closed = { ...record, status: 'closed' };
+    delete closed.result;
+    // Keep the attempt and owned session in the same terminal state. A retry
+    // after a disconnected create must not replay SDP for an already closed call.
+    await ledger.commitVoice({
+      inviteId: record.inviteId,
+      attemptId: record.attemptId,
+      sessionId: record.sessionId,
+      record: closed,
+    });
+    await ledger.releaseVoice({
+      inviteId: record.inviteId,
+      sessionId: record.sessionId,
+    });
+  }
   const turnRecord = (inviteId, turnId, state, version) => ({
     version,
     status: state.status,
@@ -169,6 +187,35 @@ export function createUnityService({
       config.encryptionKey,
       contextBinding(inviteId, turnId),
     );
+  async function cancelTurn(inviteId, turnId) {
+    const name = textKey(inviteId, turnId);
+    running.get(name)?.abort();
+    // Cancellation can arrive before start has stored the turn, or while a
+    // different worker transitions it. Preserve a tombstone and only acknowledge
+    // after the shared write succeeds; a stale CAS must not leave context alive.
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const record = await ledger.get(name);
+      if (record?.status === 'cancelled' && !record.encrypted) return;
+      if (
+        !record &&
+        !(await ledger.rateLimit({
+          key: `cancel:${inviteId}`,
+          limit: 60,
+          windowSeconds: 60,
+        }))
+      )
+        throw serviceError('TURN_CANCEL_RATE_LIMITED', 429, true);
+      const cancelled = {
+        version: (record?.version || 0) + 1,
+        status: 'cancelled',
+      };
+      const changed = record
+        ? await ledger.compareAndSwap(name, record.version, cancelled, 900)
+        : await ledger.putIfAbsent(name, cancelled, 900);
+      if (changed) return;
+    }
+    throw serviceError('TURN_CONFLICT', 409, true);
+  }
   async function activeTurn(inviteId, state) {
     const active = await ledger.get(
       `conversation:${inviteId}:${state.request.conversationId}`,
@@ -202,18 +249,7 @@ export function createUnityService({
         ? await ledger.compareAndSwap(name, prior.version, next, 900)
         : await ledger.putIfAbsent(name, next, 900);
       if (changed) {
-        if (prior) {
-          running.get(textKey(inviteId, prior.turnId))?.abort();
-          const oldKey = textKey(inviteId, prior.turnId);
-          const old = await ledger.get(oldKey);
-          if (old)
-            await ledger.compareAndSwap(
-              oldKey,
-              old.version,
-              { version: old.version + 1, status: 'cancelled' },
-              900,
-            );
-        }
+        if (prior) await cancelTurn(inviteId, prior.turnId);
         return;
       }
     }
@@ -342,8 +378,10 @@ export function createUnityService({
       });
       if (res.destroyed) {
         try {
-          await provider.hangup(created.callId, AbortSignal.timeout(10000));
-          await ledger.releaseVoice({ inviteId: auth.inviteId, sessionId });
+          await closeOwnedVoice({
+            ...admission.record,
+            callId: created.callId,
+          });
         } catch {
           /* Reservation remains held; cleanup was unconfirmed. */
         }
@@ -354,8 +392,7 @@ export function createUnityService({
       const callId = created?.callId || error.callId;
       if (callId) {
         try {
-          await provider.hangup(callId, AbortSignal.timeout(10000));
-          await ledger.releaseVoice({ inviteId: auth.inviteId, sessionId });
+          await closeOwnedVoice({ ...admission.record, callId });
         } catch {
           /* Retain reservation on unknown teardown. */
         }
@@ -388,25 +425,14 @@ export function createUnityService({
     const record = await ledger.get(`session:${body.sessionId}`);
     if (!record || record.inviteId !== claim.inviteId)
       throw serviceError('SESSION_UNAVAILABLE', 404);
-    if (record.status === 'closed')
-      return sendJSON(res, 200, { version: 1, status: 'already_closed' });
     try {
-      await provider.hangup(record.callId, AbortSignal.timeout(10000));
-      await ledger.put(
-        `session:${body.sessionId}`,
-        { ...record, status: 'closed' },
-        5400,
-      );
-      await ledger.put(
-        `attempt:${record.inviteId}:${record.attemptId}`,
-        { ...record, status: 'closed' },
-        5400,
-      );
-      await ledger.releaseVoice({
-        inviteId: record.inviteId,
-        sessionId: body.sessionId,
+      // A previous hangup may have succeeded before a ledger write or slot
+      // release failed. Retrying close must finish those idempotent writes.
+      await closeOwnedVoice(record);
+      sendJSON(res, 200, {
+        version: 1,
+        status: record.status === 'closed' ? 'already_closed' : 'closed',
       });
-      sendJSON(res, 200, { version: 1, status: 'closed' });
     } catch {
       sendJSON(res, 202, { version: 1, status: 'closing_unconfirmed' });
     }
@@ -422,6 +448,7 @@ export function createUnityService({
     };
     req.once('aborted', disconnected);
     res.once('close', disconnected);
+    if (req.aborted || res.destroyed) controller.abort();
     let emittedText = '';
     let usage = null;
     try {
@@ -479,12 +506,15 @@ export function createUnityService({
         if (calls.length > 1)
           throw serviceError('PROVIDER_INVALID_RESPONSE', 502);
         if (!calls.length) {
-          await ledger.compareAndSwap(
-            name,
-            record.version,
-            { version: record.version + 1, status: 'complete' },
-            900,
-          );
+          if (
+            !(await ledger.compareAndSwap(
+              name,
+              record.version,
+              { version: record.version + 1, status: 'complete' },
+              900,
+            ))
+          )
+            throw serviceError('TURN_SUPERSEDED', 409);
           send('turn.complete', {
             turnId: state.request.turnId,
             text: emittedText,
@@ -625,15 +655,7 @@ export function createUnityService({
     assertValid(schemas.textTurn, body);
     const name = textKey(auth.inviteId, body.turnId);
     if (body.kind === 'cancel') {
-      running.get(name)?.abort();
-      const record = await ledger.get(name);
-      if (record)
-        await ledger.compareAndSwap(
-          name,
-          record.version,
-          { version: record.version + 1, status: 'cancelled' },
-          900,
-        );
+      await cancelTurn(auth.inviteId, body.turnId);
       return sendJSON(res, 200, {
         version: 1,
         turnId: body.turnId,
@@ -641,6 +663,8 @@ export function createUnityService({
       });
     }
     if (body.kind === 'start') {
+      if ((await ledger.get(name))?.status === 'cancelled')
+        throw serviceError('TURN_CANCELLED', 409);
       assertMemories(body.consentedMemories);
       if (byteCount(body.message) > 8192 || byteCount(body.history) > 24576)
         throw serviceError('BODY_TOO_LARGE', 413);

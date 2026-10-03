@@ -10,6 +10,7 @@ const loadCesium = createCesiumLoader({
   source: `${import.meta.env.BASE_URL}cesium/Cesium.js`,
 });
 let bridge;
+const documentLifetime = new AbortController();
 async function initialize() {
   if (window.parent === window) {
     status.textContent =
@@ -20,12 +21,16 @@ async function initialize() {
   try {
     const response = await fetch('/build-info.json', {
       cache: 'no-store',
-      signal: AbortSignal.timeout(2000),
+      signal: AbortSignal.any([
+        documentLifetime.signal,
+        AbortSignal.timeout(2000),
+      ]),
     });
     if (response.ok) commit = (await response.json()).commit;
   } catch {
     /* Development uses its explicitly compiled checkout identity. */
   }
+  if (documentLifetime.signal.aborted) return;
   if (!/^[a-f0-9]{40}$/.test(commit || '')) {
     status.textContent =
       'Earth build identity could not be verified. Use the standalone view.';
@@ -37,9 +42,12 @@ async function initialize() {
     mediaFactory: (options) =>
       installEmbedMediaFocus({ ...options, documentRef: document }),
     runtimeFactory: async (options) => {
+      options.signal.throwIfAborted();
       status.textContent = 'Opening the complete Earth application…';
       if (import.meta.env.PROD) await loadCesium();
+      options.signal.throwIfAborted();
       const { createEmbeddedRuntime } = await import('./embedRuntime.js');
+      options.signal.throwIfAborted();
       return createEmbeddedRuntime(options);
     },
   });
@@ -47,7 +55,8 @@ async function initialize() {
 window.addEventListener(
   'pagehide',
   () => {
-    void bridge?.destroy();
+    documentLifetime.abort('Earth document closed');
+    void bridge?.destroy().catch(() => {});
   },
   { once: true },
 );

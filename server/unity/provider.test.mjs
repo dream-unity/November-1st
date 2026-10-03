@@ -28,6 +28,7 @@ test('unified SDP fixes model, server instructions, interruption and secret boun
   assert.equal(session.model, 'gpt-realtime-2.1');
   assert.equal(session.audio.output.voice, 'marin');
   assert.equal(session.audio.input.turn_detection.interrupt_response, true);
+  assert.equal(session.audio.input.turn_detection.create_response, false);
   assert.deepEqual(session.audio.input.transcription, {
     model: 'gpt-4o-mini-transcribe',
     language: 'en',
@@ -132,4 +133,40 @@ test('incomplete and malformed provider streams fail explicitly', async () => {
     provider.text({ input: [], memories: [], onDelta() {} }),
     { code: 'TURN_INCOMPLETE' },
   );
+});
+
+test('an upstream creation failure cannot claim that no call was created', async () => {
+  const provider = createOpenAIProvider({
+    key: 'test-server-key',
+    tools: [],
+    fetchImpl: async () => new Response('', { status: 500 }),
+  });
+  await assert.rejects(
+    provider.createRealtime({ sdp: 'v=0\noffer', memories: [] }),
+    (error) => error.code === 'CREATION_UNCONFIRMED' && !error.definitiveNoCall,
+  );
+});
+
+test('rejecting a provider event cancels the unread upstream response body', async () => {
+  let cancelled = false;
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(
+        new TextEncoder().encode('data: {"type":"response.incomplete"}\n\n'),
+      );
+    },
+    cancel() {
+      cancelled = true;
+    },
+  });
+  const provider = createOpenAIProvider({
+    key: 'test-server-key',
+    tools: [],
+    fetchImpl: async () => new Response(stream),
+  });
+  await assert.rejects(
+    provider.text({ input: [], memories: [], onDelta() {} }),
+    { code: 'TURN_INCOMPLETE' },
+  );
+  assert.equal(cancelled, true);
 });

@@ -33,6 +33,7 @@ async function cappedText(response, max = 512 * 1024) {
     }
     return Buffer.concat(parts).toString('utf8');
   } finally {
+    await reader.cancel().catch(() => {});
     reader.releaseLock();
   }
 }
@@ -65,7 +66,7 @@ export function createOpenAIProvider({ key, fetchImpl = fetch, tools }) {
               turn_detection: {
                 type: 'semantic_vad',
                 eagerness: 'low',
-                create_response: true,
+                create_response: false,
                 interrupt_response: true,
               },
             },
@@ -95,10 +96,16 @@ export function createOpenAIProvider({ key, fetchImpl = fetch, tools }) {
       } catch {
         throw serviceError('CREATION_UNCONFIRMED', 504, false);
       }
-      if (!response.ok)
+      if (!response.ok) {
+        await response.body?.cancel().catch(() => {});
+        // A timeout/server failure does not prove that upstream creation never
+        // happened. Keep admission held instead of issuing a fresh live slot.
+        if (response.status >= 500 || response.status === 408)
+          throw serviceError('CREATION_UNCONFIRMED', 502, false);
         throw Object.assign(providerError(response.status), {
           definitiveNoCall: true,
         });
+      }
       const location = response.headers.get('Location');
       let callId;
       try {
@@ -112,6 +119,7 @@ export function createOpenAIProvider({ key, fetchImpl = fetch, tools }) {
           throw new Error();
         callId = url.pathname.split('/').at(-1);
       } catch {
+        await response.body?.cancel().catch(() => {});
         throw serviceError('CREATION_UNCONFIRMED', 502);
       }
       let answer;
@@ -138,6 +146,7 @@ export function createOpenAIProvider({ key, fetchImpl = fetch, tools }) {
           signal,
         },
       );
+      await response.body?.cancel().catch(() => {});
       if (response.ok || response.status === 404) return;
       throw providerError(response.status);
     },
@@ -164,7 +173,10 @@ export function createOpenAIProvider({ key, fetchImpl = fetch, tools }) {
           max_output_tokens: 1200,
         }),
       });
-      if (!response.ok) throw providerError(response.status);
+      if (!response.ok) {
+        await response.body?.cancel().catch(() => {});
+        throw providerError(response.status);
+      }
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -215,6 +227,7 @@ export function createOpenAIProvider({ key, fetchImpl = fetch, tools }) {
         }
         if (buffer.trim()) consume(buffer);
       } finally {
+        await reader.cancel().catch(() => {});
         reader.releaseLock();
       }
       if (
