@@ -1,0 +1,61 @@
+name: Package verified Vercel release
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/vercel-release-package.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install without browser downloads
+        run: PUPPETEER_SKIP_DOWNLOAD=1 npm ci
+      - name: Verify production host and import boundaries
+        run: npm run test:host && npm run check:boundaries
+      - name: Verify production build
+        run: npm run build
+      - name: Package exact checksum-pinned source loader
+        env:
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: |
+          python3 <<'PY'
+          import hashlib, json, os, pathlib, urllib.request, zipfile
+          revision = os.environ['RELEASE_COMMIT']
+          if len(revision) != 40 or any(c not in '0123456789abcdef' for c in revision):
+              raise RuntimeError('An exact source revision is required')
+          archive = urllib.request.urlopen(
+              'https://codeload.github.com/dream-unity/November-1st/tar.gz/' + revision,
+              timeout=90).read(96 * 1024 * 1024 + 1)
+          if len(archive) > 96 * 1024 * 1024 or archive[:2] != b'\x1f\x8b':
+              raise RuntimeError('Invalid or oversized source archive')
+          manifest = {'repository': 'dream-unity/November-1st', 'commit': revision,
+                      'archiveSha256': hashlib.sha256(archive).hexdigest()}
+          output = pathlib.Path('release-package'); output.mkdir()
+          (output / 'source-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+          files = ['package.json', 'package-lock.json', 'vercel.json', 'api/index.js',
+                   'scripts/vercel-source-bootstrap.mjs']
+          with zipfile.ZipFile(output / 'Dream-Unity-Pinned-Backend.zip', 'w',
+                               zipfile.ZIP_DEFLATED, compresslevel=9) as package:
+              for filename in files: package.write(filename, filename)
+              package.writestr('deploy-source.json', json.dumps(manifest, indent=2) + '\n')
+          print(json.dumps(manifest))
+          print('Source package bytes:', (output / 'Dream-Unity-Pinned-Backend.zip').stat().st_size)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vercel-pinned-release
+          path: release-package/
+          if-no-files-found: error
+          retention-days: 7
