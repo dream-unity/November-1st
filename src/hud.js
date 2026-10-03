@@ -102,6 +102,7 @@ export class IntelHUD {
     this.placeSearch = placeSearch;
     this.viewer = viewer;
     this._visible = false;
+    this._destroyed = false;
     this._autoMode = true; // auto show/hide based on style
     this._currentStyle = 'normal';
     this._el = null;
@@ -657,13 +658,34 @@ export class IntelHUD {
    * (2 characters every 24ms).
    * @param {string} text - Full summary string to type out.
    */
-  _typeSummary(text) {
+  _typeSummary(text, isCurrent = () => true) {
     const el = document.getElementById('hud-summary');
     if (!el) return;
     clearInterval(this._summaryTypingInterval);
+    const revision = this._summaryRevision;
     let index = 0;
     el.textContent = '';
-    this._summaryTypingInterval = setInterval(() => {
+    const timer = setInterval(() => {
+      if (this._summaryTypingInterval !== timer) return;
+      if (
+        this._destroyed ||
+        !this._visible ||
+        revision !== this._summaryRevision ||
+        !isCurrent()
+      ) {
+        clearInterval(timer);
+        this._summaryTypingInterval = null;
+        if (
+          !this._destroyed &&
+          this._visible &&
+          revision === this._summaryRevision
+        ) {
+          this._summaryDirty = true;
+          this._lastSummarySignature = '';
+          this._setSummaryText(this._composeSummary(), false);
+        }
+        return;
+      }
       index += 2;
       if (index >= text.length) {
         el.textContent = text;
@@ -673,6 +695,7 @@ export class IntelHUD {
       }
       el.textContent = text.slice(0, index);
     }, 24);
+    this._summaryTypingInterval = timer;
   }
 
   /**
@@ -681,15 +704,38 @@ export class IntelHUD {
    *   by character; otherwise sets it instantly.
    */
   async _updateSummary(animate = false, force = false) {
+    if (this._destroyed || !this._visible) return;
+    const revision = this._summaryRevision;
     const fallbackText = this._composeSummary();
     if (!this._latestMetrics) {
       this._setSummaryText(fallbackText, animate);
       return;
     }
     if (!force && !this._summaryDirty) return;
-    if (this.summaryPolicy.canRequest?.() === false) return;
+    // No implicit permission: showing the HUD is not an AI-service activation.
+    // Check before building context, which can itself invoke metered places.
+    let authorization;
+    try {
+      authorization = this.summaryPolicy.authorize
+        ? await this.summaryPolicy.authorize()
+        : this.summaryPolicy.canRequest?.() === true
+          ? { isCurrent: () => this.summaryPolicy.canRequest?.() === true }
+          : null;
+    } catch {
+      authorization = null;
+    }
+    if (this._destroyed || !this._visible || revision !== this._summaryRevision)
+      return;
+    if (!authorization?.isCurrent?.()) {
+      this._setSummaryText(fallbackText, animate);
+      return;
+    }
 
-    const revision = this._summaryRevision;
+    const isCurrent = () =>
+      !this._destroyed &&
+      this._visible &&
+      revision === this._summaryRevision &&
+      authorization.isCurrent();
     // Every caller invokes this as `void this._updateSummary(...)`, so nothing
     // owns the returned promise — a rejection escaping from here lands as an
     // unhandled rejection in the console. Building the context walks the live
@@ -698,15 +744,19 @@ export class IntelHUD {
     // fallback line, not a crash.
     let context;
     try {
-      context = await this._summaryContext();
+      context = await this._summaryContext({
+        ...this.basemapContext,
+        ...authorization.contextOptions,
+      });
     } catch (error) {
+      if (!isCurrent()) return;
       console.warn('[HUD] summary context unavailable:', error);
       // Left dirty on purpose: the next periodic tick retries instead of
       // sticking on the fallback line for the rest of the session.
       this._setSummaryText(fallbackText, animate);
       return;
     }
-    if (revision !== this._summaryRevision) return;
+    if (!isCurrent()) return;
     const signature = JSON.stringify(context);
     if (!force && signature === this._lastSummarySignature) {
       this._summaryDirty = false;
@@ -722,11 +772,12 @@ export class IntelHUD {
     this._summaryRequest = controller;
     try {
       this.summaryPolicy.onRequest?.();
+      if (!isCurrent()) return;
       const response = await this.summaryService.summarize(context, {
         signal: controller.signal,
       });
       const data = response.data;
-      if (revision !== this._summaryRevision) return;
+      if (!isCurrent()) return;
       if (isHudSummaryUnconfigured(response.status, data)) {
         this._setSummaryText(fallbackText, animate);
         return;
@@ -734,8 +785,9 @@ export class IntelHUD {
       if (!response.ok || !data?.summary) {
         throw new Error(data?.error || `HTTP ${response.status}`);
       }
-      this._setSummaryText(data.summary, animate);
+      this._setSummaryText(data.summary, animate, isCurrent);
     } catch (error) {
+      if (!isCurrent()) return;
       if (error?.name !== 'AbortError') {
         console.warn('[HUD] AI summary unavailable:', error);
         // Invalidate the committed signature so the next periodic tick
@@ -746,32 +798,55 @@ export class IntelHUD {
       this._setSummaryText(fallbackText, animate);
     } finally {
       window.clearTimeout(timeout);
-      if (this._summaryRequest === controller) this._summaryRequest = null;
+      if (this._summaryRequest === controller) {
+        this._summaryRequest = null;
+        if (!this._destroyed && !isCurrent()) {
+          this._summaryDirty = true;
+          this._lastSummarySignature = '';
+        }
+      }
     }
   }
 
-  _setSummaryText(text, animate) {
+  _setSummaryText(text, animate, isCurrent) {
+    if (this._destroyed) return;
+    clearInterval(this._summaryTypingInterval);
+    this._summaryTypingInterval = null;
     if (animate) {
-      this._typeSummary(text);
+      this._typeSummary(text, isCurrent);
       return;
     }
     const el = document.getElementById('hud-summary');
     if (el) el.textContent = text;
   }
 
-  async _summaryContext() {
+  async _summaryContext(options = this.basemapContext) {
     const labels = await getBasemapLabelContext(
       this.viewer,
       this.placeSearch,
-      this.basemapContext,
+      options,
     );
     const enabledLayers =
       this._dataManager
         ?.getAll?.()
         ?.filter((layer) => layer.enabled)
         .map((layer) => layer.name) || [];
+    const metrics = this._latestMetrics;
+    const localLabels = metrics
+      ? [
+          composeLocalityTag(
+            this._nearestKnownPoint(metrics.latDeg, metrics.lonDeg),
+            metrics.latDeg,
+            metrics.lonDeg,
+          ),
+          this._regionLabel(metrics.latDeg, metrics.lonDeg),
+        ]
+      : [];
     return {
-      placeLabels: labels.placeLabels,
+      placeLabels: [...new Set([...labels.placeLabels, ...localLabels])].slice(
+        0,
+        24,
+      ),
       streetLabels: labels.streetLabels,
       nearbyPlaceLabels: labels.nearbyPlaceLabels,
       enabledLayerLabels: enabledLayers,
@@ -831,6 +906,10 @@ export class IntelHUD {
   /** Hide the HUD overlay. */
   hide() {
     this._visible = false;
+    this._markSummaryDirty();
+    this._summaryRequest?.abort();
+    clearInterval(this._summaryTypingInterval);
+    this._summaryTypingInterval = null;
     if (this._el) this._el.classList.remove('active');
   }
 
@@ -912,6 +991,8 @@ export class IntelHUD {
 
   /** Tear down all running intervals. Call when discarding the HUD instance. */
   destroy() {
+    this._destroyed = true;
+    this._summaryRevision++;
     clearInterval(this._updateInterval);
     clearInterval(this._recBlinkInterval);
     clearInterval(this._timestampInterval);

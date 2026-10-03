@@ -2,6 +2,7 @@ import { SceneDirector } from '../scenes/director.js';
 import { initAnnotations } from '../annotations/index.js';
 import { initDrawTool } from '../annotations/drawTool.js';
 import { initGevVoiceCommands } from '../voice/gevRealtime.js';
+import { createHudSummaryPolicy } from '../services/hudSummaryPolicy.js';
 import { installScopeMask, destroyScopeMask } from '../scopeMask.js';
 import {
   installRenderGovernor,
@@ -134,6 +135,14 @@ export function createApplicationTools({
           sceneDirector,
           annotations,
         });
+  // The visual HUD remains local until the visitor explicitly connects legacy
+  // voice. Embedded Earth has no legacy voice owner and cannot authorize AI
+  // prewarming or Google place enrichment behind the parent conversation.
+  if (styleManager.hud)
+    styleManager.hud.summaryPolicy = createHudSummaryPolicy({
+      getVoice: () => voiceCommands,
+      signal,
+    });
   defer(() => {
     voiceCommands?.stop({ removeUi: true });
     if (window.__gevVoiceCommands === voiceCommands)

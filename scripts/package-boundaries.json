@@ -1657,6 +1657,7 @@
       "src/services/application.js",
       "src/services/groundFloor.js",
       "src/services/groundSnap.js",
+      "src/services/hudSummaryPolicy.js",
       "src/services/meshFloorSampler.js",
       "src/services/requests.js",
       "src/services/terrainHeights.js",

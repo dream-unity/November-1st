@@ -8,7 +8,7 @@ The frontend and `/api/*` must share an origin. A GitHub Pages portal should lin
 
 ## GitHub Pages entry
 
-The public address https://dream-unity.github.io/November-1st/ is an automatic entry to the full application at https://november-1st-sable.vercel.app/. GitHub Pages cannot run the provider server. Keep Pages configured to publish main/root; the committed `.nojekyll` and source-only entry in `index.html` work with that configuration without npm or a Vite build.
+The public address https://dream-unity.github.io/November-1st/ is an automatic entry to the full application at https://dream-unity-runtime.vercel.app/. GitHub Pages cannot run the provider server. Keep Pages configured to publish main/root; the committed `.nojekyll` and source-only entry in `index.html` work with that configuration without npm or a Vite build.
 
 The entry preserves the URL query and fragment, uses a fixed destination and `location.replace`, and provides a visible manual link with inline styling. The complete application remains on one origin with its APIs. `build/pages-entry.js`, called by the existing application HTML plugin, removes the entry from development and production application HTML so the full app never redirects itself. Six regression tests exercise the raw source entry, shared-state preservation, manual fallback, self-loop guard and compiled markup.
 
@@ -30,6 +30,25 @@ Build with `npm ci && npm run build`, then run `npm start` behind an HTTPS rever
 
 To use persistent AIS from the Vercel frontend, configure `AISSTREAM_API_KEY` and `GEV_SERVICE_TOKEN` on the persistent host. Configure `GEV_PERSISTENT_API_ORIGIN` (an HTTPS origin without a path) and matching `GEV_PERSISTENT_API_TOKEN` on Vercel. Only the fixed AIS route is bridged. Keep this connection server-side.
 
+## Private prototype conversation
+
+In the `dream-unity-runtime` project's production environment settings, configure these six server-only variables from `.env.example`. Keep their values out of source, browser configuration and chat; never prefix them with `VITE_`.
+
+| Variable | Required value |
+| --- | --- |
+| `UNITY_OPENAI_API_KEY` | Private provider API key with access to the configured Unity models. |
+| `UNITY_SIGNING_KEY` | At least 32 random characters, separate from provider and Redis credentials. |
+| `UNITY_CONTEXT_ENCRYPTION_KEY` | Exactly 64 hexadecimal characters representing 32 random bytes for transient context encryption. |
+| `UNITY_REDIS_REST_URL` | Redis HTTPS REST origin, with no credentials, query, fragment or path beyond `/`. |
+| `UNITY_REDIS_REST_TOKEN` | Server-only standard REST token permitting atomic `EVAL` admission operations. |
+| `UNITY_INVITE_HASHES_JSON` | Nonempty JSON array of objects containing only `id` and `hash`; each hash is the lowercase 64-character SHA-256 of a private invite code. |
+
+Generate each invite code from at least 128 random bits, encoded as base64url (at least 22 characters). Store only its hash in the environment and give the code privately to the invited tester. IDs must be unique, 1–64 letters, digits, underscores or hyphens; hashes must also be unique, with at most 64 invitations. Redis is required for shared admission: process memory and temporary files are not substitutes.
+
+Set `UNITY_AI_ENABLED=1` only after all six prerequisites are configured, then redeploy so the running service receives them. These settings are separate from legacy `OPENAI_API_KEY`, Basic/service authentication and `GEV_ALLOW_PAID_PUBLIC`; those settings do not open Unity invitation access. Keep the preview invitation-only.
+
+`GET /api/unity/status` reports configuration readiness only. A ready response does not establish Redis connectivity, provider entitlement or usable voice. An invited tester still needs to complete real microphone and provider acceptance, including text replies, voice capture/playback, Stop, and media handoff.
+
 ## Optional providers
 
 | Capability | Configuration | Condition |
@@ -43,7 +62,7 @@ To use persistent AIS from the Vercel frontend, configure `AISSTREAM_API_KEY` an
 
 Never commit secrets. Use environment settings on the host. Browser map tokens are public by design and need provider-side origin restrictions. Rebuild when browser token configuration changes.
 
-For metered endpoints, configure `GEV_BASIC_AUTH_PASSWORD` (optional user defaults to dream-unity), or use service authentication where appropriate. Deliberately setting `GEV_ALLOW_PAID_PUBLIC=1` opens paid endpoints to public requests; do this only with accepted budget limits and provider-side controls. Per-process throttling is not a global spending cap. Vercel static files remain public even when the function is authenticated; private deployments need platform deployment protection or the persistent host behind authentication.
+For metered endpoints, configure `GEV_BASIC_AUTH_PASSWORD` (optional user defaults to dream-unity), or use service authentication where appropriate. Do not enable anonymous paid access for this private preview. `GEV_ALLOW_PAID_PUBLIC` is a separate legacy-host policy and does not authorize `/api/unity/*`. Per-process throttling is not a global spending cap. Vercel static files remain public even when the function is authenticated; private deployments need platform deployment protection or the persistent host behind authentication.
 
 The local .env editor and realtime debug-log writer are blocked in production. Configure provider keys through deployment environment settings, not the local onboarding controls.
 

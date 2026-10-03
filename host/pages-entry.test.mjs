@@ -6,7 +6,7 @@ import { expandApplicationHtml } from '../build/application-html.js';
 import { stripPagesEntry } from '../build/pages-entry.js';
 
 const source = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-const appUrl = 'https://november-1st-sable.vercel.app/';
+const appUrl = 'https://dream-unity-runtime.vercel.app/';
 
 function entryBlock(name) {
   const match = source.match(
