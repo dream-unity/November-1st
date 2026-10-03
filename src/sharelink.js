@@ -544,10 +544,21 @@ export class ShareLinkManager {
     if (!params) return null;
     const latitude = Number(params.get('lat'));
     const longitude = Number(params.get('lon'));
-    if (!Number.isFinite(latitude) || Math.abs(latitude) > 90 || !Number.isFinite(longitude) || Math.abs(longitude) > 180) return null;
+    if (
+      !Number.isFinite(latitude) ||
+      Math.abs(latitude) > 90 ||
+      !Number.isFinite(longitude) ||
+      Math.abs(longitude) > 180
+    )
+      return null;
     const hashParams = params.toString();
     if (hashParams.length > 8192) return null;
-    return Object.freeze({ format: 'gev-share-v2', hashParams, feed: ['radio', 'cctv', 'traffic'].includes(feed) ? feed : null, hasUnsavedState: Boolean(hasUnsavedState) });
+    return Object.freeze({
+      format: 'gev-share-v2',
+      hashParams,
+      feed: ['radio', 'cctv', 'traffic'].includes(feed) ? feed : null,
+      hasUnsavedState: Boolean(hasUnsavedState),
+    });
   }
 
   /** Build a deterministic snapshot without mutating history. */

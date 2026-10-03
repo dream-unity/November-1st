@@ -76,7 +76,8 @@ export const ACTION_DESCRIPTIONS = {
     $position: 1,
   },
   set_layer_visibility: {
-    description: "Enable or disable one registered God's Earth View data layer.",
+    description:
+      "Enable or disable one registered God's Earth View data layer.",
     $position: 1,
     parameters: {
       properties: {

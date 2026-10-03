@@ -552,10 +552,12 @@ export function initFirstRunExperience({
     if (backButton) backButton.hidden = !inCategory;
     root.dataset.view = inCategory ? 'air-sea-space' : 'home';
     if (title) title.textContent = inCategory ? 'Air, Sea & Space' : homeTitle;
-    if (description) description.textContent = inCategory
-      ? 'Follow movement across the planet and beyond. Choose one view to begin.'
-      : homeDescription;
-    if (keyboardHint) keyboardHint.textContent = inCategory ? 'Esc to go back' : 'Esc to close';
+    if (description)
+      description.textContent = inCategory
+        ? 'Follow movement across the planet and beyond. Choose one view to begin.'
+        : homeDescription;
+    if (keyboardHint)
+      keyboardHint.textContent = inCategory ? 'Esc to go back' : 'Esc to close';
     // A failed mission belongs to its previous view, not to the next menu page.
     if (status) {
       delete status.dataset.sticky;

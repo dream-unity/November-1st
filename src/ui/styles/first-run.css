@@ -20,7 +20,9 @@
   box-shadow: 0 20px 64px rgba(0, 0, 0, 0.2);
   opacity: 0;
   transform: translate(-50%, calc(-50% + 12px));
-  transition: opacity 180ms ease, transform 220ms ease;
+  transition:
+    opacity 180ms ease,
+    transform 220ms ease;
   pointer-events: none;
   font-family: var(--font-sans);
 }
@@ -191,7 +193,9 @@
   text-align: left;
   font: inherit;
   cursor: pointer;
-  transition: background 150ms ease, border-color 150ms ease;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease;
 }
 
 .first-run-choices button:focus-visible,
@@ -507,8 +511,16 @@ body.scene-playback-mode #first-run-launcher {
 
 /* Fade only when there really are more choices below the fold. */
 .first-run-choices[data-scrollable='true'] {
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 12px), transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 12px), transparent 100%);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 calc(100% - 12px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 calc(100% - 12px),
+    transparent 100%
+  );
 }
 
 @supports (animation-timeline: scroll(self block)) {
