@@ -162,7 +162,7 @@ export function createOpenAIProvider({ key, fetchImpl = fetch, tools }) {
           throw new Error();
         callId = url.pathname.split('/').at(-1);
       } catch {
-        await response.body?.cancel().catch(() => {});
+        response.body?.cancel().catch(() => {});
         throw serviceError('CREATION_UNCONFIRMED', 502);
       }
       let answer;
@@ -189,7 +189,7 @@ export function createOpenAIProvider({ key, fetchImpl = fetch, tools }) {
           signal,
         },
       );
-      await response.body?.cancel().catch(() => {});
+      response.body?.cancel().catch(() => {});
       if (response.ok || response.status === 404) return;
       throw providerError(response.status);
     },

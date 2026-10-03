@@ -3,7 +3,7 @@ import { defineConfig, loadEnv } from 'vite';
 import { createBrowserViteConfig } from '../../build/vite.js';
 import { localProviderPlugins } from '../providers/local.js';
 import { apiNotFoundPlugin } from './api-not-found.js';
-import { execFileSync } from 'node:child_process';
+import { resolveBuildSourceCommit } from '../../build/source-commit.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 
@@ -24,11 +24,6 @@ export default defineConfig(({ mode }) => {
     )
       .split(',')
       .map((value) => value.trim()),
-    sourceCommit:
-      process.env.DU_SOURCE_COMMIT ||
-      execFileSync('git', ['rev-parse', 'HEAD'], {
-        cwd: root,
-        encoding: 'utf8',
-      }).trim(),
+    sourceCommit: resolveBuildSourceCommit(process.env, root),
   });
 });

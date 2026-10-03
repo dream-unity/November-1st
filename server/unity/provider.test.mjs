@@ -314,3 +314,87 @@ test('provider configuration and spend failures are distinct from retryable thro
     }
   }
 });
+
+test('provider terminal outcomes settle even when discarded response cleanup never finishes', async (t) => {
+  const cases = [
+    {
+      name: 'text HTTP failure',
+      status: 500,
+      code: 'PROVIDER_UNAVAILABLE',
+      invoke: (provider, signal) =>
+        provider.text({ input: [], memories: [], signal, onDelta() {} }),
+    },
+    {
+      name: 'aborted text throttle-body classification',
+      status: 429,
+      code: 'PROVIDER_RATE_LIMITED',
+      abortRead: true,
+      invoke: (provider, signal) =>
+        provider.text({ input: [], memories: [], signal, onDelta() {} }),
+    },
+    {
+      name: 'Realtime HTTP failure',
+      status: 500,
+      code: 'CREATION_UNCONFIRMED',
+      invoke: (provider, signal) =>
+        provider.createRealtime({ sdp: 'v=0\noffer', memories: [], signal }),
+    },
+    {
+      name: 'Realtime invalid ownership Location',
+      status: 201,
+      headers: {
+        Location: 'https://untrusted.invalid/v1/realtime/calls/rtc_other',
+      },
+      code: 'CREATION_UNCONFIRMED',
+      invoke: (provider, signal) =>
+        provider.createRealtime({ sdp: 'v=0\noffer', memories: [], signal }),
+    },
+    {
+      name: 'confirmed hangup',
+      status: 200,
+      invoke: (provider, signal) => provider.hangup('rtc_owned', signal),
+    },
+  ];
+  for (const entry of cases) {
+    await t.test(entry.name, async () => {
+      const abort = new AbortController();
+      let cancelled = false;
+      const provider = createOpenAIProvider({
+        key: 'test-server-key',
+        tools: [],
+        fetchImpl: async () =>
+          new Response(
+            new ReadableStream({
+              cancel() {
+                cancelled = true;
+                abort.abort();
+                return new Promise(() => {});
+              },
+            }),
+            { status: entry.status, headers: entry.headers },
+          ),
+      });
+      let outcome;
+      const operation = entry.invoke(provider, abort.signal).then(
+        () => {
+          outcome = 'complete';
+        },
+        (error) => {
+          outcome = error.code;
+        },
+      );
+      // A pending cancellation promise must not keep the known result open.
+      await new Promise((resolve) => setImmediate(resolve));
+      if (entry.abortRead) {
+        // Throttle classification may read a bounded body; an expired request
+        // still must settle even if transport cancellation cleanup never does.
+        abort.abort();
+        await new Promise((resolve) => setImmediate(resolve));
+      }
+      assert.equal(cancelled, true);
+      assert.equal(abort.signal.aborted, true);
+      assert.equal(outcome, entry.code || 'complete');
+      await operation;
+    });
+  }
+});
