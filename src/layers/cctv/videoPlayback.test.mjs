@@ -1,3 +1,4 @@
+import { installEmbedMediaFocus } from '../../embed/mediaFocus.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createCctvVideoPlayback } from './videoPlayback.js';
@@ -883,4 +884,25 @@ test('invalid HLS manifests remain terminal even when hls.js categorizes them as
   const count = f.statuses.length;
   t.mock.timers.tick(10_000);
   assert.equal(f.statuses.length, count);
+});
+
+
+test('failed cleanup of a detached embedded native video remains owned and blocks a false QUIET ACK', async () => {
+  const gate = installEmbedMediaFocus({ documentRef: { querySelectorAll: () => [] }, requestFocus: () => true });
+  const video = new Video();
+  let failPause = false;
+  const originalPause = video.pause.bind(video);
+  video.pause = () => { if (failPause) throw new Error('native pause failed'); originalPause(); };
+  const playback = createCctvVideoPlayback({ video, url: '/camera', feedType: 'mp4', autoPlay: false });
+  try {
+    await gate.requestFocus();
+    video.paused = false;
+    failPause = true;
+    assert.throws(() => playback.destroy(), /native pause failed/);
+    assert.deepEqual(await gate.quiet(), { quiet: false, blockedPlayerCount: 1 });
+    failPause = false;
+    assert.deepEqual(await gate.quiet(), { quiet: true, blockedPlayerCount: 0 });
+    assert.equal(video.paused, true);
+    assert.equal(video.source, null);
+  } finally { failPause = false; playback.destroy(); await gate.destroy(); }
 });

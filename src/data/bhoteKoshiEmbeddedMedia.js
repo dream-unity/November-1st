@@ -1,3 +1,8 @@
+import {
+  hasEmbedMediaFocus,
+  isEmbedMediaFocusActive,
+  registerMediaOwner,
+} from '../embed/mediaFocus.js';
 import * as Cesium from 'cesium';
 
 const YOUTUBE_HOSTS = new Set([
@@ -617,6 +622,16 @@ export function createBhoteKoshiEmbeddedMedia({
   let warmRecord = null;
   let generation = 0;
   const leavingRecords = new Set();
+  const unregisterMedia = registerMediaOwner({
+    quiet() {
+      hide({ immediate: true });
+      for (const current of [...leavingRecords]) removeRecord(current);
+      clearWarm();
+    },
+    isQuiet: () =>
+      record === null && warmRecord === null && leavingRecords.size === 0,
+    getElements: () => root.querySelectorAll?.('iframe,video,audio') || [],
+  });
 
   const prefersReducedMotion = () =>
     globalRef.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ===
@@ -708,7 +723,9 @@ export function createBhoteKoshiEmbeddedMedia({
     embed.dataset.href = source.url;
     embed.dataset.width = '500';
     embed.dataset.showText = 'false';
-    embed.dataset.allowfullscreen = 'true';
+    embed.dataset.allowfullscreen = isEmbedMediaFocusActive()
+      ? 'false'
+      : 'true';
     embed.dataset.autoplay = 'false';
     session.embed = embed;
     host.append(embed);
@@ -826,6 +843,9 @@ export function createBhoteKoshiEmbeddedMedia({
   }
 
   function warm({ observation, sourceUrl } = {}) {
+    // Hidden preloads are real third-party browsing contexts too. A render
+    // update never requests focus or recreates them after QUIET.
+    if (isEmbedMediaFocusActive() && !hasEmbedMediaFocus()) return false;
     const media = observation?.media || {};
     const source = resolveEmbeddedMediaSource(sourceUrl || media.sourceUrl);
     if (!source || source.provider === 'x') {
@@ -924,6 +944,8 @@ export function createBhoteKoshiEmbeddedMedia({
   }
 
   function setPlayback(playing) {
+    if (playing && isEmbedMediaFocusActive() && !hasEmbedMediaFocus())
+      return false;
     if (!playing) clearWarm();
     // Removing an uncontrolled provider frame also cancels delayed autoplay.
     // Provider commands alone cannot stop a frame that has not loaded yet.
@@ -936,6 +958,7 @@ export function createBhoteKoshiEmbeddedMedia({
   }
 
   function show({ observation, anchor, autoplay = false, sourceUrl } = {}) {
+    if (isEmbedMediaFocusActive() && !hasEmbedMediaFocus()) return false;
     const media = observation?.media || {};
     const source = resolveEmbeddedMediaSource(sourceUrl || media.sourceUrl);
     if (!source || !anchor) {
@@ -1033,9 +1056,10 @@ export function createBhoteKoshiEmbeddedMedia({
         iframe.src = url.href;
       }
       iframe.title = `${providerLabel(source.provider)} media: ${observation?.title || 'witness source'}`;
-      iframe.allow =
-        'autoplay; encrypted-media; picture-in-picture; fullscreen';
-      iframe.allowFullscreen = true;
+      iframe.allow = isEmbedMediaFocusActive()
+        ? "autoplay; encrypted-media; picture-in-picture; fullscreen 'none'; microphone 'none'; camera 'none'; geolocation 'none'"
+        : 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+      iframe.allowFullscreen = !isEmbedMediaFocusActive();
       iframe.loading = 'eager';
       iframe.referrerPolicy = 'strict-origin-when-cross-origin';
       iframe.addEventListener?.(
@@ -1077,6 +1101,7 @@ export function createBhoteKoshiEmbeddedMedia({
   }
 
   function destroy() {
+    unregisterMedia();
     hide({ immediate: true });
     for (const current of [...leavingRecords]) removeRecord(current);
     clearWarm();

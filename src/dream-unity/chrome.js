@@ -16,15 +16,28 @@ function element(tag, text, className) {
   return node;
 }
 
-function homeLink() {
+function homeLink(onHome) {
   const link = element('a', '↖ Dream Unity');
   link.href = HOME_URL;
   link.setAttribute('aria-label', 'Return to Dream Unity');
+  if (onHome)
+    link.addEventListener('click', (event) => {
+      if (
+        event.button === 0 &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.shiftKey &&
+        !event.altKey
+      ) {
+        event.preventDefault();
+        onHome();
+      }
+    });
   return link;
 }
 
 /** Add navigation and honest provider configuration without changing the globe. */
-export function installDreamUnityChrome({ onOpenFeed } = {}) {
+export function installDreamUnityChrome({ onOpenFeed, onHome } = {}) {
   const lifetime = new AbortController();
   const nav = element('nav', '', 'du-navigation');
   nav.setAttribute('aria-label', 'Dream Unity navigation');
@@ -34,7 +47,7 @@ export function installDreamUnityChrome({ onOpenFeed } = {}) {
   statusButton.dataset.connection = 'checking';
   statusButton.setAttribute('aria-haspopup', 'dialog');
   statusButton.setAttribute('aria-controls', 'du-source-status');
-  nav.append(homeLink(), statusButton);
+  nav.append(homeLink(onHome), statusButton);
   const feeds = element('div', '', 'du-feed-shortcuts');
   feeds.setAttribute('role', 'group');
   feeds.setAttribute('aria-label', 'Live feeds');
@@ -200,7 +213,7 @@ export function showStartupFailure(error) {
     sources.focus();
     document.getElementById('du-open-source-status')?.click();
   });
-  actions.append(reload, sources, homeLink());
+  actions.append(reload, sources, homeLink(error?.onHome));
   const feedActions = element('div', '', 'du-recovery-actions');
   for (const [kind, label] of [
     ['radio', 'Live radio'],

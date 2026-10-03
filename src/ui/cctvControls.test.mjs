@@ -1,3 +1,4 @@
+import { installEmbedMediaFocus } from '../embed/mediaFocus.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { CctvControls } from './cctvControls.js';
@@ -533,4 +534,44 @@ test('the globe camera panel refuses ended broadcasts and does not claim unconfi
       }
     });
   }
+});
+
+
+test('embedded globe provider controls wait for parent ACK and never automatically remount after QUIET', async (t) => {
+  const f = embeddedPanelFixture(t);
+  let grant;
+  let focusRequests = 0;
+  const gate = installEmbedMediaFocus({ documentRef: { querySelectorAll: () => [] }, requestFocus: () => { focusRequests++; return new Promise((resolve) => { grant = resolve; }); } });
+  try {
+    f.controls._renderCctvState(f.state);
+    await flushEmbedPanel();
+    assert.equal(f.players.length, 0);
+    assert.equal(f.statusRequests.length, 0);
+    assert.equal(focusRequests, 1);
+    grant(true); await flushEmbedPanel();
+    assert.equal(f.players.length, 1);
+    assert.equal(f.players[0].iframe.allowFullscreen, false);
+    assert.match(f.players[0].iframe.allow, /fullscreen 'none'/);
+    assert.deepEqual(await gate.quiet(), { quiet: true, blockedPlayerCount: 0 });
+    assert.equal(f.players[0].destroyed, true);
+    f.controls._renderCctvState(f.state); await flushEmbedPanel();
+    assert.equal(focusRequests, 1, 'resuming voice must not silently reactivate the current camera');
+    assert.equal(f.players.length, 1);
+    f.controls._cctvMediaGateButton.onclick(); await flushEmbedPanel();
+    grant(true); await flushEmbedPanel();
+    assert.equal(f.players.length, 2, 'an explicit player request can acquire media focus again');
+  } finally { f.controls.destroy(); await gate.destroy(); }
+});
+
+test('camera disable cancels delayed embedded focus ACK before any provider can load', async (t) => {
+  const f = embeddedPanelFixture(t);
+  let grant;
+  const gate = installEmbedMediaFocus({ documentRef: { querySelectorAll: () => [] }, requestFocus: () => new Promise((resolve) => { grant = resolve; }) });
+  try {
+    f.controls._renderCctvState(f.state); await flushEmbedPanel();
+    f.controls._renderCctvState({ ...f.state, enabled: false });
+    grant(true); await flushEmbedPanel();
+    assert.equal(f.players.length, 0);
+    assert.equal(f.statusRequests.length, 0);
+  } finally { f.controls.destroy(); await gate.destroy(); }
 });

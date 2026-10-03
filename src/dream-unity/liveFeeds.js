@@ -1,3 +1,8 @@
+import {
+  guardedMediaFocus,
+  isEmbedMediaFocusActive,
+  registerMediaOwner,
+} from '../embed/mediaFocus.js';
 import { createRadioStreamPlayer } from '../layers/radio/playback.js';
 import { createCctvVideoPlayback } from '../sources/cctvVideoPlayback.js';
 import { createCctvEmbedPlayback } from '../sources/cctvEmbedPlayback.js';
@@ -124,6 +129,19 @@ export function installLiveFeeds({
   let destroyed = false;
   let toastTimer;
   let toast;
+  const unregisterMedia = registerMediaOwner({
+    quiet() {
+      cleanup();
+      panel.replaceChildren(
+        element(
+          'p',
+          'Media is stopped. Choose a feed type and entry to open a player again.',
+        ),
+      );
+    },
+    isQuiet: () => activeKind === null && scope === null,
+    getElements: () => panel.querySelectorAll('audio,video,iframe'),
+  });
 
   function announceAfterClose(message) {
     if (!message) return;
@@ -420,6 +438,7 @@ export function installLiveFeeds({
     let radioCatalogKey = '';
     let requestedRadioKey = null;
     let initialCountryApplied = false;
+    let selectionGeneration = 0;
     const radioCountryNames = new Set(Object.values(RADIO_COUNTRY_DIRECTORIES));
     function stopMedia() {
       mediaLifetime?.abort();
@@ -427,7 +446,34 @@ export function installLiveFeeds({
       disposeMedia();
       disposeMedia = () => {};
     }
-    function selection(item, { autoplay = true, focus = true } = {}) {
+    function selection(item, options = {}) {
+      const generation = ++selectionGeneration;
+      const isPlayer =
+        kind === 'radio' ||
+        ['embed', 'mp4', 'webm', 'hls'].includes(item.feedType);
+      if (isEmbedMediaFocusActive() && isPlayer) {
+        stopMedia();
+        detail.replaceChildren(
+          element('p', 'Pausing voice before opening this player…'),
+        );
+        void guardedMediaFocus(`directory-${kind}`).then((granted) => {
+          if (signal.aborted || generation !== selectionGeneration) return;
+          if (!granted) {
+            detail.replaceChildren(
+              element(
+                'p',
+                'The player is paused because media focus was not granted. Select the entry again to retry, or open its source separately.',
+              ),
+            );
+            return;
+          }
+          mountSelection(item, options);
+        });
+        return;
+      }
+      mountSelection(item, options);
+    }
+    function mountSelection(item, { autoplay = true, focus = true } = {}) {
       stopMedia();
       selected = item;
       mediaLifetime = new AbortController();
@@ -660,6 +706,8 @@ export function installLiveFeeds({
         } else if (['mp4', 'webm', 'hls'].includes(item.feedType)) {
           const video = element('video');
           video.controls = true;
+          if (isEmbedMediaFocusActive())
+            video.setAttribute('controlsList', 'nofullscreen');
           video.muted = true;
           video.playsInline = true;
           video.preload = 'auto';
@@ -1234,6 +1282,7 @@ export function installLiveFeeds({
       if (destroyed) return;
       destroyed = true;
       cleanup();
+      unregisterMedia();
       lifetime.abort();
       if (dialog.open) dialog.close();
       dialog.remove();

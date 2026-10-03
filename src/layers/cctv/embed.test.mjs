@@ -1,3 +1,4 @@
+import { installEmbedMediaFocus } from '../../embed/mediaFocus.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as Cesium from 'cesium';
@@ -173,4 +174,49 @@ test('even a hover or stale ambient-card request cannot fetch a frame for an off
     {},
     'no fetch counters, pending work or frame cache was created',
   );
+});
+
+
+test('embedded projected video requires existing focus, unloads on QUIET and cannot be restarted by the render loop', async () => {
+  const previous = globalThis.document;
+  const videos = [];
+  const doc = new EventTarget(); doc.hidden = false;
+  doc.createElement = (name) => {
+    if (name === 'canvas') return { getContext: () => ({}) };
+    assert.equal(name, 'video');
+    const video = Object.assign(new EventTarget(), {
+      paused: true, readyState: 0, src: '',
+      load() {}, pause() { this.paused = true; },
+      play() { this.paused = false; return Promise.resolve(); },
+      removeAttribute(name) { if (name === 'src') this.src = ''; },
+    });
+    videos.push(video); return video;
+  };
+  globalThis.document = doc;
+  let focusRequests = 0;
+  const gate = installEmbedMediaFocus({ documentRef: { querySelectorAll: () => [] }, requestFocus: () => { focusRequests++; return true; } });
+  const state = { _viewer: { entities: new Cesium.EntityCollection() }, _projectionEntities: [], _cctvOverlayHost: { clearSource() {}, setVisible() {} } };
+  const record = { camera: { id: 'native-projection', name: 'Camera projection', feedType: 'mp4' }, frustumGeometry: { halfW: 1, halfH: 1 }, frustumPositions: { capCenter: new Cesium.Cartesian3(1, 2, 3), label: new Cesium.Cartesian3(1, 2, 4) } };
+  const projection = createProjection({ state, services: { render: {} }, parts: {
+    model: { normalizeFeedType, isVideoFeedType, planeOrientationFor: () => Cesium.Quaternion.IDENTITY },
+    frames: { mediaUrlFor: () => '/api/cctv/media/native-projection', paintProjectionPlaceholder() {} },
+  } });
+  try {
+    assert.equal(projection.ensureProjectionRuntime(record), null);
+    assert.equal(videos.length, 0);
+    assert.equal(focusRequests, 0, 'a render tick cannot request a microphone handoff');
+    assert.equal(await gate.requestFocus(), true);
+    const runtime = projection.ensureProjectionRuntime(record);
+    assert.equal(videos.length, 1);
+    assert.equal(runtime.video.src, '/api/cctv/media/native-projection');
+    videos[0].dispatchEvent(new Event('canplay')); await Promise.resolve();
+    assert.deepEqual(await gate.quiet(), { quiet: true, blockedPlayerCount: 0 });
+    assert.equal(videos[0].paused, true);
+    assert.equal(videos[0].src, '');
+    assert.equal(record.projection, null);
+    assert.equal(state._viewer.entities.values.length, 0);
+    assert.equal(projection.ensureProjectionRuntime(record), null);
+    assert.equal(videos.length, 1);
+    assert.equal(focusRequests, 1);
+  } finally { await gate.destroy(); globalThis.document = previous; }
 });

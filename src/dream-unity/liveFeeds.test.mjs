@@ -1,3 +1,4 @@
+import { installEmbedMediaFocus } from '../embed/mediaFocus.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registerHooks } from 'node:module';
@@ -1712,4 +1713,63 @@ test('ended broadcasts never start an archive and strict live-only cameras refus
       f.restore();
     }
   }
+});
+
+
+test('embedded radio exposes no player or audio until parent focus ACK; QUIET closes its controls', async () => {
+  const f = fixture(async () => Response.json({ stations: [station] }));
+  let grant;
+  const gate = installEmbedMediaFocus({ documentRef: { querySelectorAll: () => [] }, requestFocus: () => new Promise((resolve) => { grant = resolve; }) });
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('radio'); await flush();
+    click(find(f.doc, (node) => node.dataset.feedId === station.id), find(f.doc, (node) => node.className === 'du-feeds-list'));
+    await flush();
+    assert.equal(f.audio.length, 0);
+    assert.equal(find(f.doc, (node) => node.textContent === 'Play / retry'), undefined);
+    grant(true); await flush();
+    assert.equal(f.audio.length, 1);
+    assert.equal(f.audio[0].paused, false);
+    assert.deepEqual(await gate.quiet(), { quiet: true, blockedPlayerCount: 0 });
+    assert.equal(f.audio[0].paused, true);
+    assert.equal(f.audio[0].src, '');
+    assert.equal(find(f.doc, (node) => node.textContent === 'Play / retry'), undefined);
+  } finally { feeds.destroy(); await gate.destroy(); f.restore(); }
+});
+
+test('embedded CCTV mounts no native controls while voice is active and disposes video before QUIET', async () => {
+  const liveItem = { ...camera, id: 'embed-live-video', name: 'Embedded live camera', feedType: 'mp4', playbackKind: 'live' };
+  const f = fixture(async () => Response.json({ sources: [liveItem] }));
+  let grant;
+  const gate = installEmbedMediaFocus({ documentRef: { querySelectorAll: () => [] }, requestFocus: () => new Promise((resolve) => { grant = resolve; }) });
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('cctv'); await flush();
+    click(find(f.doc, (node) => node.dataset.feedId === liveItem.id), find(f.doc, (node) => node.className === 'du-feeds-list'));
+    await flush();
+    assert.equal(f.videos.length, 0);
+    grant(true); await flush();
+    assert.equal(f.videos.length, 1);
+    assert.equal(f.videos[0].controls, true);
+    assert.equal(f.videos[0].getAttribute('controlsList'), 'nofullscreen');
+    assert.deepEqual(await gate.quiet(), { quiet: true, blockedPlayerCount: 0 });
+    assert.equal(f.videos[0].paused, true);
+    assert.equal(f.videos[0].src, '');
+    assert.equal(find(f.doc, (node) => node.tagName === 'VIDEO'), undefined);
+  } finally { feeds.destroy(); await gate.destroy(); f.restore(); }
+});
+
+test('closing an embedded directory before delayed focus ACK cannot mount a late player', async () => {
+  const f = fixture(async () => Response.json({ stations: [station] }));
+  let grant;
+  const gate = installEmbedMediaFocus({ documentRef: { querySelectorAll: () => [] }, requestFocus: () => new Promise((resolve) => { grant = resolve; }) });
+  const feeds = installLiveFeeds();
+  try {
+    feeds.open('radio'); await flush();
+    click(find(f.doc, (node) => node.dataset.feedId === station.id), find(f.doc, (node) => node.className === 'du-feeds-list'));
+    await flush();
+    find(f.doc, (node) => node.tagName === 'DIALOG').close();
+    grant(true); await flush();
+    assert.equal(f.audio.length, 0);
+  } finally { feeds.destroy(); await gate.destroy(); f.restore(); }
 });

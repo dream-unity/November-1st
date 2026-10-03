@@ -73,6 +73,7 @@ export function createLifecycle({
     /** Release rendering, event, request, and playback resources. */
     destroy() {
       this.disable();
+      parts.playback.releaseMediaOwner();
       parts.volume.cancelRadioVolumeTransition();
       layerState._voiceDucked = false;
       layerState._voiceRestoring = false;

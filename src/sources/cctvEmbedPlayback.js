@@ -1,3 +1,4 @@
+import { isEmbedMediaFocusActive } from '../embed/mediaFocus.js';
 import { normalizeCctvEmbedUrl, cctvEmbedProvider } from './cctvTypes.js';
 import { readResponseJsonCapped } from './httpBody.js';
 
@@ -438,9 +439,10 @@ export function createCctvEmbedPlayback({
         iframe.src = url;
         iframe.width = '100%';
         iframe.height = '100%';
-        iframe.allow =
-          'autoplay; encrypted-media; picture-in-picture; fullscreen';
-        iframe.allowFullscreen = true;
+        iframe.allow = isEmbedMediaFocusActive()
+          ? "autoplay; encrypted-media; picture-in-picture; fullscreen 'none'; microphone 'none'; camera 'none'; geolocation 'none'"
+          : 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+        iframe.allowFullscreen = !isEmbedMediaFocusActive();
         // YouTube error 153 requires a real referrer/client identity.
         iframe.referrerPolicy = 'strict-origin-when-cross-origin';
         iframe.setAttribute('frameborder', '0');

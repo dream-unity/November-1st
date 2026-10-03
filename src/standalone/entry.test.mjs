@@ -8,7 +8,7 @@ import vm from 'node:vm';
 const source = (await readFile(new URL('./entry.js', import.meta.url), 'utf8'))
   .replace(/^import [\s\S]*?;\n/gm, '')
   .replaceAll('import.meta.env', '__environment')
-  .replace('export function startGodsEye', 'function startGodsEye');
+  .replaceAll('export function ', 'function ');
 
 function fixture({
   search = '',

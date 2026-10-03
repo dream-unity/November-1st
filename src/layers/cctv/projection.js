@@ -1,3 +1,8 @@
+import {
+  hasEmbedMediaFocus,
+  isEmbedMediaFocusActive,
+  registerMediaOwner,
+} from '../../embed/mediaFocus.js';
 import { hasCctvVideoFrame } from '../../sources/cctvTypes.js';
 import * as Cesium from 'cesium';
 import { createCctvVideoPlayback } from './videoPlayback.js';
@@ -172,6 +177,17 @@ export function createProjection({
 
   function createProjectionRuntime(record) {
     if (!layerState._viewer) return null;
+    const requestedFeedType = parts.model.normalizeFeedType(
+      record.camera.feedType,
+    );
+    // The camera panel obtains focus; the render loop never requests it or
+    // restarts a player after the user explicitly resumes conversation.
+    if (
+      isEmbedMediaFocusActive() &&
+      parts.model.isVideoFeedType(requestedFeedType) &&
+      !hasEmbedMediaFocus()
+    )
+      return null;
     const canvas = document.createElement('canvas');
     canvas.width = PROJECTION_CANVAS_WIDTH;
     canvas.height = PROJECTION_CANVAS_HEIGHT;
@@ -313,6 +329,18 @@ export function createProjection({
     if (runtime.mediaStatus?.message)
       runtime.overlayEntry.details = [runtime.mediaStatus.message];
 
+    if (runtime.video) {
+      runtime.unregisterMediaOwner = registerMediaOwner({
+        quiet() {
+          destroyProjectionRuntime(runtime);
+          if (record.projection === runtime) record.projection = null;
+          layerState._projectionEntities =
+            layerState._projectionEntities.filter((item) => item !== runtime);
+        },
+        isQuiet: () => runtime.destroyed && runtime.video.paused === true,
+        getElements: () => (runtime.destroyed ? [] : [runtime.video]),
+      });
+    }
     return runtime;
   }
 
@@ -349,6 +377,10 @@ export function createProjection({
       runtime.video.pause();
       runtime.video.removeAttribute('src');
       runtime.video.load();
+    }
+    if (!runtime.video || runtime.video.paused === true) {
+      runtime.unregisterMediaOwner?.();
+      runtime.unregisterMediaOwner = null;
     }
     if (runtime.image) {
       runtime.image.onload = null;

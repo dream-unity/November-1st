@@ -50,12 +50,21 @@ export function hostSecurity(config, env = process.env) {
       pathname.startsWith(`${route}/`) ||
       pathname.startsWith(`${route}.`);
     const isApi = under('/api');
+    const unityNamespace = under('/api/unity');
     const origin = req.headers.origin;
     if (isApi && origin) {
       const sameOrigin =
         origin === `https://${req.headers.host}` ||
         origin === `http://${req.headers.host}`;
-      if (!sameOrigin && !config.allowedOrigins.includes(origin))
+      const namespaceOriginAllowed = unityNamespace
+        ? ['https://dreamunity.one', 'https://dream-unity.github.io'].includes(
+            origin,
+          ) ||
+          (config.mode === 'persistent' &&
+            env.NODE_ENV === 'test' &&
+            origin === 'http://localhost:8765')
+        : config.allowedOrigins.includes(origin);
+      if (!sameOrigin && !namespaceOriginAllowed)
         return json(res, 403, { error: 'Origin is not allowed' });
       if (!sameOrigin) {
         res.setHeader('Access-Control-Allow-Origin', origin);
@@ -78,6 +87,14 @@ export function hostSecurity(config, env = process.env) {
       res.writeHead(204);
       res.end();
       return;
+    }
+    if (unityNamespace) {
+      // Unity is a separately classified paid surface. Common path/origin/CORS
+      // checks above still apply, but its own handler requires invite admission
+      // even when GEV is public-paid or the caller has a GEV service credential.
+      // Free status and the invite exchange must work behind GEV's Basic guard.
+      req.gevHostAccess = { authorized: false };
+      return next();
     }
     const auth = String(req.headers.authorization || '');
     const serviceAuthenticated =

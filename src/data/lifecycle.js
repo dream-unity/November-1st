@@ -82,6 +82,7 @@ export class LayerLifecycle {
     this._registrationDispositions = null;
     this._allowQaRegistration = allowQaRegistration === true;
     this._qaLayerIds = new Set();
+    this._pollingSuspended = false;
   }
 
   register(layerModule) {
@@ -513,6 +514,7 @@ export class LayerLifecycle {
   }
 
   _armUpdateLoop(layerId, entry) {
+    if (this._pollingSuspended) return;
     const configuredRefreshInterval = Number(entry.module.refreshInterval);
     const updateInterval = Number(entry.module.updateInterval);
     const refreshInterval =
@@ -523,13 +525,36 @@ export class LayerLifecycle {
           : 0;
     if (refreshInterval > 0) {
       entry.intervalId = setInterval(() => {
+        if (this._pollingSuspended) return;
         void this._runPeriodicUpdate(layerId, entry);
       }, refreshInterval);
     } else if (updateInterval === 0) {
       entry.intervalId = setInterval(() => {
-        if (!entry.enabled) return;
+        if (this._pollingSuspended || !entry.enabled) return;
         this._publishActivity({ type: 'status' });
       }, entry.module.statsRefreshInterval || 1000);
+    }
+  }
+
+  /** Pause manager-owned periodic timers while retaining enabled layers/data.
+   * Layer-owned sockets and in-flight work retain their own lifecycle owners.
+   */
+  setPollingSuspended(suspended) {
+    const next = suspended === true;
+    if (next === this._pollingSuspended) return;
+    this._pollingSuspended = next;
+    for (const [layerId, entry] of this.layers) {
+      if (entry.intervalId !== null) {
+        clearInterval(entry.intervalId);
+        entry.intervalId = null;
+      }
+      if (
+        !next &&
+        entry.enabled &&
+        !entry.destroying &&
+        entry.lifecycleState === 'enabled'
+      )
+        this._armUpdateLoop(layerId, entry);
     }
   }
 

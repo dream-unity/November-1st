@@ -1,4 +1,10 @@
 import {
+  guardedMediaFocus,
+  hasEmbedMediaFocus,
+  isEmbedMediaFocusActive,
+  registerMediaOwner,
+} from '../../embed/mediaFocus.js';
+import {
   RADIO_VOICE_PLAYBACK_TIMEOUT_MS,
   RADIO_STREAM_TIMEOUT_MS,
 } from './policy.js';
@@ -19,6 +25,39 @@ export function createPlayback({
   let hlsTransport = null;
   let hlsVerified = true;
   const cancelled = Symbol('radio-play-cancelled');
+  let focusPlayGeneration = 0;
+  const unquietRetiredAudio = new Set();
+  const unregisterMediaOwner = registerMediaOwner({
+    quiet() {
+      let failure;
+      try {
+        stopRadioPlayback();
+      } catch (error) {
+        failure = error;
+      }
+      for (const audio of unquietRetiredAudio) {
+        try {
+          audio.pause();
+          audio.removeAttribute('src');
+          audio.load();
+          if (audio.paused === true) unquietRetiredAudio.delete(audio);
+        } catch (error) {
+          failure = error;
+        }
+      }
+      try {
+        parts.tuningNoise?.clearRadioTuningNoise?.({ emit: false });
+      } catch (error) {
+        failure = error;
+      }
+      if (failure) throw failure;
+    },
+    isQuiet: () =>
+      unquietRetiredAudio.size === 0 &&
+      !layerState._activePlaybackAttempt &&
+      (!layerState._audio || layerState._audio.paused === true),
+    getElements: () => (layerState._audio ? [layerState._audio] : []),
+  });
 
   function releaseHls() {
     const retired = hlsTransport;
@@ -96,6 +135,12 @@ export function createPlayback({
     if (!audioFactory && typeof Audio === 'undefined') return;
     cancelPendingPlayback();
     const previousAudio = layerState._audio;
+    if (
+      isEmbedMediaFocusActive() &&
+      previousAudio &&
+      previousAudio.paused !== true
+    )
+      unquietRetiredAudio.add(previousAudio);
     layerState._audio = null;
     releaseHls();
     hlsVerified = true;
@@ -115,6 +160,8 @@ export function createPlayback({
       } catch {
         /* detached media */
       }
+      if (previousAudio.paused === true)
+        unquietRetiredAudio.delete(previousAudio);
     }
     const audio = audioFactory ? audioFactory() : new Audio();
     layerState._audio = audio;
@@ -243,6 +290,16 @@ export function createPlayback({
     const station = parts.queries.selectedStation();
     if (!parts.interaction.radioPresentationAllowed() || !station?.streamUrl)
       return false;
+    const requestedFocusGeneration = ++focusPlayGeneration;
+    if (isEmbedMediaFocusActive() && !hasEmbedMediaFocus()) {
+      if (!(await guardedMediaFocus('radio-playback'))) return false;
+      if (
+        requestedFocusGeneration !== focusPlayGeneration ||
+        parts.queries.selectedStation()?.id !== station.id ||
+        !parts.interaction.radioPresentationAllowed()
+      )
+        return false;
+    }
     if (layerState._tuningActive) parts.tuning.endRadioTuning();
     // A media event carries no reliable attempt identity. Give every explicit
     // play/resume/replacement its own element so queued events from the retired
@@ -454,6 +511,7 @@ export function createPlayback({
   } = {}) {
     if (attemptId && layerState._activePlaybackAttempt?.id !== attemptId)
       return false;
+    focusPlayGeneration += 1;
     const stoppedAttemptId = layerState._activePlaybackAttempt?.id || null;
     cancelPendingPlayback();
     parts.tuning.endRadioTuning();
@@ -503,6 +561,7 @@ export function createPlayback({
   /** Pause Radio without toggling a stopped or already-paused stream back on. */
 
   function pauseRadioPlayback({ origin = 'programmatic' } = {}) {
+    focusPlayGeneration += 1;
     if (!['loading', 'playing', 'buffering'].includes(layerState._audioState))
       return false;
     const pausedAttemptId = layerState._activePlaybackAttempt?.id || null;
@@ -530,6 +589,15 @@ export function createPlayback({
     return true;
   }
   return {
+    releaseMediaOwner() {
+      if (
+        unquietRetiredAudio.size === 0 &&
+        (!layerState._audio ||
+          layerState._audio.paused === true ||
+          !isEmbedMediaFocusActive())
+      )
+        unregisterMediaOwner();
+    },
     audioEventBelongsToActiveAttempt,
     installAudio,
     tryRadioFallback,
@@ -627,7 +695,9 @@ export function createRadioStreamPlayer({
       if (destroyed) return;
       destroyed = true;
       playback.stopRadioPlayback();
-      state._audio = null;
+      playback.releaseMediaOwner();
+      if (!isEmbedMediaFocusActive() || state._audio?.paused === true)
+        state._audio = null;
     },
   };
 }

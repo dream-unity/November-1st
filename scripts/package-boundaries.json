@@ -29,7 +29,8 @@
     "modules": [
       "build/vite.js",
       "build/application-html.js",
-      "build/pages-entry.js"
+      "build/pages-entry.js",
+      "build/embed-policy.js"
     ],
     "external": ["vite-plugin-cesium"]
   },
@@ -448,7 +449,8 @@
       "src/sources/cctvVideoPlayback.js",
       "src/sources/cctvTypes.js",
       "src/sources/cctvEmbedPlayback.js",
-      "src/sources/httpBody.js"
+      "src/sources/httpBody.js",
+      "src/embed/mediaFocus.js"
     ],
     "external": ["hls.js"]
   },
@@ -619,7 +621,8 @@
       "src/sources/cctvVideoPlayback.js",
       "src/sources/cctvTypes.js",
       "src/sources/cctvEmbedPlayback.js",
-      "src/sources/httpBody.js"
+      "src/sources/httpBody.js",
+      "src/embed/mediaFocus.js"
     ],
     "external": ["cesium", "hls.js"]
   },
@@ -1077,7 +1080,8 @@
       "src/sources/cctvVideoPlayback.js",
       "src/sources/cctvTypes.js",
       "src/sources/cctvEmbedPlayback.js",
-      "src/sources/httpBody.js"
+      "src/sources/httpBody.js",
+      "src/embed/mediaFocus.js"
     ],
     "external": ["cesium", "hls.js"]
   },
@@ -1129,7 +1133,8 @@
       "src/sources/radioBrowser.js",
       "src/sources/radioIdentity.js",
       "src/layers/radio/hlsPlayback.js",
-      "src/sources/httpBody.js"
+      "src/sources/httpBody.js",
+      "src/embed/mediaFocus.js"
     ],
     "external": ["cesium", "hls.js"]
   },
@@ -1866,7 +1871,8 @@
       "src/sources/radioIdentity.js",
       "src/sources/cctvTypes.js",
       "src/sources/cctvEmbedPlayback.js",
-      "src/layers/radio/hlsPlayback.js"
+      "src/layers/radio/hlsPlayback.js",
+      "src/embed/mediaFocus.js"
     ],
     "external": [
       "@mapbox/vector-tile",
@@ -2268,7 +2274,8 @@
       "src/sources/radioIdentity.js",
       "src/sources/cctvTypes.js",
       "src/sources/cctvEmbedPlayback.js",
-      "src/layers/radio/hlsPlayback.js"
+      "src/layers/radio/hlsPlayback.js",
+      "src/embed/mediaFocus.js"
     ],
     "external": [
       "cesium",

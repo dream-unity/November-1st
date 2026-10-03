@@ -1,3 +1,9 @@
+import {
+  guardedMediaFocus,
+  hasEmbedMediaFocus,
+  isEmbedMediaFocusActive,
+  registerMediaOwner,
+} from '../embed/mediaFocus.js';
 import * as Cesium from 'cesium';
 import { isPointerFree } from './inputOwnership.js';
 import {
@@ -995,7 +1001,36 @@ export function createBhoteKoshiEventLayer({
   let _evidenceVideoReady = false;
   let _evidenceVideoGeneration = 0;
   let _evidenceVideoFrameHandle = null;
+  const _unquietEvidenceVideos = new Set();
   let _embeddedMedia = null;
+  let _mediaFocusGeneration = 0;
+  const unregisterMedia = registerMediaOwner({
+    quiet() {
+      _mediaFocusGeneration += 1;
+      invalidateIntroAutostart();
+      stopPlayback();
+      stopCinematic();
+      stopSceneEvidenceReveal();
+      stopScenePathReveal();
+      if (_presentation === BHOTE_KOSHI_SCENE_PRESENTATION)
+        _sceneController?.stopScene?.('Media stopped for conversation');
+      stopSceneMediaPlayback();
+      releaseEvidenceVideo();
+      for (const video of _unquietEvidenceVideos) {
+        video.pause();
+        video.removeAttribute?.('src');
+        video.load?.();
+        if (video.paused === true) _unquietEvidenceVideos.delete(video);
+      }
+      _embeddedMedia?.hide?.({ immediate: true });
+    },
+    isQuiet: () =>
+      _unquietEvidenceVideos.size === 0 &&
+      _evidenceVideo === null &&
+      !_playing &&
+      _sceneMediaPlaybackTimer === null,
+    getElements: () => (_evidenceVideo ? [_evidenceVideo] : []),
+  });
   let _embeddedEvidenceIndex = -1;
   let _sceneMediaPlaybackBeatId = null;
   let _sceneMediaPlaybackCompletedBeatId = null;
@@ -2079,6 +2114,8 @@ export function createBhoteKoshiEventLayer({
         video.removeAttribute?.('src');
         video.load?.();
       } catch {}
+      if (isEmbedMediaFocusActive() && video.paused !== true)
+        _unquietEvidenceVideos.add(video);
     }
     if (
       restorePoster &&
@@ -2131,6 +2168,12 @@ export function createBhoteKoshiEventLayer({
   }
 
   function syncEvidenceMedia() {
+    if (isEmbedMediaFocusActive() && !hasEmbedMediaFocus()) {
+      releaseEvidenceVideo();
+      _embeddedEvidenceIndex = -1;
+      _embeddedMedia?.hide?.({ immediate: true });
+      return;
+    }
     if (
       _presentation === BHOTE_KOSHI_SCENE_PRESENTATION &&
       !_evidenceTimeline.some(
@@ -2702,6 +2745,14 @@ export function createBhoteKoshiEventLayer({
   }
 
   function toggleCinematic() {
+    if (isEmbedMediaFocusActive() && !hasEmbedMediaFocus()) {
+      const generation = ++_mediaFocusGeneration;
+      void guardedMediaFocus('bhote-koshi-cinematic').then((granted) => {
+        if (granted && _enabled && generation === _mediaFocusGeneration)
+          toggleCinematic();
+      });
+      return;
+    }
     invalidateIntroAutostart();
     if (_cinematicActive) {
       stopCinematic();
@@ -2841,6 +2892,11 @@ export function createBhoteKoshiEventLayer({
   }
 
   async function playWholeScene() {
+    if (isEmbedMediaFocusActive() && !hasEmbedMediaFocus()) {
+      const generation = ++_mediaFocusGeneration;
+      if (!(await guardedMediaFocus('bhote-koshi-scene'))) return false;
+      if (!_enabled || generation !== _mediaFocusGeneration) return false;
+    }
     if (
       !_enabled ||
       _presentation !== BHOTE_KOSHI_SCENE_PRESENTATION ||
@@ -2871,6 +2927,14 @@ export function createBhoteKoshiEventLayer({
   }
 
   function handlePlay() {
+    if (isEmbedMediaFocusActive() && !hasEmbedMediaFocus()) {
+      const generation = ++_mediaFocusGeneration;
+      void guardedMediaFocus('bhote-koshi-replay').then((granted) => {
+        if (granted && _enabled && generation === _mediaFocusGeneration)
+          handlePlay();
+      });
+      return;
+    }
     if (_presentation === BHOTE_KOSHI_SCENE_PRESENTATION) {
       void playSceneShot();
       return;
@@ -2903,6 +2967,14 @@ export function createBhoteKoshiEventLayer({
   }
 
   function handleStoryReplay() {
+    if (isEmbedMediaFocusActive() && !hasEmbedMediaFocus()) {
+      const generation = ++_mediaFocusGeneration;
+      void guardedMediaFocus('bhote-koshi-replay').then((granted) => {
+        if (granted && _enabled && generation === _mediaFocusGeneration)
+          handleStoryReplay();
+      });
+      return;
+    }
     replayCinematic();
   }
 
@@ -3426,6 +3498,15 @@ export function createBhoteKoshiEventLayer({
   }
 
   async function enable(viewer, { origin = 'local-restore', signal } = {}) {
+    if (isEmbedMediaFocusActive() && !hasEmbedMediaFocus()) {
+      const generation = ++_mediaFocusGeneration;
+      if (!(await guardedMediaFocus('bhote-koshi-player')))
+        throw new Error(
+          'Media focus was not granted. Open the standalone experience or retry.',
+        );
+      if (signal?.aborted || generation !== _mediaFocusGeneration)
+        throw new Error('Media activation was cancelled.');
+    }
     _viewer = viewer;
     _enabled = true;
     _previousSplitPosition = viewer.scene.splitPosition;
@@ -3520,6 +3601,7 @@ export function createBhoteKoshiEventLayer({
   }
 
   async function disable() {
+    _mediaFocusGeneration += 1;
     setSceneMediaPlayback();
     _enabled = false;
     ++_comparisonSurfaceGeneration;
@@ -3623,6 +3705,7 @@ export function createBhoteKoshiEventLayer({
 
   async function destroy() {
     await disable();
+    if (_unquietEvidenceVideos.size === 0) unregisterMedia();
     _sceneClockUnsubscribe?.();
     _sceneClockUnsubscribe = null;
     _embeddedMedia?.destroy?.();

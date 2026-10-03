@@ -1,3 +1,4 @@
+import { installEmbedMediaFocus } from '../embed/mediaFocus.js';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
@@ -2910,4 +2911,52 @@ test('Bhote Koshi corridor remains ordered downstream and inside the imagery rec
     assert.ok(point.lat >= south && point.lat <= north);
     priorChainage = point.chainageM;
   }
+});
+
+
+test('embedded Nepal layer mounts no controls or local clips before focus and cancels late media after QUIET', async () => {
+  const event = JSON.parse(await readFile(eventUrl, 'utf8'));
+  const observation = event.evidenceSpine.find(({ id }) => id === 'immediate-collapse-viewpoint');
+  observation.media.videoPath = 'evidence-01.mp4';
+  observation.media.sourceUrl = 'https://example.com/immediate-collapse';
+  const previous = { document: globalThis.document, window: globalThis.window };
+  const { body } = installEventDom();
+  globalThis.window = { setTimeout: () => 71, clearTimeout() {} };
+  const viewer = eventViewer();
+  let grant;
+  let focusRequests = 0;
+  const gate = installEmbedMediaFocus({ documentRef: { querySelectorAll: () => [] }, requestFocus: () => { focusRequests++; return new Promise((resolve) => { grant = resolve; }); } });
+  const videos = [];
+  const layer = createBhoteKoshiEventLayer({
+    eventLoader: async () => event,
+    imageryProviderFactory: async (url) => ({ url }),
+    terrainSampler: async (_viewer, points) => points.map((point) => ({ height: point.fallbackElevationM })),
+    mediaLoader: async () => { const error = new Error('fixture'); error.name = 'AbortError'; throw error; },
+    evidenceFrameFactory: () => ({}), evidenceFrameUpdater: () => true,
+    videoFactory: () => {
+      const handlers = new Map();
+      const video = { paused: true, currentTime: 0, duration: 10, load() {}, pause() { this.paused = true; }, play() { this.paused = false; return Promise.resolve(); }, removeAttribute(name) { if (name === 'src') this.src = ''; }, addEventListener(name, handler) { handlers.set(name, handler); }, dispatch(name) { handlers.get(name)?.(); } };
+      videos.push(video); return video;
+    },
+    embeddedMediaFactory: () => ({ show() {}, hide() {}, pause() {}, destroy() {} }),
+    overlayHost: { setEntries() {}, setVisible() {}, clearSource() {} },
+    renderHost: { request() {}, hold() {}, release() {} },
+  });
+  layer.attachMapStackController({ getActiveId: () => 'esri-imagery', getSwitchGeneration: () => 1, async setStack() {} });
+  try {
+    const enabling = layer.enable(viewer, { origin: 'local-restore' });
+    await Promise.resolve();
+    assert.equal(videos.length, 0);
+    assert.equal(body.children.filter((element) => element.tagName === 'aside').length, 0);
+    grant(true); await enabling;
+    assert.equal(videos.length, 1);
+    videos[0].dispatch('loadeddata');
+    assert.deepEqual(await gate.quiet(), { quiet: true, blockedPlayerCount: 0 });
+    assert.equal(videos[0].paused, true);
+    assert.equal(videos[0].src, '');
+    videos[0].dispatch('loadeddata');
+    layer.setParams({ progress: 0.02 });
+    assert.equal(videos.length, 1, 'late ready/render work must not recreate a decoder after conversation resumes');
+    assert.equal(focusRequests, 1);
+  } finally { await layer.destroy(); await gate.destroy(); Object.assign(globalThis, previous); }
 });

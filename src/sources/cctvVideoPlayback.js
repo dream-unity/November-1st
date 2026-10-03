@@ -1,3 +1,5 @@
+import { registerMediaOwner } from '../embed/mediaFocus.js';
+
 /** Own a camera video's loading, actual playback and teardown lifecycle. */
 export function createCctvVideoPlayback({
   video,
@@ -38,6 +40,27 @@ export function createCctvVideoPlayback({
     );
   const hlsHelp =
     'Camera stream could not load — retry or choose another camera';
+  const mediaIsQuiet = () =>
+    video.paused === true &&
+    (typeof video.getAttribute === 'function'
+      ? !video.getAttribute('src')
+      : !video.src);
+  const unregisterMedia = registerMediaOwner({
+    quiet() {
+      generation++;
+      requestedActive = false;
+      active = false;
+      wantsPlayback = false;
+      clearTimer();
+      clearPlayTimer();
+      clearReconnect();
+      pendingPlay = null;
+      unload();
+      if (destroyed && mediaIsQuiet()) unregisterMedia();
+    },
+    isQuiet: mediaIsQuiet,
+    getElements: () => [video],
+  });
 
   function clearTimer() {
     clearTimeout(timer);
@@ -517,7 +540,13 @@ export function createCctvVideoPlayback({
       updateActive();
     },
     destroy() {
-      if (destroyed) return;
+      if (destroyed) {
+        // A previously failed native pause remains an owned resource. Retrying
+        // cleanup is allowed, but never unregister it without positive proof.
+        if (!mediaIsQuiet()) unload();
+        if (mediaIsQuiet()) unregisterMedia();
+        return;
+      }
       destroyed = true;
       generation++;
       clearTimer();
@@ -532,6 +561,7 @@ export function createCctvVideoPlayback({
       for (const [event, listener] of Object.entries(listeners))
         video.removeEventListener(event, listener);
       unload();
+      if (mediaIsQuiet()) unregisterMedia();
     },
   };
 }

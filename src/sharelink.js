@@ -538,6 +538,18 @@ export class ShareLinkManager {
     history.replaceState(null, '', `#${params.toString()}`);
   }
 
+  /** Current serializer snapshot, without debounced history or clipboard effects. */
+  exportSnapshot({ feed = null, hasUnsavedState = true } = {}) {
+    const params = this._buildHashParams();
+    if (!params) return null;
+    const latitude = Number(params.get('lat'));
+    const longitude = Number(params.get('lon'));
+    if (!Number.isFinite(latitude) || Math.abs(latitude) > 90 || !Number.isFinite(longitude) || Math.abs(longitude) > 180) return null;
+    const hashParams = params.toString();
+    if (hashParams.length > 8192) return null;
+    return Object.freeze({ format: 'gev-share-v2', hashParams, feed: ['radio', 'cctv', 'traffic'].includes(feed) ? feed : null, hasUnsavedState: Boolean(hasUnsavedState) });
+  }
+
   /** Build a deterministic snapshot without mutating history. */
   _buildHashParams() {
     if (this._destroyed) return null;

@@ -1,3 +1,4 @@
+import { isEmbedMediaFocusActive } from '../../embed/mediaFocus.js';
 import {
   RADIO_TUNER_STATIC_MAX_GAIN,
   EMPTY_ACCEPTED_CATALOG_SNAPSHOT,
@@ -74,6 +75,9 @@ export function createTuningNoise({
   }
 
   function installTuningNoise() {
+    // Tuner hiss is decorative; embedded playback must never create an extra
+    // WebAudio owner that can outlive the acknowledged broadcaster stream.
+    if (isEmbedMediaFocusActive()) return false;
     const AudioContextClass =
       globalThis.AudioContext || globalThis.webkitAudioContext;
     if (!AudioContextClass) return false;

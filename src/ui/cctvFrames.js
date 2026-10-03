@@ -1,3 +1,9 @@
+import {
+  guardedMediaFocus,
+  hasEmbedMediaFocus,
+  isEmbedMediaFocusActive,
+  registerMediaOwner,
+} from '../embed/mediaFocus.js';
 import { createCctvVideoPlayback } from '../sources/cctvVideoPlayback.js';
 import { createCctvEmbedPlayback } from '../sources/cctvEmbedPlayback.js';
 import {
@@ -18,6 +24,52 @@ export function _syncCctvVideo(activeCamera, enabled) {
     this._clearCctvVideo();
     return false;
   }
+  if (isEmbedMediaFocusActive() && !hasEmbedMediaFocus()) {
+    if (this._cctvMediaGateCameraId !== activeCamera.id) {
+      this._clearCctvVideo();
+      this._cctvMediaGateCameraId = activeCamera.id;
+      this._cctvMediaFocusSuppressed = false;
+    }
+    if (!this._cctvMediaGateButton) {
+      this._clearCctvFrame();
+      const open = document.createElement('button');
+      open.type = 'button';
+      open.textContent = 'Open camera player';
+      const status = document.createElement('p');
+      status.setAttribute('role', 'status');
+      status.textContent = 'Voice will pause before this player opens.';
+      this._cctvMediaGateButton = open;
+      this._cctvMediaGateStatus = status;
+      this._cctvFrameWrap?.appendChild(status);
+      this._cctvFrameWrap?.appendChild(open);
+      open.onclick = () => requestPlayer();
+    }
+    const requestPlayer = () => {
+      if (this._cctvMediaGatePending) return;
+      const generation = (this._cctvMediaGateGeneration || 0) + 1;
+      this._cctvMediaGateGeneration = generation;
+      this._cctvMediaGatePending = true;
+      this._cctvMediaGateButton.disabled = true;
+      this._cctvMediaGateStatus.textContent =
+        'Pausing voice before opening this player…';
+      void guardedMediaFocus('globe-camera-player').then((granted) => {
+        if (this.destroyed || generation !== this._cctvMediaGateGeneration)
+          return;
+        this._cctvMediaGatePending = false;
+        if (!granted) {
+          this._cctvMediaFocusSuppressed = true;
+          this._cctvMediaGateButton.disabled = false;
+          this._cctvMediaGateStatus.textContent =
+            'The player remains closed. Open it again to retry, or use the standalone experience.';
+          return;
+        }
+        this._clearCctvVideo();
+        this._syncCctvVideo(activeCamera, enabled);
+      });
+    };
+    if (!this._cctvMediaFocusSuppressed) requestPlayer();
+    return true;
+  }
   const panelVisible = () =>
     !this._cctvPanel?.hidden &&
     !this._cctvPanel?.classList?.contains('collapsed');
@@ -35,6 +87,8 @@ export function _syncCctvVideo(activeCamera, enabled) {
   video.className = embedded ? 'cctv-embed' : 'cctv-video';
   if (!embedded) {
     video.controls = true;
+    if (isEmbedMediaFocusActive())
+      video.setAttribute('controlsList', 'nofullscreen');
     video.muted = true;
     video.loop = false;
     video.preload = 'auto';
@@ -48,6 +102,21 @@ export function _syncCctvVideo(activeCamera, enabled) {
   this._cctvVideoFeedType = activeCamera.feedType;
   this._cctvVideoEmbedUrl = activeCamera.embedUrl;
   this._cctvVideo = video;
+  this._cctvMediaGateCameraId = activeCamera.id;
+  this._unregisterCctvMedia = registerMediaOwner({
+    quiet: () => {
+      this._cctvMediaFocusSuppressed = true;
+      this._clearCctvVideo();
+    },
+    isQuiet: () => this._cctvVideo === null && this._cctvPlayback === null,
+    getElements: () =>
+      this._cctvVideo
+        ? [
+            this._cctvVideo,
+            ...(this._cctvVideo.querySelectorAll?.('iframe') || []),
+          ]
+        : [],
+  });
   const retry = document.createElement('button');
   retry.type = 'button';
   retry.textContent = 'Play / retry camera video';
@@ -149,6 +218,12 @@ export function _syncCctvVideo(activeCamera, enabled) {
 }
 
 export function _clearCctvVideo() {
+  this._cctvMediaGateGeneration = (this._cctvMediaGateGeneration || 0) + 1;
+  this._cctvMediaGatePending = false;
+  this._cctvMediaGateButton?.remove();
+  this._cctvMediaGateButton = null;
+  this._cctvMediaGateStatus?.remove();
+  this._cctvMediaGateStatus = null;
   this._cctvVideoObserver?.disconnect();
   this._cctvVideoObserver = null;
   this._cctvPlayback?.destroy();
@@ -167,6 +242,8 @@ export function _clearCctvVideo() {
   this._cctvVideoFeedType = null;
   this._cctvVideoEmbedUrl = null;
   this._cctvVideoStatus = null;
+  this._unregisterCctvMedia?.();
+  this._unregisterCctvMedia = null;
 }
 
 export function _clearCctvFrame() {

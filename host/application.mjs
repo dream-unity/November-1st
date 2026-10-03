@@ -7,6 +7,7 @@ import { hostSecurity, json } from './security.mjs';
 import { staticApplication } from './static.mjs';
 import { aisBridge } from './ais-bridge.mjs';
 import { voiceAvailability } from '../server/providers/openai/status.js';
+import { createUnityService } from '../server/unity/service.mjs';
 
 /** Connect itself does not catch rejected promises from async handlers. */
 function asyncAware(app) {
@@ -53,6 +54,7 @@ export async function createProductionHost({
   serveStatic = true,
   providerPlugins,
   fetchImpl,
+  unity,
 } = {}) {
   let revision = config.commit;
   if (!revision) {
@@ -72,6 +74,9 @@ export async function createProductionHost({
   const providerNames = plugins.map((plugin) => plugin.name);
   let disposed = false;
   app.use(hostSecurity(config, env));
+  // This namespace has independent invite capabilities and atomic shared quotas.
+  // It never inherits GEV Basic/service access or GEV_ALLOW_PAID_PUBLIC.
+  app.use('/api/unity', createUnityService({ env, fetchImpl, ...unity }));
   const exactGet = (handler) => (req, res, next) => {
     if (!['/', ''].includes((req.url || '/').split('?')[0])) return next();
     if (!['GET', 'HEAD'].includes(req.method))

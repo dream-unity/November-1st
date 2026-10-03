@@ -30,7 +30,11 @@ test('explicit build inputs preserve browser-only defines, plugin order and loop
   assert.deepEqual(config.define, {
     'import.meta.env.GOOGLE_MAPS_API_KEY': '"browser-fixture"',
     'import.meta.env.CESIUM_ION_TOKEN': '"ion-fixture"',
+    'import.meta.env.DU_EMBED_PARENT_ORIGINS': '"https://dreamunity.one"',
+    'import.meta.env.DU_BUILD_COMMIT': undefined,
   });
+  assert.match(config.build.rollupOptions.input.embed, /\/embed\/index\.html$/);
+  assert.match(config.build.rollupOptions.input.main, /\/index\.html$/);
   assert.equal(
     createBrowserViteConfig({ host: '0.0.0.0', port: '4800' }).server
       .allowedHosts,
@@ -85,9 +89,10 @@ test('development retains the Cesium module base and middleware', () => {
   plugin.configureServer({
     middlewares: { use: (...args) => mounts.push(args) },
   });
-  assert.equal(mounts.length, 1);
+  assert.equal(mounts.length, 2);
   assert.equal(mounts[0][0], '/cesium/');
   assert.equal(typeof mounts[0][1], 'function');
+  assert.equal(typeof mounts[1][0], 'function');
   assert.equal(plugin.transformIndexHtml()[0].tag, 'link');
 });
 

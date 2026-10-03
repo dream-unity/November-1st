@@ -17,6 +17,7 @@ export function createStandaloneApplication({
   geospatial = {},
   voice = {},
   allowQaRegistration = false,
+  onPlaceSearch,
 }) {
   if (constructed)
     throw new Error('The standalone application already owns this page');
@@ -36,6 +37,7 @@ export function createStandaloneApplication({
         resolveApiKey: () => googleApiKey,
         signal: context.signal,
       });
+      onPlaceSearch?.(placeSearch);
       const scene = await createStandaloneScene({
         ...context,
         googleApiKey,

@@ -1,3 +1,4 @@
+import { installEmbedMediaFocus } from '../../embed/mediaFocus.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createPlayback, createRadioStreamPlayer } from './playback.js';
@@ -422,4 +423,67 @@ test('standalone transport refuses unsafe streams and cannot restart after destr
   player.destroy();
   assert.equal(await player.play(), false);
   assert.equal(media[0].src, '');
+});
+
+
+test('embedded globe radio creates no audio before ACK; Stop wins over delayed focus grant', async () => {
+  const audio = [];
+  const resolvers = [];
+  const gate = installEmbedMediaFocus({ documentRef: { querySelectorAll: () => [] }, requestFocus: () => new Promise((resolve) => resolvers.push(resolve)) });
+  class NativeAudio extends EventTarget {
+    paused = true;
+    src = '';
+    load() {}
+    pause() { this.paused = true; }
+    play() { this.paused = false; return Promise.resolve(); }
+    removeAttribute(name) { if (name === 'src') this.src = ''; }
+  }
+  const player = createRadioStreamPlayer({ audioFactory: () => { const value = new NativeAudio(); audio.push(value); return value; } });
+  player.setStation({ id: 'embed-radio', streamUrl: 'https://radio.example.com/live.mp3' });
+  try {
+    const first = player.play(); await Promise.resolve();
+    assert.equal(audio.length, 0);
+    player.stop(); resolvers[0](true);
+    assert.equal(await first, false);
+    assert.equal(audio.length, 0);
+    assert.equal(await player.play(), true);
+    assert.equal(audio.length, 1);
+    assert.equal(audio[0].paused, false);
+    assert.deepEqual(await gate.quiet(), { quiet: true, blockedPlayerCount: 0 });
+    assert.equal(audio[0].paused, true);
+    assert.equal(audio[0].src, '');
+    const pending = player.play(); await Promise.resolve();
+    const quiet = gate.quiet(); resolvers[1](true);
+    assert.equal(await pending, false);
+    assert.deepEqual(await quiet, { quiet: true, blockedPlayerCount: 0 });
+    assert.equal(audio.length, 1);
+  } finally { player.destroy(); await gate.destroy(); }
+});
+
+
+test('an embedded replaced radio element whose pause fails remains owned until quiet can be proved', async () => {
+  const gate = installEmbedMediaFocus({ documentRef: { querySelectorAll: () => [] }, requestFocus: () => true });
+  const audio = [];
+  let failFirst = false;
+  class NativeAudio extends EventTarget {
+    paused = true; src = '';
+    load() {}
+    play() { this.paused = false; return Promise.resolve(); }
+    pause() { if (this === audio[0] && failFirst) throw new Error('pause failure'); this.paused = true; }
+    removeAttribute(name) { if (name === 'src') this.src = ''; }
+  }
+  const player = createRadioStreamPlayer({ audioFactory: () => { const value = new NativeAudio(); audio.push(value); return value; } });
+  player.setStation({ id: 'radio', streamUrl: 'https://radio.example.com/live.mp3' });
+  try {
+    assert.equal(await player.play(), true);
+    failFirst = true;
+    assert.equal(await player.play(), true);
+    assert.equal(audio.length, 2);
+    assert.equal(audio[0].paused, false);
+    player.destroy();
+    assert.deepEqual(await gate.quiet(), { quiet: false, blockedPlayerCount: 1 });
+    failFirst = false;
+    assert.deepEqual(await gate.quiet(), { quiet: true, blockedPlayerCount: 0 });
+    assert.equal(audio[0].paused, true);
+  } finally { failFirst = false; player.destroy(); await gate.destroy(); }
 });

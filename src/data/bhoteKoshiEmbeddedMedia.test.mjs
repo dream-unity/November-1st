@@ -1,3 +1,4 @@
+import { installEmbedMediaFocus } from '../embed/mediaFocus.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -393,4 +394,26 @@ test('pausing cancels a mounted Facebook preload and rejects its late ready call
   ready({ type: 'video', instance: { play() { playerCalls.push('play'); }, pause() { playerCalls.push('pause'); } } });
   assert.deepEqual(playerCalls, []);
   media.destroy();
+});
+
+
+test('embedded Nepal provider and hidden warm frames require focus and are fully removed on QUIET', async () => {
+  let focus = false;
+  const gate = installEmbedMediaFocus({ documentRef: { querySelectorAll: () => [] }, requestFocus: () => focus });
+  const { media, root } = preloadFixture();
+  const options = { observation: { title: 'Witness clip', media: { sourceUrl: 'https://www.youtube.com/watch?v=abcdefghijk' } }, anchor: { x: 160, y: 180 }, autoplay: true };
+  try {
+    assert.equal(media.warm(options), false);
+    assert.equal(media.show(options), false);
+    assert.equal(root.children.length, 0);
+    focus = true; assert.equal(await gate.requestFocus(), true);
+    assert.equal(media.warm(options), true);
+    assert.equal(media.show(options), true);
+    assert.ok(root.children.length > 0);
+    assert.deepEqual(await gate.quiet(), { quiet: true, blockedPlayerCount: 0 });
+    assert.equal(root.children.length, 0);
+    assert.equal(media.warm(options), false);
+    assert.equal(media.show(options), false);
+    assert.equal(media.play(), false);
+  } finally { media.destroy(); await gate.destroy(); }
 });
