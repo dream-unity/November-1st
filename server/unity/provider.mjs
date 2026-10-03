@@ -12,20 +12,59 @@ export function providerParameters(schema) {
   }
   return result;
 }
-function providerError(status) {
+function providerError(status, data = {}) {
   if (status === 401 || status === 403)
     return serviceError('MODEL_UNAVAILABLE', 503);
   if (status === 404) return serviceError('MODEL_UNAVAILABLE', 503);
-  if (status === 429) return serviceError('PROVIDER_RATE_LIMITED', 429, true);
+  if (status === 400 || status === 422)
+    return serviceError('PROVIDER_CONFIGURATION_ERROR', 503);
+  if (status === 429) {
+    if (
+      [
+        'insufficient_quota',
+        'billing_hard_limit_reached',
+        'billing_not_active',
+        'credit_balance_exhausted',
+        'organization_spend_limit_exceeded',
+        'project_spend_limit_exceeded',
+        'organization_usage_limit_exceeded',
+      ].includes(data?.error?.code)
+    )
+      return serviceError('PROVIDER_QUOTA_EXHAUSTED', 429);
+    return serviceError('PROVIDER_RATE_LIMITED', 429, true);
+  }
   return serviceError('PROVIDER_UNAVAILABLE', 502, true);
 }
-async function cappedText(response, max = 512 * 1024) {
+
+async function rejectedProvider(response, signal) {
+  let data = {};
+  if (response.status === 429) {
+    try {
+      const boundedSignal = AbortSignal.any([
+        ...(signal ? [signal] : []),
+        AbortSignal.timeout(1000),
+      ]);
+      data = JSON.parse(await cappedText(response, 8192, boundedSignal));
+    } catch {
+      /* Classification falls back to the HTTP status; no body is echoed. */
+    }
+  } else response.body?.cancel().catch(() => {});
+  return providerError(response.status, data);
+}
+async function cappedText(response, max = 512 * 1024, signal) {
+  if (!response.body) throw serviceError('PROVIDER_INVALID_RESPONSE', 502);
   const reader = response.body.getReader();
+  const abort = () => {
+    reader.cancel().catch(() => {});
+  };
+  signal?.addEventListener('abort', abort, { once: true });
   const parts = [];
   let total = 0;
   try {
     while (true) {
+      signal?.throwIfAborted();
       const { done, value } = await reader.read();
+      signal?.throwIfAborted();
       if (done) break;
       total += value.byteLength;
       if (total > max) throw serviceError('PROVIDER_INVALID_RESPONSE', 502);
@@ -33,7 +72,10 @@ async function cappedText(response, max = 512 * 1024) {
     }
     return Buffer.concat(parts).toString('utf8');
   } finally {
-    await reader.cancel().catch(() => {});
+    signal?.removeEventListener('abort', abort);
+    // Cancellation closes the reader immediately. Underlying transport cleanup
+    // must not hold a completed/aborted request open indefinitely.
+    reader.cancel().catch(() => {});
     reader.releaseLock();
   }
 }
@@ -97,12 +139,13 @@ export function createOpenAIProvider({ key, fetchImpl = fetch, tools }) {
         throw serviceError('CREATION_UNCONFIRMED', 504, false);
       }
       if (!response.ok) {
-        await response.body?.cancel().catch(() => {});
         // A timeout/server failure does not prove that upstream creation never
         // happened. Keep admission held instead of issuing a fresh live slot.
-        if (response.status >= 500 || response.status === 408)
+        if (response.status >= 500 || response.status === 408) {
+          response.body?.cancel().catch(() => {});
           throw serviceError('CREATION_UNCONFIRMED', 502, false);
-        throw Object.assign(providerError(response.status), {
+        }
+        throw Object.assign(await rejectedProvider(response, signal), {
           definitiveNoCall: true,
         });
       }
@@ -124,7 +167,7 @@ export function createOpenAIProvider({ key, fetchImpl = fetch, tools }) {
       }
       let answer;
       try {
-        answer = await cappedText(response, 64 * 1024);
+        answer = await cappedText(response, 64 * 1024, signal);
       } catch (error) {
         throw Object.assign(error, { callId });
       }
@@ -174,14 +217,19 @@ export function createOpenAIProvider({ key, fetchImpl = fetch, tools }) {
         }),
       });
       if (!response.ok) {
-        await response.body?.cancel().catch(() => {});
-        throw providerError(response.status);
+        throw await rejectedProvider(response, signal);
       }
+      if (!response.body) throw serviceError('PROVIDER_INVALID_RESPONSE', 502);
       const reader = response.body.getReader();
+      const abort = () => {
+        reader.cancel().catch(() => {});
+      };
+      signal?.addEventListener('abort', abort, { once: true });
       const decoder = new TextDecoder();
       let buffer = '';
       let total = 0;
       let completed = null;
+      let terminal = false;
       function consume(block) {
         const data = block
           .split('\n')
@@ -196,11 +244,21 @@ export function createOpenAIProvider({ key, fetchImpl = fetch, tools }) {
           throw serviceError('PROVIDER_INVALID_RESPONSE', 502);
         }
         if (
-          event.type === 'response.output_text.delta' &&
-          typeof event.delta === 'string'
+          !event ||
+          Array.isArray(event) ||
+          typeof event.type !== 'string' ||
+          terminal
         )
+          throw serviceError('PROVIDER_INVALID_RESPONSE', 502);
+        if (event.type === 'response.output_text.delta') {
+          if (typeof event.delta !== 'string')
+            throw serviceError('PROVIDER_INVALID_RESPONSE', 502);
           onDelta(event.delta);
-        if (event.type === 'response.completed') completed = event.response;
+        }
+        if (event.type === 'response.completed') {
+          terminal = true;
+          completed = event.response;
+        }
         if (
           ['response.failed', 'response.incomplete', 'error'].includes(
             event.type,
@@ -210,7 +268,9 @@ export function createOpenAIProvider({ key, fetchImpl = fetch, tools }) {
       }
       try {
         while (true) {
+          signal?.throwIfAborted();
           const { done, value } = await reader.read();
+          signal?.throwIfAborted();
           if (done) break;
           total += value.byteLength;
           if (total > 512 * 1024)
@@ -225,9 +285,11 @@ export function createOpenAIProvider({ key, fetchImpl = fetch, tools }) {
             buffer = buffer.slice(boundary + 2);
           }
         }
+        buffer += decoder.decode();
         if (buffer.trim()) consume(buffer);
       } finally {
-        await reader.cancel().catch(() => {});
+        signal?.removeEventListener('abort', abort);
+        reader.cancel().catch(() => {});
         reader.releaseLock();
       }
       if (

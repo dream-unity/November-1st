@@ -34,4 +34,19 @@ test('native Vercel entry dispatches original nested API paths to upstream provi
   assert.match(radio.headers.get('content-type'), /json/);
   const health = await fetch(`${origin}/api/health`);
   assert.equal((await health.json()).providersMounted.length, 21);
+  const unity = await fetch(`${origin}/api/unity/status?path=unity%2Fstatus`, {
+    headers: { Origin: 'https://dreamunity.one' },
+  });
+  assert.equal(unity.status, 200);
+  assert.equal(
+    unity.headers.get('Access-Control-Allow-Origin'),
+    'https://dreamunity.one',
+  );
+  const status = await unity.json();
+  assert.equal(status.version, 1);
+  assert.equal(typeof status.ready, 'boolean');
+  assert.ok(Array.isArray(status.reasonCodes));
+  const missing = await fetch(`${origin}/api/unity/not-a-route`);
+  assert.equal(missing.status, 404);
+  assert.equal((await missing.json()).code, 'API_ROUTE_NOT_FOUND');
 });

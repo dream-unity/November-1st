@@ -74,22 +74,31 @@ export function readUnityConfig(env = process.env) {
     /* Missing configuration is represented by readiness. */
   }
   const enabled = env.UNITY_AI_ENABLED === '1';
+  const providerConfigured = configuredCredential(key);
+  const signingConfigured =
+    signingKey.length >= 32 && configuredCredential(signingKey);
+  const contextConfigured = /^[a-fA-F0-9]{64}$/.test(encryptionKey);
+  const admissionConfigured = validRedis && configuredCredential(redisToken);
   const cleanupReady =
-    configuredCredential(key) &&
-    signingKey.length >= 32 &&
-    validRedis &&
-    Boolean(redisToken);
+    providerConfigured && signingConfigured && admissionConfigured;
   const ready =
-    enabled &&
-    cleanupReady &&
-    /^[a-fA-F0-9]{64}$/.test(encryptionKey) &&
-    validRedis &&
-    Boolean(redisToken) &&
-    invites.length > 0;
+    enabled && cleanupReady && contextConfigured && invites.length > 0;
+  // Safe configuration diagnostics only. Never publish values, invite IDs or
+  // claims that an upstream account or Redis connection has been verified.
+  const reasonCodes = [
+    ...(!enabled ? ['AI_DISABLED'] : []),
+    ...(!providerConfigured ? ['PROVIDER_NOT_CONFIGURED'] : []),
+    ...(!signingConfigured ? ['SIGNING_NOT_CONFIGURED'] : []),
+    ...(!contextConfigured ? ['CONTEXT_ENCRYPTION_NOT_CONFIGURED'] : []),
+    ...(!admissionConfigured ? ['ADMISSION_NOT_CONFIGURED'] : []),
+    ...(!invites.length ? ['INVITES_NOT_CONFIGURED'] : []),
+  ];
   return {
     enabled,
     ready,
     cleanupReady,
+    providerConfigured,
+    reasonCodes,
     key,
     signingKey,
     encryptionKey,

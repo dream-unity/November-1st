@@ -14,6 +14,7 @@ import {
 } from './crypto.mjs';
 import { createRedisLedger } from './ledger.mjs';
 import { createOpenAIProvider } from './provider.mjs';
+import { configuredCredential } from '../providers/openai/status.js';
 import {
   CANON_VERSION,
   COVERAGE,
@@ -22,7 +23,13 @@ import {
 } from './knowledge.mjs';
 import { schemas, toolDefinitions } from './contracts.mjs';
 import { assertValid, validateTool } from './validate.mjs';
-import { readJSON, sendJSON, sendError, startEvents } from './http.mjs';
+import {
+  readJSON,
+  sendJSON,
+  sendError,
+  startEvents,
+  serviceMessage,
+} from './http.mjs';
 
 const SCOPES = ['unity:voice:create', 'unity:text', 'unity:knowledge'];
 const characterCount = (text) => Array.from(text).length;
@@ -87,7 +94,12 @@ export function createUnityService({
   try {
     config = readUnityConfig(env);
   } catch {
-    config = { enabled: env.UNITY_AI_ENABLED === '1', ready: false };
+    config = {
+      enabled: env.UNITY_AI_ENABLED === '1',
+      ready: false,
+      providerConfigured: configuredCredential(env.UNITY_OPENAI_API_KEY),
+      reasonCodes: ['CONFIG_INVALID'],
+    };
   }
   const ledger =
     suppliedLedger ||
@@ -639,7 +651,7 @@ export function createUnityService({
       send('turn.error', {
         turnId: state.request.turnId,
         code,
-        message: code,
+        message: serviceMessage(code),
         retryable: Boolean(error.retryable),
       });
       res.end();
@@ -798,13 +810,14 @@ export function createUnityService({
           enabled: Boolean(config.enabled),
           ready: Boolean(config.ready),
           access: 'invite',
-          voiceConfigured: Boolean(config.key),
-          textConfigured: Boolean(config.key),
+          voiceConfigured: Boolean(config.providerConfigured),
+          textConfigured: Boolean(config.providerConfigured),
           canonVersion: CANON_VERSION,
           actionSchemaVersion: CONTRACT_VERSION,
           coverage: COVERAGE,
           coreHash: CORE_HASH,
           reason: config.ready ? null : 'SERVICE_NOT_READY',
+          reasonCodes: config.reasonCodes,
           limits: config.limits || {},
         });
       }

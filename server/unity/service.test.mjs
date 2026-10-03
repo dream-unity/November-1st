@@ -395,14 +395,125 @@ test('missing encryption/config fails closed without invoking paid transport', a
     },
   });
   assert.equal(f.auth.code, 'SERVICE_NOT_READY');
+  assert.match(f.auth.message, /awaiting private service configuration/);
   const status = await (await f.request('/status')).json();
   assert.equal(status.ready, false);
   assert.equal(status.voiceConfigured, true);
+  assert.deepEqual(status.reasonCodes, ['CONTEXT_ENCRYPTION_NOT_CONFIGURED']);
   assert.equal((await f.request('/realtime', rtc())).status, 503);
   assert.equal(called, false);
   assert.doesNotMatch(
     JSON.stringify(status),
     /test-provider|test-signing|test-redis/,
+  );
+});
+
+test('status names missing configuration without exposing secrets or making provider calls', async (t) => {
+  let calls = 0;
+  const f = await fixture(t, {
+    env: {},
+    provider: {
+      createRealtime() {
+        calls++;
+      },
+      text() {
+        calls++;
+      },
+    },
+  });
+  const response = await f.request('/status');
+  assert.equal(response.status, 200);
+  const status = await response.json();
+  assert.equal(status.enabled, false);
+  assert.equal(status.ready, false);
+  assert.equal(status.voiceConfigured, false);
+  assert.equal(status.textConfigured, false);
+  assert.deepEqual(status.reasonCodes, [
+    'AI_DISABLED',
+    'PROVIDER_NOT_CONFIGURED',
+    'SIGNING_NOT_CONFIGURED',
+    'CONTEXT_ENCRYPTION_NOT_CONFIGURED',
+    'ADMISSION_NOT_CONFIGURED',
+    'INVITES_NOT_CONFIGURED',
+  ]);
+  assert.equal(calls, 0);
+});
+
+test('placeholder provider and admission credentials never report readiness', async (t) => {
+  const f = await fixture(t, {
+    env: {
+      ...ENV,
+      UNITY_OPENAI_API_KEY: 'replace_api_key',
+      UNITY_REDIS_REST_TOKEN: 'your_token',
+    },
+  });
+  const status = await (await f.request('/status')).json();
+  assert.equal(status.ready, false);
+  assert.equal(status.voiceConfigured, false);
+  assert.deepEqual(status.reasonCodes, [
+    'PROVIDER_NOT_CONFIGURED',
+    'ADMISSION_NOT_CONFIGURED',
+  ]);
+  assert.equal(f.auth.code, 'SERVICE_NOT_READY');
+  assert.equal(f.creates(), 0);
+});
+
+test('malformed operator configuration reports a safe invalid reason while preserving provider presence', async (t) => {
+  const f = await fixture(t, {
+    env: {
+      ...ENV,
+      UNITY_INVITE_HASHES_JSON: '{"invalid-secret-invite":',
+    },
+  });
+  const status = await (await f.request('/status')).json();
+  assert.equal(status.ready, false);
+  assert.equal(status.voiceConfigured, true);
+  assert.deepEqual(status.reasonCodes, ['CONFIG_INVALID']);
+  assert.doesNotMatch(
+    JSON.stringify(status),
+    /test-provider|test-signing|test-redis|invalid-secret|owner/,
+  );
+  assert.equal(f.auth.code, 'SERVICE_NOT_READY');
+  assert.equal(f.creates(), 0);
+});
+
+test('configured status reports presence only and never probes a paid provider', async (t) => {
+  const f = await fixture(t);
+  const status = await (await f.request('/status')).json();
+  assert.equal(status.ready, true);
+  assert.equal(status.voiceConfigured, true);
+  assert.equal(status.textConfigured, true);
+  assert.deepEqual(status.reasonCodes, []);
+  assert.equal(status.reason, null);
+  assert.equal(f.creates(), 0);
+});
+
+test('provider failures emit readable public guidance without revealing upstream error details', async (t) => {
+  const f = await fixture(t, {
+    provider: {
+      async text() {
+        throw Object.assign(
+          new Error('Bearer secret-provider-key: private upstream body'),
+          {
+            code: 'MODEL_UNAVAILABLE',
+            status: 503,
+          },
+        );
+      },
+    },
+  });
+  const output = events(
+    await (await f.request('/turns', start(), f.auth.accessToken)).text(),
+  );
+  assert.equal(output.at(-1).name, 'turn.error');
+  assert.equal(output.at(-1).data.code, 'MODEL_UNAVAILABLE');
+  assert.match(
+    output.at(-1).data.message,
+    /site owner must check the AI service configuration/,
+  );
+  assert.doesNotMatch(
+    JSON.stringify(output),
+    /secret-provider-key|private upstream body|Bearer/,
   );
 });
 

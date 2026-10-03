@@ -170,3 +170,147 @@ test('rejecting a provider event cancels the unread upstream response body', asy
   );
   assert.equal(cancelled, true);
 });
+
+test('contradictory terminal provider responses cannot replace the accepted tool output', async () => {
+  const terminal = (output) => ({
+    type: 'response.completed',
+    response: { status: 'completed', output },
+  });
+  const provider = createOpenAIProvider({
+    key: 'test-server-key',
+    tools: [],
+    fetchImpl: async () =>
+      new Response(
+        [
+          terminal([]),
+          terminal([
+            {
+              type: 'function_call',
+              name: 'navigate',
+              call_id: 'late',
+              arguments: '{"destination":"earth"}',
+            },
+          ]),
+        ]
+          .map((event) => `data: ${JSON.stringify(event)}\n\n`)
+          .join(''),
+      ),
+  });
+  await assert.rejects(
+    provider.text({ input: [], memories: [], onDelta() {} }),
+    {
+      code: 'PROVIDER_INVALID_RESPONSE',
+    },
+  );
+});
+
+test('provider text after completion is rejected before forwarding the late delta', async () => {
+  const deltas = [];
+  const provider = createOpenAIProvider({
+    key: 'test-server-key',
+    tools: [],
+    fetchImpl: async () =>
+      new Response(
+        [
+          {
+            type: 'response.completed',
+            response: { status: 'completed', output: [] },
+          },
+          {
+            type: 'response.output_text.delta',
+            delta: 'This must not be forwarded.',
+          },
+        ]
+          .map((event) => `data: ${JSON.stringify(event)}\n\n`)
+          .join(''),
+      ),
+  });
+  await assert.rejects(
+    provider.text({
+      input: [],
+      memories: [],
+      onDelta: (text) => deltas.push(text),
+    }),
+    {
+      code: 'PROVIDER_INVALID_RESPONSE',
+    },
+  );
+  assert.deepEqual(deltas, []);
+});
+
+test('aborting a stalled provider stream cancels its reader and settles without more bytes', async () => {
+  const abort = new AbortController();
+  let cancelled = false;
+  const provider = createOpenAIProvider({
+    key: 'test-server-key',
+    tools: [],
+    fetchImpl: async () =>
+      new Response(
+        new ReadableStream({
+          cancel() {
+            cancelled = true;
+          },
+        }),
+      ),
+  });
+  const reading = provider.text({
+    input: [],
+    memories: [],
+    signal: abort.signal,
+    onDelta() {},
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  abort.abort();
+  await assert.rejects(reading, { name: 'AbortError' });
+  assert.equal(cancelled, true);
+});
+
+test('provider configuration and spend failures are distinct from retryable throttling without echoing error bodies', async () => {
+  for (const [status, upstreamCode, code, retryable] of [
+    [400, 'invalid_request_error', 'PROVIDER_CONFIGURATION_ERROR', false],
+    [422, 'unprocessable_entity', 'PROVIDER_CONFIGURATION_ERROR', false],
+    [429, 'credit_balance_exhausted', 'PROVIDER_QUOTA_EXHAUSTED', false],
+    [429, 'project_spend_limit_exceeded', 'PROVIDER_QUOTA_EXHAUSTED', false],
+    [
+      429,
+      'organization_spend_limit_exceeded',
+      'PROVIDER_QUOTA_EXHAUSTED',
+      false,
+    ],
+    [
+      429,
+      'organization_usage_limit_exceeded',
+      'PROVIDER_QUOTA_EXHAUSTED',
+      false,
+    ],
+    [429, 'insufficient_quota', 'PROVIDER_QUOTA_EXHAUSTED', false],
+    [429, 'slow_down', 'PROVIDER_RATE_LIMITED', true],
+  ]) {
+    const provider = createOpenAIProvider({
+      key: 'test-server-key',
+      tools: [],
+      fetchImpl: async () =>
+        Response.json(
+          {
+            error: {
+              code: upstreamCode,
+              message: 'private provider credentials and body',
+            },
+          },
+          { status },
+        ),
+    });
+    for (const invoke of [
+      () => provider.text({ input: [], memories: [], onDelta() {} }),
+      () => provider.createRealtime({ sdp: 'v=0\noffer', memories: [] }),
+    ]) {
+      await assert.rejects(
+        invoke(),
+        (error) =>
+          error.code === code &&
+          error.retryable === retryable &&
+          !error.message.includes('private provider'),
+      );
+    }
+  }
+});
