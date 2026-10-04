@@ -18,6 +18,12 @@ export const DEFAULT_LIMITS = Object.freeze({
   transientContextSeconds: 900,
 });
 
+const REDIS_ENV_PAIRS = [
+  ['UNITY_REDIS_REST_URL', 'UNITY_REDIS_REST_TOKEN'],
+  ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN'],
+  ['KV_REST_API_URL', 'KV_REST_API_TOKEN'],
+];
+
 export const hash = (value) =>
   createHash('sha256').update(String(value)).digest('hex');
 export function serviceError(code, status = 400, retryable = false) {
@@ -58,8 +64,15 @@ export function readUnityConfig(env = process.env) {
   const key = String(env.UNITY_OPENAI_API_KEY || '').trim();
   const signingKey = String(env.UNITY_SIGNING_KEY || '');
   const encryptionKey = String(env.UNITY_CONTEXT_ENCRYPTION_KEY || '');
-  const redisUrl = String(env.UNITY_REDIS_REST_URL || '');
-  const redisToken = String(env.UNITY_REDIS_REST_TOKEN || '');
+  // Select one credential family, including incomplete or blank overrides.
+  // Never mix sources or silently bypass invalid higher-priority configuration.
+  const [redisUrlName, redisTokenName] =
+    REDIS_ENV_PAIRS.find(
+      ([urlName, tokenName]) =>
+        env[urlName] !== undefined || env[tokenName] !== undefined,
+    ) || REDIS_ENV_PAIRS[0];
+  const redisUrl = String(env[redisUrlName] || '');
+  const redisToken = String(env[redisTokenName] || '');
   let validRedis = false;
   try {
     const url = new URL(redisUrl);
