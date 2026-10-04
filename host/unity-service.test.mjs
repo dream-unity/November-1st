@@ -3,3 +3,4 @@
 import '../server/unity/service.test.mjs';
 import '../server/unity/provider.test.mjs';
 import '../server/unity/ledger.test.mjs';
+import '../server/unity/config.test.mjs';
